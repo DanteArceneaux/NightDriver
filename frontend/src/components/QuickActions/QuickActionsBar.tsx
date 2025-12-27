@@ -7,7 +7,7 @@ import { ShiftPlannerModal } from '../ShiftPlanner/ShiftPlannerModal';
 import { PaceTracker } from './PaceTracker';
 
 interface QuickActionsBarProps {
-  currentLocation: { lat: number; lng: number };
+  currentLocation?: { lat: number; lng: number };
 }
 
 export function QuickActionsBar({ currentLocation }: QuickActionsBarProps) {
@@ -76,14 +76,14 @@ export function QuickActionsBar({ currentLocation }: QuickActionsBarProps) {
       </div>
 
       {/* Modals */}
-      {showBathrooms && (
+      {showBathrooms && currentLocation && (
         <BathroomFinder
           currentLocation={currentLocation}
           onClose={() => setShowBathrooms(false)}
         />
       )}
 
-      {showCharging && (
+      {showCharging && currentLocation && (
         <ChargingStationFinder
           currentLocation={currentLocation}
           onClose={() => setShowCharging(false)}
@@ -92,12 +92,11 @@ export function QuickActionsBar({ currentLocation }: QuickActionsBarProps) {
 
       {showCoffee && (
         <CoffeeFinder
-          currentLocation={currentLocation}
           onClose={() => setShowCoffee(false)}
         />
       )}
 
-      {showShiftPlanner && (
+      {showShiftPlanner && currentLocation && (
         <ShiftPlannerModal
           currentLocation={currentLocation}
           onClose={() => setShowShiftPlanner(false)}
