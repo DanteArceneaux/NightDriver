@@ -619,6 +619,144 @@ export function createApiRouter(
     }
   });
 
+  // GET /api/amenities - Find driver amenities (bathrooms, charging, coffee) (NEW)
+  router.get('/amenities', async (req: Request, res: Response) => {
+    try {
+      const { AmenitiesService } = await import('../services/amenities.service.js');
+      const amenitiesService = new AmenitiesService();
+
+      const { lat, lng, type, radius } = req.query;
+
+      if (!lat || !lng) {
+        return res.status(400).json({ error: 'lat and lng query parameters required' });
+      }
+
+      const location = { lat: parseFloat(lat as string), lng: parseFloat(lng as string) };
+      const searchType = (type as any) || 'all';
+      const searchRadius = radius ? parseFloat(radius as string) : 2;
+
+      const amenities = await amenitiesService.findNearby(location, searchType, searchRadius);
+
+      res.json({
+        location,
+        count: amenities.length,
+        amenities,
+      });
+    } catch (error) {
+      console.error('Error fetching amenities:', error);
+      res.status(500).json({ error: 'Failed to fetch amenities' });
+    }
+  });
+
+  // GET /api/amenities/bathrooms - Get only 24/7 bathrooms (NEW)
+  router.get('/amenities/bathrooms', async (req: Request, res: Response) => {
+    try {
+      const { AmenitiesService } = await import('../services/amenities.service.js');
+      const amenitiesService = new AmenitiesService();
+
+      const { lat, lng, radius } = req.query;
+
+      if (!lat || !lng) {
+        return res.status(400).json({ error: 'lat and lng query parameters required' });
+      }
+
+      const location = { lat: parseFloat(lat as string), lng: parseFloat(lng as string) };
+      const searchRadius = radius ? parseFloat(radius as string) : 2;
+
+      const bathrooms = await amenitiesService.find24HourBathrooms(location, searchRadius);
+
+      res.json({
+        location,
+        count: bathrooms.length,
+        bathrooms,
+      });
+    } catch (error) {
+      console.error('Error fetching bathrooms:', error);
+      res.status(500).json({ error: 'Failed to fetch bathrooms' });
+    }
+  });
+
+  // GET /api/amenities/charging - Get EV charging stations (NEW)
+  router.get('/amenities/charging', async (req: Request, res: Response) => {
+    try {
+      const { AmenitiesService } = await import('../services/amenities.service.js');
+      const amenitiesService = new AmenitiesService();
+
+      const { lat, lng, radius, tesla } = req.query;
+
+      if (!lat || !lng) {
+        return res.status(400).json({ error: 'lat and lng query parameters required' });
+      }
+
+      const location = { lat: parseFloat(lat as string), lng: parseFloat(lng as string) };
+      const searchRadius = radius ? parseFloat(radius as string) : 5;
+
+      const chargers = tesla === 'true'
+        ? await amenitiesService.findTeslaSuperchargers(location, searchRadius)
+        : await amenitiesService.findNearby(location, 'charging', searchRadius);
+
+      res.json({
+        location,
+        count: chargers.length,
+        chargers,
+      });
+    } catch (error) {
+      console.error('Error fetching charging stations:', error);
+      res.status(500).json({ error: 'Failed to fetch charging stations' });
+    }
+  });
+
+  // POST /api/shift-planner - Generate optimal shift plan (NEW)
+  router.post('/shift-planner', async (req: Request, res: Response) => {
+    try {
+      const { ShiftPlannerService } = await import('../services/shiftPlanner.service.js');
+      const plannerService = new ShiftPlannerService();
+
+      const { startTime, endTime, startingLocation, vehicleType, currentBatteryPercent, goals } = req.body;
+
+      if (!startTime || !endTime || !startingLocation) {
+        return res.status(400).json({ error: 'startTime, endTime, and startingLocation required' });
+      }
+
+      const plan = await plannerService.planShift({
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+        startingLocation,
+        vehicleType,
+        currentBatteryPercent,
+        goals,
+      });
+
+      res.json(plan);
+    } catch (error) {
+      console.error('Error planning shift:', error);
+      res.status(500).json({ error: 'Failed to plan shift' });
+    }
+  });
+
+  // GET /api/conventions - Get real convention calendar (NEW)
+  router.get('/conventions', async (req: Request, res: Response) => {
+    try {
+      const { WSCCConventionsService } = await import('../services/wsccConventions.service.js');
+      const conventionsService = new WSCCConventionsService();
+
+      const { date } = req.query;
+      const targetDate = date ? new Date(date as string) : new Date();
+
+      const active = await conventionsService.getActiveConventions(targetDate);
+      const impacts = await conventionsService.getConventionImpacts(targetDate);
+
+      res.json({
+        date: targetDate.toISOString(),
+        activeConventions: active,
+        zoneImpacts: impacts,
+      });
+    } catch (error) {
+      console.error('Error fetching conventions:', error);
+      res.status(500).json({ error: 'Failed to fetch conventions' });
+    }
+  });
+
   return router;
 }
 

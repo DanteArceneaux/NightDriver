@@ -10,6 +10,9 @@ import { QuickLogButton } from './components/Trip/QuickLogButton';
 import { EventAlertBanner } from './components/Alerts/EventAlertBanner';
 import { GoalProgressWidget } from './components/Earnings/GoalProgressWidget';
 import { QuickEarningsButtons } from './components/Earnings/QuickEarningsButtons';
+import { QuickActionsBar } from './components/QuickActions/QuickActionsBar';
+import { BreakReminder } from './components/Alerts/BreakReminder';
+import { TeslaBatteryWidget } from './components/Vehicle/TeslaBatteryWidget';
 import { SkeletonHero, SkeletonMap, SkeletonTimeline, SkeletonLeaderboard } from './components/Skeleton/Skeleton';
 import { requestNotificationPermission } from './lib/notifications';
 import { calculateDistance, estimateDriveTime, calculateEfficiency } from './lib/distance';
@@ -21,11 +24,18 @@ function App() {
   const { countdown } = useAutoRefresh(30000); // 30 seconds for WebSocket (used for visual countdown ring)
   const [surges] = useState<any[]>([]);
   const [weather, setWeather] = useState<{ temp: number; description: string } | undefined>();
+  const [shiftStartTime] = useState<Date>(() => {
+    // Try to load from localStorage or start new shift
+    const saved = localStorage.getItem('shiftStartTime');
+    return saved ? new Date(saved) : new Date();
+  });
 
   // Request notification permission on mount
   useEffect(() => {
     requestNotificationPermission();
-  }, []);
+    // Save shift start time
+    localStorage.setItem('shiftStartTime', shiftStartTime.toISOString());
+  }, [shiftStartTime]);
 
   // Fetch weather for header
   useEffect(() => {
@@ -129,6 +139,15 @@ function App() {
 
       {/* Quick Log Button */}
       <QuickLogButton zones={sortedZones} />
+
+      {/* Break Reminder (every 4 hours) */}
+      <BreakReminder shiftStartTime={shiftStartTime} />
+
+      {/* Tesla Battery Widget */}
+      <TeslaBatteryWidget />
+
+      {/* Quick Actions Bar (Bathroom, Charging, Shift Planner) */}
+      <QuickActionsBar currentLocation={driverLocation || { lat: 47.6062, lng: -122.3321 }} />
 
       {/* Theme-aware Layout */}
       <AppLayout

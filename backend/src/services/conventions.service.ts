@@ -7,6 +7,8 @@
  * In production, scrape WSCC public calendar or use events API.
  */
 
+import { WSCCConventionsService } from './wsccConventions.service.js';
+
 export interface Convention {
   name: string;
   venue: 'WSCC' | 'Other';
@@ -19,6 +21,11 @@ export interface Convention {
 }
 
 export class ConventionsService {
+  private wsccService: WSCCConventionsService;
+
+  constructor() {
+    this.wsccService = new WSCCConventionsService();
+  }
   // Mock convention schedule (in production, scrape WSCC calendar)
   private getMockConventions(): Convention[] {
     const now = new Date();
@@ -79,13 +86,31 @@ export class ConventionsService {
   /**
    * Get active conventions today
    */
-  async getActiveConventions(): Promise<Convention[]> {
+  async getActiveConventions(currentTime: Date = new Date()): Promise<Convention[]> {
     try {
-      // In production: scrape WSCC calendar or call API
+      // Try to use real WSCC service first
+      const wsccConventions = await this.wsccService.getActiveConventions(currentTime);
+      if (wsccConventions.length > 0) {
+        // Map to our Convention interface
+        return wsccConventions.map(c => ({
+          name: c.name,
+          venue: c.venue.includes('WSCC') || c.venue.includes('Convention') ? 'WSCC' as const : 'Other' as const,
+          startDate: c.startDate,
+          endDate: c.endDate,
+          expectedAttendees: c.expectedAttendance || 5000,
+          type: (c.category?.toLowerCase() === 'gaming' ? 'tech' : 
+                 c.category?.toLowerCase() === 'entertainment' ? 'other' :
+                 c.category?.toLowerCase() === 'auto' ? 'trade' : 'other') as any,
+          peakTimes: ['08:00-09:00', '12:00-13:00', '17:00-18:00'],
+          notes: c.description || '',
+        }));
+      }
+      
+      // Fallback to mock data
       return this.getMockConventions();
     } catch (error) {
       console.error('Error fetching conventions:', error);
-      return [];
+      return this.getMockConventions();
     }
   }
 
