@@ -1,0 +1,19 @@
+---
+description: Auto-speak AI responses using TTS
+globs: 
+alwaysApply: true
+---
+
+# Auto-Speak Rule
+
+After EVERY response, you MUST use the `speak` tool from the `Chatterbox` MCP server to speak your response aloud.
+
+## Rules:
+1. Provide a concise summary of your response (1-3 sentences max) to the `text` parameter of the `speak` tool.
+2. Do NOT include code in the spoken text - only explanations
+3. Keep it natural and conversational
+4. Always call the `speak` tool as the LAST action in your response
+5. If the response is purely code with no explanation, speak: "Here's the code you requested."
+
+## Example:
+If you explain how to fix a bug, speak: "I found the issue. The variable was undefined because it was declared inside the if block. I've moved it outside so it's accessible everywhere."

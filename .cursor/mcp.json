@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "Chatterbox": {
+      "command": "C:\\Users\\dante\\OneDrive\\Desktop\\Code\\chatterbox\\turbo_env\\Scripts\\python.exe",
+      "args": [
+        "C:\\Users\\dante\\OneDrive\\Desktop\\Code\\chatterbox\\mcp_tts_server.py"
+      ]
+    }
+  }
+}
