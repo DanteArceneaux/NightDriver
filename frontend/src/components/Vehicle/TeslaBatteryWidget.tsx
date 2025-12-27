@@ -38,14 +38,7 @@ export function TeslaBatteryWidget({ onBatteryChange }: TeslaBatteryWidgetProps)
   const estimatedRange = Math.round((batteryPercent / 100) * 300); // Assume 300 mi max range
 
   if (vehicleType === 'gas') {
-    return (
-      <button
-        onClick={() => setShowWidget(true)}
-        className="fixed top-24 right-4 z-40 bg-gray-800/90 backdrop-blur-sm border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-400 hover:text-white hover:border-cyan-500/50 transition-all"
-      >
-        Switch to EV Mode
-      </button>
-    );
+    return null;
   }
 
   return (
