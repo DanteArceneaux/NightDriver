@@ -92,7 +92,7 @@ export function GameHudLayout(props: LayoutProps) {
         </div>
 
         {/* Bottom-Right: Conditions Widget (always visible, expanded) */}
-        <div className="absolute bottom-4 right-4 pointer-events-auto w-[420px] max-w-[calc(100vw-2rem)]">
+        <div className="absolute bottom-4 left-4 pointer-events-auto w-[420px] max-w-[calc(100vw-2rem)]">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <LiveConditions />
           </motion.div>
@@ -105,13 +105,13 @@ export function GameHudLayout(props: LayoutProps) {
               initial={{ opacity: 0, scale: 0.9, x: -50 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.9, x: -50 }}
-              className="absolute left-4 top-32 bottom-4 w-[500px] max-w-[calc(100vw-2rem)] pointer-events-auto overflow-hidden"
+              className="absolute right-4 top-4 bottom-32 w-[500px] max-w-[calc(100vw-2rem)] pointer-events-auto overflow-hidden"
             >
               <div className="h-full bg-gradient-to-br from-indigo-950/95 to-gray-900/95 backdrop-blur-xl border-2 border-purple-500/60 rounded-lg shadow-[0_0_30px_rgba(168,85,247,0.4)] p-6 overflow-y-auto">
                 {/* Close Button */}
                 <button
                   onClick={() => setActiveWidget(null)}
-                  className="absolute top-4 right-4 p-2 hover:bg-purple-600/50 rounded-lg transition-colors"
+                  className="absolute top-4 right-4 p-2 hover:bg-purple-600/50 rounded-lg transition-colors z-10"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -124,7 +124,7 @@ export function GameHudLayout(props: LayoutProps) {
                     driverLocation={props.driverLocation}
                   />
                 )}
-                {activeWidget === 'forecast' && <ForecastTimeline />}
+                {activeWidget === 'forecast' && <ForecastTimeline vertical={true} />}
                 {activeWidget === 'events' && <EventsPanel />}
                 {activeWidget === 'zones' && (
                   <Leaderboard zones={props.zones} driverLocation={props.driverLocation} />

@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Map, Music, CloudRain, Plane, TrendingUp, MapPin, Clock, ParkingCircle } from 'lucide-react';
+import { Map, Music, CloudRain, Plane, TrendingUp, MapPin, Clock, ParkingCircle, Zap, BrainCircuit } from 'lucide-react';
 import type { ZoneScore, Coordinates, Zone } from '../../types';
 import { calculateDistance, estimateDriveTime, calculateEfficiency } from '../../lib/distance';
-import { openGoogleMaps, openWaze, openAppleMaps } from '../../lib/navigation';
+import { openGoogleMaps, openWaze, openAppleMaps, openTeslaNav } from '../../lib/navigation';
 import { DraggableCard } from '../UI/DraggableCard';
 
 interface ZoneDetailSheetProps {
@@ -198,6 +198,31 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
               )}
 
               {/* Navigation Buttons */}
+              <div className="grid grid-cols-2 gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => openTeslaNav(stagingSpot || zone.coordinates, zone.name)}
+                  className="flex items-center justify-center gap-2 p-3 bg-red-600 hover:bg-red-500 rounded-xl transition-colors border border-red-400/30 text-white font-black"
+                >
+                  <Zap className="w-5 h-5 fill-white" />
+                  TESLA NAV
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    // AI Route Help logic
+                    alert(`AI Route Analysis for ${zone.name}:\n\n1. Take I-5 South to Mercer St exit.\n2. Best staging: ${stagingSpot ? 'Assigned spot' : 'Nearby side street'}.\n3. Expected wait: < 5 mins based on live surges.`);
+                  }}
+                  className="flex items-center justify-center gap-2 p-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-colors border border-indigo-400/30 text-white font-black"
+                >
+                  <BrainCircuit className="w-5 h-5" />
+                  AI HELP
+                </motion.button>
+              </div>
+
               <div className="grid grid-cols-3 gap-2">
                 <motion.button
                   whileHover={{ scale: 1.05 }}

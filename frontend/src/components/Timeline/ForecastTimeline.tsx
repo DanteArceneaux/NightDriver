@@ -28,9 +28,10 @@ function getScoreBgColor(score: number): string {
 
 interface ForecastTimelineProps {
   hideWrapper?: boolean;
+  vertical?: boolean;
 }
 
-export function ForecastTimeline({ hideWrapper = false }: ForecastTimelineProps) {
+export function ForecastTimeline({ hideWrapper = false, vertical = false }: ForecastTimelineProps) {
   const { tokens } = useTheme();
   const [forecast, setForecast] = useState<Forecast | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +69,7 @@ export function ForecastTimeline({ hideWrapper = false }: ForecastTimelineProps)
   const scoreRange = maxScore - minScore || 1;
 
   // Create SVG path for sparkline
-  const width = 100;
+  const width = vertical ? 60 : 100;
   const height = 40;
   const points = scores.map((score, i) => {
     const x = (i / (scores.length - 1)) * width;
@@ -77,7 +78,7 @@ export function ForecastTimeline({ hideWrapper = false }: ForecastTimelineProps)
   }).join(' ');
 
   const content = (
-    <>
+    <div className={vertical ? 'flex flex-col gap-4' : ''}>
       {!hideWrapper && (
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -106,8 +107,8 @@ export function ForecastTimeline({ hideWrapper = false }: ForecastTimelineProps)
         </div>
       )}
 
-      {/* Horizontal Scrollable Timeline */}
-      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
+      {/* Timeline */}
+      <div className={vertical ? 'space-y-3' : 'flex gap-4 overflow-x-auto pb-2 scrollbar-thin'}>
         {forecast.points.map((point, index) => {
           const topZone = point.topZones[0];
           const colorClass = getScoreColor(topZone.score);
@@ -116,25 +117,33 @@ export function ForecastTimeline({ hideWrapper = false }: ForecastTimelineProps)
           return (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: vertical ? -20 : 0, y: vertical ? 0 : 20 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex-shrink-0 w-40 glass rounded-xl p-4 border border-white/10 hover:border-theme-primary/50 transition-all cursor-pointer"
+              className={`${vertical ? 'w-full' : 'flex-shrink-0 w-40'} glass rounded-xl p-4 border border-white/10 hover:border-theme-primary/50 transition-all cursor-pointer`}
             >
-              {/* Time Label */}
-              <div className="text-xs text-gray-400 font-medium mb-3 flex items-center justify-between">
-                <span>+{index + 1}h</span>
-                <span className="text-gray-500">{formatHour(point.hour)}</span>
-              </div>
+              <div className={vertical ? 'flex items-center justify-between gap-4' : ''}>
+                {/* Time Label */}
+                <div className={`${vertical ? 'w-16' : 'mb-3'} text-xs text-gray-400 font-medium flex items-center justify-between`}>
+                  {vertical ? (
+                    <span className="text-gray-500 font-black">{formatHour(point.hour)}</span>
+                  ) : (
+                    <>
+                      <span>+{index + 1}h</span>
+                      <span className="text-gray-500">{formatHour(point.hour)}</span>
+                    </>
+                  )}
+                </div>
 
-              {/* Zone Name */}
-              <div className="text-sm font-bold text-white mb-2 truncate">
-                {topZone.name}
-              </div>
+                {/* Zone Name */}
+                <div className={`${vertical ? 'flex-1' : 'mb-2'} text-sm font-bold text-white truncate`}>
+                  {topZone.name}
+                </div>
 
-              {/* Score Badge */}
-              <div className={`inline-flex items-center justify-center px-3 py-1 rounded-full border text-xs font-black ${bgClass} ${colorClass}`}>
-                {topZone.score}
+                {/* Score Badge */}
+                <div className={`inline-flex items-center justify-center px-3 py-1 rounded-full border text-xs font-black ${bgClass} ${colorClass}`}>
+                  {topZone.score}
+                </div>
               </div>
             </motion.div>
           );
@@ -142,20 +151,22 @@ export function ForecastTimeline({ hideWrapper = false }: ForecastTimelineProps)
       </div>
 
       {/* Trend Indicator */}
-      <div className="mt-4 flex items-center gap-2 text-xs text-gray-400">
-        {scores[scores.length - 1] > scores[0] ? (
-          <>
-            <TrendingUp className="w-3 h-3 text-neon-green" />
-            <span className="text-neon-green font-semibold">Trending Up</span>
-          </>
-        ) : (
-          <>
-            <TrendingUp className="w-3 h-3 rotate-180 text-neon-orange" />
-            <span className="text-neon-orange font-semibold">Trending Down</span>
-          </>
-        )}
-      </div>
-    </>
+      {!vertical && (
+        <div className="mt-4 flex items-center gap-2 text-xs text-gray-400">
+          {scores[scores.length - 1] > scores[0] ? (
+            <>
+              <TrendingUp className="w-3 h-3 text-neon-green" />
+              <span className="text-neon-green font-semibold">Trending Up</span>
+            </>
+          ) : (
+            <>
+              <TrendingUp className="w-3 h-3 rotate-180 text-neon-orange" />
+              <span className="text-neon-orange font-semibold">Trending Down</span>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 
   if (hideWrapper) {

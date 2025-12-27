@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { MapPin, Zap, Coffee, Calendar, TrendingUp } from 'lucide-react';
 import { BathroomFinder } from '../Amenities/BathroomFinder';
 import { ChargingStationFinder } from '../Amenities/ChargingStationFinder';
+import { CoffeeFinder } from '../Amenities/CoffeeFinder';
 import { ShiftPlannerModal } from '../ShiftPlanner/ShiftPlannerModal';
+import { PaceTracker } from './PaceTracker';
 
 interface QuickActionsBarProps {
   currentLocation: { lat: number; lng: number };
@@ -11,7 +13,9 @@ interface QuickActionsBarProps {
 export function QuickActionsBar({ currentLocation }: QuickActionsBarProps) {
   const [showBathrooms, setShowBathrooms] = useState(false);
   const [showCharging, setShowCharging] = useState(false);
+  const [showCoffee, setShowCoffee] = useState(false);
   const [showShiftPlanner, setShowShiftPlanner] = useState(false);
+  const [showPace, setShowPace] = useState(false);
 
   return (
     <>
@@ -40,10 +44,7 @@ export function QuickActionsBar({ currentLocation }: QuickActionsBarProps) {
 
             {/* Coffee/Break */}
             <button
-              onClick={() => {
-                // TODO: Add coffee finder modal
-                alert('Coffee finder coming soon!');
-              }}
+              onClick={() => setShowCoffee(true)}
               className="group relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl hover:bg-amber-600/20 transition-all"
               title="Find Coffee"
             >
@@ -63,10 +64,7 @@ export function QuickActionsBar({ currentLocation }: QuickActionsBarProps) {
 
             {/* Earnings Pace */}
             <button
-              onClick={() => {
-                // TODO: Add pace check modal
-                alert('Pace tracker coming soon!');
-              }}
+              onClick={() => setShowPace(true)}
               className="group relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl hover:bg-pink-600/20 transition-all"
               title="Check Pace"
             >
@@ -92,10 +90,23 @@ export function QuickActionsBar({ currentLocation }: QuickActionsBarProps) {
         />
       )}
 
+      {showCoffee && (
+        <CoffeeFinder
+          currentLocation={currentLocation}
+          onClose={() => setShowCoffee(false)}
+        />
+      )}
+
       {showShiftPlanner && (
         <ShiftPlannerModal
           currentLocation={currentLocation}
           onClose={() => setShowShiftPlanner(false)}
+        />
+      )}
+
+      {showPace && (
+        <PaceTracker
+          onClose={() => setShowPace(false)}
         />
       )}
     </>

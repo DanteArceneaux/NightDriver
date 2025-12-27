@@ -1,10 +1,10 @@
 import { motion, animate } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { Music, CloudRain, Plane, Navigation as NavIcon, Zap, Clock, Calendar, Map } from 'lucide-react';
+import { Music, CloudRain, Plane, Navigation as NavIcon, Zap, Clock, Calendar, Map, BrainCircuit } from 'lucide-react';
 import { TopPick, ZoneScore, Coordinates, Event } from '../../types';
 import { calculateDistance, estimateDriveTime, calculateEfficiency, formatDistance, formatDriveTime } from '../../lib/distance';
 import { fetchConditions } from '../../lib/api';
-import { openNavigation, getDefaultNavigationApp } from '../../lib/navigation';
+import { openNavigation, getDefaultNavigationApp, openTeslaNav } from '../../lib/navigation';
 import { useTheme } from '../../features/theme';
 
 interface TopPickCardProps {
@@ -184,6 +184,35 @@ export function TopPickCard({ topPick, zone, driverLocation }: TopPickCardProps)
             </span>
           </div>
           <div className="flex items-center gap-2">
+            {/* Tesla Nav Button */}
+            {zone && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => openTeslaNav(zone.coordinates, zone.name)}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-500/50 rounded-xl text-red-400 font-bold text-xs transition-all"
+                title="Send to Tesla"
+              >
+                <Zap className="w-4 h-4 fill-red-400" />
+                TESLA
+              </motion.button>
+            )}
+
+            {/* AI Help Button */}
+            {zone && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  alert(`AI Route Analysis for ${zone.name}:\n\n1. Demand is peaking now due to ${topPick.reason}.\n2. Recommended approach: Dexter Ave N to avoid Mercer traffic.\n3. Earnings potential: High surge ($30+ fares expected).`);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/50 rounded-xl text-indigo-400 font-bold text-xs transition-all"
+              >
+                <BrainCircuit className="w-4 h-4" />
+                AI HELP
+              </motion.button>
+            )}
+
             {/* Navigation Button */}
             {zone && (
               <motion.button

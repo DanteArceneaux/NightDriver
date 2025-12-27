@@ -15,7 +15,21 @@ export function openAppleMaps(coords: Coordinates): void {
   window.open(url, '_blank');
 }
 
-export function openNavigation(coords: Coordinates, app: 'google' | 'waze' | 'apple' = 'google'): void {
+export function openTeslaNav(coords: Coordinates, label: string = 'Destination'): void {
+  // Tesla deep link format
+  // tesla://navigate?lat=...&lng=...&label=...
+  const url = `tesla://navigate?lat=${coords.lat}&lng=${coords.lng}&label=${encodeURIComponent(label)}`;
+  window.location.href = url;
+  
+  // Fallback if deep link doesn't work after 1 second
+  setTimeout(() => {
+    if (document.hasFocus()) {
+      openGoogleMaps(coords);
+    }
+  }, 1000);
+}
+
+export function openNavigation(coords: Coordinates, app: 'google' | 'waze' | 'apple' | 'tesla' = 'google'): void {
   switch (app) {
     case 'google':
       openGoogleMaps(coords);
@@ -25,6 +39,9 @@ export function openNavigation(coords: Coordinates, app: 'google' | 'waze' | 'ap
       break;
     case 'apple':
       openAppleMaps(coords);
+      break;
+    case 'tesla':
+      openTeslaNav(coords);
       break;
   }
 }

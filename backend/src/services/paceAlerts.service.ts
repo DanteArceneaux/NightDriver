@@ -1,20 +1,14 @@
-/**
- * Pace Alerts Service
- * 
- * Track earnings pace and alert if falling behind goal.
- */
-
 export interface PaceAlert {
-  status: 'ahead' | 'on_track' | 'behind' | 'critical';
+  status: 'ahead' | 'on_track' | 'behind';
+  currentHourlyRate: number;
+  requiredHourlyRate: number;
+  difference: number;
   message: string;
-  recommendation: string;
-  projectedDailyEarnings: number;
-  neededHourlyRate: number;
 }
 
 export class PaceAlertsService {
   /**
-   * Calculate pace alert
+   * Calculate earnings pace relative to goal
    */
   calculatePace(
     currentEarnings: number,
@@ -22,43 +16,35 @@ export class PaceAlertsService {
     dailyGoal: number,
     plannedTotalHours: number
   ): PaceAlert {
-    const currentHourlyRate = hoursWorked > 0 ? currentEarnings / hoursWorked : 0;
-    const hoursRemaining = plannedTotalHours - hoursWorked;
-    const earningsNeeded = dailyGoal - currentEarnings;
-    const neededHourlyRate = hoursRemaining > 0 ? earningsNeeded / hoursRemaining : 0;
-    const projectedDailyEarnings = currentEarnings + (currentHourlyRate * hoursRemaining);
+    const currentHourlyRate = hoursWorked > 0 ? Math.round(currentEarnings / hoursWorked) : 0;
+    const remainingGoal = Math.max(0, dailyGoal - currentEarnings);
+    const remainingHours = Math.max(0.1, plannedTotalHours - hoursWorked);
+    const requiredHourlyRate = Math.round(remainingGoal / remainingHours);
 
-    let status: PaceAlert['status'];
-    let message: string;
-    let recommendation: string;
+    let status: PaceAlert['status'] = 'on_track';
+    let message = '';
+    const difference = currentHourlyRate - requiredHourlyRate;
 
-    const percentOfGoal = (currentEarnings / dailyGoal) * 100;
-
-    if (projectedDailyEarnings >= dailyGoal * 1.1) {
+    if (currentEarnings >= dailyGoal) {
       status = 'ahead';
-      message = `🔥 Crushing it! ${percentOfGoal.toFixed(0)}% of goal. Projected: $${projectedDailyEarnings.toFixed(0)}`;
-      recommendation = 'Keep current pace or take a break';
-    } else if (projectedDailyEarnings >= dailyGoal * 0.95) {
-      status = 'on_track';
-      message = `✓ On track. ${percentOfGoal.toFixed(0)}% of goal. Projected: $${projectedDailyEarnings.toFixed(0)}`;
-      recommendation = 'Maintain current effort';
-    } else if (projectedDailyEarnings >= dailyGoal * 0.8) {
+      message = "GOAL REACHED! You're in pure profit mode now.";
+    } else if (difference > 5) {
+      status = 'ahead';
+      message = `You're \$${difference}/hr ahead of pace. Keep it up!`;
+    } else if (difference < -5) {
       status = 'behind';
-      message = `⚠️ Falling behind. ${percentOfGoal.toFixed(0)}% of goal. Need $${neededHourlyRate.toFixed(0)}/hr`;
-      recommendation = 'Increase pace or extend shift by 1-2 hours';
+      message = `You're \$${Math.abs(difference)}/hr behind. Target higher score zones.`;
     } else {
-      status = 'critical';
-      message = `🚨 Significantly behind. ${percentOfGoal.toFixed(0)}% of goal. Need $${neededHourlyRate.toFixed(0)}/hr`;
-      recommendation = 'Focus on high-value zones or extend shift significantly';
+      status = 'on_track';
+      message = "You're right on track to hit your daily goal.";
     }
 
     return {
       status,
+      currentHourlyRate,
+      requiredHourlyRate,
+      difference,
       message,
-      recommendation,
-      projectedDailyEarnings,
-      neededHourlyRate,
     };
   }
 }
-
