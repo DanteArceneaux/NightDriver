@@ -185,6 +185,27 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
     loadEvents();
   }, []);
 
+  // Theme-aware button styles
+  const getActiveButtonClass = () => {
+    if (themeId === 'hud') {
+      return 'bg-purple-600/80 text-white border-2 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.6)]';
+    }
+    if (themeId === 'pro') {
+      return 'bg-blue-600/80 text-white border-2 border-blue-400 shadow-lg';
+    }
+    return 'bg-neon-cyan/30 text-neon-cyan border-2 border-neon-cyan/50 shadow-[0_0_15px_rgba(0,255,238,0.4)]';
+  };
+
+  const getInactiveButtonClass = () => {
+    if (themeId === 'hud') {
+      return 'bg-gray-900/60 border-2 border-purple-600/40 text-purple-300 hover:border-purple-500';
+    }
+    if (themeId === 'pro') {
+      return 'bg-slate-800/60 border border-slate-600 text-slate-300 hover:border-slate-500';
+    }
+    return 'bg-black/60 text-gray-400 border border-white/20 hover:bg-black/80';
+  };
+
   return (
     <div className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative">
       {/* Map Layer Toggle */}
@@ -194,26 +215,22 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           whileTap={{ scale: 0.95 }}
           onClick={() => setMapLayer('dark')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
-            mapLayer === 'dark'
-              ? 'bg-neon-cyan/30 text-neon-cyan border-2 border-neon-cyan/50 shadow-[0_0_15px_rgba(0,255,238,0.4)]'
-              : 'bg-black/60 text-gray-400 border border-white/20 hover:bg-black/80'
+            mapLayer === 'dark' ? getActiveButtonClass() : getInactiveButtonClass()
           }`}
         >
           <MapIcon className="w-4 h-4" />
-          Dark
+          <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>Dark</span>
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setMapLayer('satellite')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
-            mapLayer === 'satellite'
-              ? 'bg-neon-cyan/30 text-neon-cyan border-2 border-neon-cyan/50 shadow-[0_0_15px_rgba(0,255,238,0.4)]'
-              : 'bg-black/60 text-gray-400 border border-white/20 hover:bg-black/80'
+            mapLayer === 'satellite' ? getActiveButtonClass() : getInactiveButtonClass()
           }`}
         >
           <Satellite className="w-4 h-4" />
-          Satellite
+          <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>Satellite</span>
         </motion.button>
       </div>
 
