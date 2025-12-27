@@ -2,15 +2,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { DollarSign, Clock, MapPin, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useTripStore } from '../../features/trips';
-import { zones } from '../../data/zones';
 import { DraggableCard } from '../UI/DraggableCard';
 
 interface TripLoggerProps {
   isOpen: boolean;
   onClose: () => void;
+  zones: Array<{ id: string; name: string }>;
 }
 
-export function TripLogger({ isOpen, onClose }: TripLoggerProps) {
+export function TripLogger({ isOpen, onClose, zones }: TripLoggerProps) {
   const { addTrip } = useTripStore();
   const [zoneId, setZoneId] = useState('');
   const [earnings, setEarnings] = useState('');
@@ -46,6 +46,9 @@ export function TripLogger({ isOpen, onClose }: TripLoggerProps) {
   // Center position for modal
   const centerX = typeof window !== 'undefined' ? Math.max(16, (window.innerWidth - 400) / 2) : 100;
   const centerY = typeof window !== 'undefined' ? Math.max(50, (window.innerHeight - 500) / 2) : 100;
+
+  // Sort zones for faster scanning in the dropdown (micro-zones are numerous)
+  const sortedZones = [...zones].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <AnimatePresence>
@@ -89,7 +92,7 @@ export function TripLogger({ isOpen, onClose }: TripLoggerProps) {
                   className="w-full px-4 py-3 bg-black/40 border border-white/20 rounded-xl text-white font-medium focus:border-theme-primary focus:outline-none focus:ring-2 focus:ring-neon-cyan/30"
                 >
                   <option value="">Select a zone...</option>
-                  {zones.map((zone) => (
+                  {sortedZones.map((zone) => (
                     <option key={zone.id} value={zone.id}>
                       {zone.name}
                     </option>

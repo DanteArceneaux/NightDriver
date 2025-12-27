@@ -1,11 +1,36 @@
 import { motion } from 'framer-motion';
 import { DollarSign, TrendingUp, MapPin, Award } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useTripStore } from '../../features/trips';
-import { zones } from '../../data/zones';
+import { fetchZones } from '../../lib/api';
 
 export function PerformanceView() {
   const { getAllZonePerformance, trips } = useTripStore();
   const performances = getAllZonePerformance();
+  const [zoneNameById, setZoneNameById] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (trips.length === 0) return;
+
+    let cancelled = false;
+
+    fetchZones()
+      .then((data) => {
+        if (cancelled) return;
+        const map: Record<string, string> = {};
+        data.zones.forEach((z) => {
+          map[z.id] = z.name;
+        });
+        setZoneNameById(map);
+      })
+      .catch(() => {
+        // If backend is unavailable, we gracefully fall back to showing the raw zoneId.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [trips.length]);
 
   if (trips.length === 0) {
     return (
@@ -18,7 +43,7 @@ export function PerformanceView() {
   }
 
   const getZoneName = (zoneId: string): string => {
-    return zones.find(z => z.id === zoneId)?.name || zoneId;
+    return zoneNameById[zoneId] || zoneId;
   };
 
   const totalEarnings = performances.reduce((sum, p) => sum + p.totalEarnings, 0);

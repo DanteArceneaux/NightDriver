@@ -3,8 +3,13 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { TripLogger } from './TripLogger';
 import { useTheme } from '../../features/theme';
+import type { ZoneScore } from '../../types';
 
-export function QuickLogButton() {
+interface QuickLogButtonProps {
+  zones: ZoneScore[];
+}
+
+export function QuickLogButton({ zones }: QuickLogButtonProps) {
   const [showLogger, setShowLogger] = useState(false);
   const { id: themeId } = useTheme();
 
@@ -25,7 +30,7 @@ export function QuickLogButton() {
         <Plus className="w-8 h-8 text-black" strokeWidth={3} />
       </motion.button>
 
-      <TripLogger isOpen={showLogger} onClose={() => setShowLogger(false)} />
+      <TripLogger isOpen={showLogger} onClose={() => setShowLogger(false)} zones={zones} />
     </>
   );
 }

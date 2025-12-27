@@ -39,6 +39,8 @@ describe('SeattleMap', () => {
       id: 'zone1',
       name: 'Capitol Hill',
       score: 85,
+      trend: 'rising',
+      estimatedHourlyRate: 42,
       coordinates: { lat: 47.6205, lng: -122.3212 },
       factors: {
         baseline: 50,
@@ -47,16 +49,14 @@ describe('SeattleMap', () => {
         weather: 5,
         flights: 5,
         traffic: 0,
-        timeOfDay: 0,
-        historical: 0,
       },
-      reason: 'High demand area',
-      confidence: 0.9,
     },
     {
       id: 'zone2',
       name: 'Downtown',
       score: 70,
+      trend: 'stable',
+      estimatedHourlyRate: 35,
       coordinates: { lat: 47.6062, lng: -122.3321 },
       factors: {
         baseline: 50,
@@ -65,11 +65,7 @@ describe('SeattleMap', () => {
         weather: 3,
         flights: 2,
         traffic: 0,
-        timeOfDay: 0,
-        historical: 0,
       },
-      reason: 'Moderate demand',
-      confidence: 0.8,
     },
   ];
 
@@ -149,4 +145,5 @@ describe('SeattleMap', () => {
     });
   });
 });
+
 

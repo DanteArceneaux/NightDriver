@@ -9,18 +9,17 @@ vi.mock('../../features/trips', () => ({
   }),
 }));
 
-vi.mock('../../data/zones', () => ({
-  zones: [
-    { id: 'downtown', name: 'Downtown Seattle' },
-    { id: 'capitol-hill', name: 'Capitol Hill' },
-    { id: 'seatac', name: 'SeaTac Airport' },
-  ],
-}));
+const zones = [
+  { id: 'downtown', name: 'Downtown Seattle' },
+  { id: 'capitol-hill', name: 'Capitol Hill' },
+  { id: 'seatac', name: 'SeaTac Airport' },
+];
 
 describe('TripLogger', () => {
   const defaultProps = {
     isOpen: true,
     onClose: vi.fn(),
+    zones,
   };
 
   beforeEach(() => {
@@ -112,21 +111,21 @@ describe('TripLogger', () => {
 
 describe('TripLogger Form Validation', () => {
   it('requires zone selection', () => {
-    render(<TripLogger isOpen={true} onClose={vi.fn()} />);
+    render(<TripLogger isOpen={true} onClose={vi.fn()} zones={zones} />);
     
     const select = screen.getByRole('combobox');
     expect(select).toBeRequired();
   });
 
   it('requires earnings input', () => {
-    render(<TripLogger isOpen={true} onClose={vi.fn()} />);
+    render(<TripLogger isOpen={true} onClose={vi.fn()} zones={zones} />);
     
     const earningsInput = screen.getByPlaceholderText('0.00');
     expect(earningsInput).toBeRequired();
   });
 
   it('requires duration input', () => {
-    render(<TripLogger isOpen={true} onClose={vi.fn()} />);
+    render(<TripLogger isOpen={true} onClose={vi.fn()} zones={zones} />);
     
     const durationInput = screen.getByPlaceholderText('30');
     expect(durationInput).toBeRequired();

@@ -1,13 +1,14 @@
 import { Circle, Popup } from 'react-leaflet';
 import { DollarSign, MapPin, Clock } from 'lucide-react';
 import { usePersonalHeatmap } from '../../hooks/usePersonalHeatmap';
-import { zones } from '../../data/zones';
+import type { ZoneScore } from '../../types';
 
 interface HeatmapOverlayProps {
   enabled: boolean;
+  zones: ZoneScore[];
 }
 
-export function HeatmapOverlay({ enabled }: HeatmapOverlayProps) {
+export function HeatmapOverlay({ enabled, zones }: HeatmapOverlayProps) {
   const heatmapData = usePersonalHeatmap();
 
   if (!enabled || heatmapData.length === 0) {

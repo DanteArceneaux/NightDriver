@@ -320,7 +320,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         <MapResizeHandler />
 
         {/* Personal Heatmap Overlay */}
-        <HeatmapOverlay enabled={showHeatmap} />
+        <HeatmapOverlay enabled={showHeatmap} zones={zones} />
 
         {/* Zone Markers */}
         {zones.map((zone) => {

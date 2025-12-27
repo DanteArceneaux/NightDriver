@@ -16,7 +16,7 @@ import { calculateDistance, estimateDriveTime, calculateEfficiency } from './lib
 import { fetchConditions } from './lib/api';
 
 function App() {
-  const { data, loading, error, connected, lastUpdate, refresh } = useZoneScores();
+  const { data, loading, error, connected, refresh } = useZoneScores();
   const { location: driverLocation } = useDriverLocation();
   const { countdown } = useAutoRefresh(30000); // 30 seconds for WebSocket (used for visual countdown ring)
   const [surges] = useState<any[]>([]);
@@ -128,7 +128,7 @@ function App() {
       <QuickEarningsButtons />
 
       {/* Quick Log Button */}
-      <QuickLogButton />
+      <QuickLogButton zones={sortedZones} />
 
       {/* Theme-aware Layout */}
       <AppLayout
