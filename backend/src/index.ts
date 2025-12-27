@@ -62,8 +62,15 @@ app.use('/api', createApiRouter(
 app.get('/', (_req, res) => {
   res.json({
     name: 'Seattle Uber Driver Optimizer API',
-    version: '2.0.0',
-    features: ['Real-time WebSocket updates', 'Surge detection', 'Real weather data'],
+    version: '4.0.0',
+    features: [
+      'Real-time WebSocket updates',
+      'Surge detection',
+      'Micro-zones (granular Seattle scoring)',
+      'Money-makers intelligence (ferries, hotel checkout, hospitals, UW bursts)',
+      'Driver Pulse (crowdsourced ground truth)',
+      'Trip chain recommendations',
+    ],
     endpoints: {
       zones: '/api/zones',
       zone: '/api/zones/:id',
@@ -152,7 +159,7 @@ process.on('SIGTERM', () => {
 
 // Start server
 httpServer.listen(config.port, () => {
-  console.log(`🚗 Seattle Driver Optimizer API v2.0`);
+  console.log(`🚗 Seattle Driver Optimizer API v4.0`);
   console.log(`📍 HTTP: http://localhost:${config.port}`);
   console.log(`⚡ WebSocket: ws://localhost:${config.port}`);
   console.log(`🏥 Health: http://localhost:${config.port}/api/health`);
