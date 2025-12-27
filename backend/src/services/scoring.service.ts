@@ -1,21 +1,49 @@
-import { zones } from '../data/zones.js';
+import { zones as legacyZones } from '../data/zones.js';
 import { getBaselineScore } from '../data/timePatterns.js';
+import type { Zone } from '../types/index.js';
 import { ZoneScore, TopPick, Event, WeatherConditions, FlightArrival } from '../types/index.js';
 import { CruiseShipsService } from './cruiseShips.service.js';
 import { ConventionsService } from './conventions.service.js';
 import { WeatherSurgeService } from './weatherSurge.service.js';
 import { getBarCloseSurgeImpact } from '../data/barCloseTimes.js';
 import { getDeadZonePenalty } from '../data/deadZones.js';
+import { microZones, type MicroZone } from '../data/microZones.js';
 
 export class ScoringService {
   private cruiseShipsService: CruiseShipsService;
   private conventionsService: ConventionsService;
   private weatherSurgeService: WeatherSurgeService;
 
+  /**
+   * Micro-zone metadata map (fast lookup)
+   */
+  private microZoneById: Map<string, MicroZone>;
+
+  /**
+   * Zones used for scoring:
+   * - Micro-zones for Seattle core (high precision)
+   * - Legacy zones for suburbs (kept for coverage)
+   */
+  private scoringZones: Zone[];
+
   constructor() {
     this.cruiseShipsService = new CruiseShipsService();
     this.conventionsService = new ConventionsService();
     this.weatherSurgeService = new WeatherSurgeService();
+
+    this.microZoneById = new Map(microZones.map(z => [z.id, z]));
+    this.scoringZones = this.buildScoringZones();
+  }
+
+  private buildScoringZones(): Zone[] {
+    // Any legacy zone whose ID exists in microZones is replaced (avoid duplicates).
+    // This keeps the system future-proof as we add more micro-zones over time.
+    const replacedLegacyZoneIds = new Set<string>(microZones.map(z => z.id));
+
+    const legacyOnlyZones = legacyZones.filter(z => !replacedLegacyZoneIds.has(z.id));
+
+    // Micro-zones first so they show up at top of any non-sorted lists
+    return [...microZones, ...legacyOnlyZones];
   }
 
   calculateZoneScores(
@@ -25,12 +53,12 @@ export class ScoringService {
     flights: FlightArrival[] = [],
     trafficData: Map<string, number> = new Map()
   ): ZoneScore[] {
-    const scores: ZoneScore[] = zones.map(zone => {
+    const scores: ZoneScore[] = this.scoringZones.map(zone => {
       const dayOfWeek = currentTime.getDay();
       const hour = currentTime.getHours();
 
-      // Get baseline score from time patterns
-      const baseline = getBaselineScore(zone.id, dayOfWeek, hour);
+      // Get baseline score from either micro-zone peak hours or legacy time patterns
+      const baseline = this.getBaselineForZone(zone.id, dayOfWeek, hour);
 
       // Calculate event boost
       const eventBoost = this.calculateEventBoost(zone.id, events, currentTime);
@@ -50,8 +78,11 @@ export class ScoringService {
       // 🏢 NEW: Calculate convention center impact
       const conventionBoost = this.conventionsService.calculateConventionImpact(zone.id, currentTime);
 
-      // 🍺 NEW: Calculate bar close surge
-      const barCloseBoost = getBarCloseSurgeImpact(zone.id, currentTime);
+      // 🍺 NEW: Calculate bar close surge (micro-zones use metadata; legacy zones use macro mapping)
+      const microMeta = this.microZoneById.get(zone.id);
+      const barCloseBoost = microMeta?.barCloseSurge
+        ? this.getMicroBarCloseBoost(microMeta.barCloseSurge, currentTime)
+        : getBarCloseSurgeImpact(zone.id, currentTime);
 
       // ⚠️ NEW: Apply dead zone penalty
       const deadZonePenalty = getDeadZonePenalty(zone.id, currentTime);
@@ -59,9 +90,13 @@ export class ScoringService {
       // 🌧️ NEW: Apply weather surge multiplier
       const weatherMultiplier = weather ? this.weatherSurgeService.calculateSurgeMultiplier(weather) : 1.0;
 
+      // 🎯 Micro-zone modifiers: value, competition, rider quality
+      const microZoneMetaBoost = microMeta ? this.getMicroZoneMetaBoost(microMeta) : 0;
+
       // Total score (apply multiplier, then cap at 100)
       let totalScore = baseline + eventBoost + weatherBoost + flightBoost + trafficBoost + 
-                       cruiseBoost + conventionBoost + barCloseBoost + deadZonePenalty;
+                       cruiseBoost + conventionBoost + barCloseBoost + deadZonePenalty +
+                       microZoneMetaBoost;
       
       // Apply weather multiplier
       totalScore = totalScore * weatherMultiplier;
@@ -70,7 +105,7 @@ export class ScoringService {
       totalScore = Math.min(100, Math.max(0, totalScore));
 
       const finalScore = Math.round(totalScore);
-      const estimatedEarnings = this.calculateEstimatedEarnings(finalScore, hour, dayOfWeek);
+      const estimatedEarnings = this.calculateEstimatedEarnings(finalScore, hour, dayOfWeek, zone.id);
 
       return {
         id: zone.id,
@@ -91,6 +126,101 @@ export class ScoringService {
 
     // Sort by score descending
     return scores.sort((a, b) => b.score - a.score);
+  }
+
+  /**
+   * Baseline demand:
+   * - Micro-zones: driven by their defined peak hours (more granular than legacy patterns)
+   * - Legacy zones: use existing timePatterns model
+   */
+  private getBaselineForZone(zoneId: string, dayOfWeek: number, hour: number): number {
+    const micro = this.microZoneById.get(zoneId);
+    if (!micro) {
+      return getBaselineScore(zoneId, dayOfWeek, hour);
+    }
+
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const peaks = isWeekend ? micro.peakHours.weekend : micro.peakHours.weekday;
+
+    // Event-dependent zones (stadiums/arenas) use low baseline and rely on events boost
+    if (!peaks || peaks.length === 0) return 10;
+
+    // Exact peak hour
+    if (peaks.includes(hour)) return 35;
+
+    // Near peak (within 1 hour)
+    const nearPeak = peaks.some(h => this.hourDistance(h, hour) <= 1);
+    if (nearPeak) return 22;
+
+    // Slight bump for high-value pickup zones during typical hotel/airport cycles
+    if (micro.averageRideValue >= 25 && (hour >= 5 && hour <= 8)) return 18;
+    if (micro.averageRideValue >= 25 && (hour >= 16 && hour <= 19)) return 18;
+
+    return 10;
+  }
+
+  private hourDistance(a: number, b: number): number {
+    const diff = Math.abs(a - b);
+    return Math.min(diff, 24 - diff);
+  }
+
+  /**
+   * Micro-zone metadata boost:
+   * - Favor zones with higher average ride value
+   * - Favor zones with lower competitor density (less competition = higher $/hr)
+   * - Penalize zones with poor rider quality (safety/ratings/time cost)
+   */
+  private getMicroZoneMetaBoost(micro: MicroZone): number {
+    let boost = 0;
+
+    // Ride value contribution (conservative)
+    if (micro.averageRideValue >= 30) boost += 6;
+    else if (micro.averageRideValue >= 24) boost += 4;
+    else if (micro.averageRideValue >= 18) boost += 2;
+    else if (micro.averageRideValue <= 12) boost -= 2;
+
+    // Competition (lower is better)
+    const competition = micro.competitorDensity;
+    if (competition === 'very_low') boost += 4;
+    else if (competition === 'low') boost += 2;
+    else if (competition === 'high') boost -= 2;
+    else if (competition === 'very_high') boost -= 4;
+
+    // Rider quality (avoid problem zones late-night unless they truly surge)
+    const rq = micro.riderQuality;
+    if (rq === 'excellent') boost += 2;
+    else if (rq === 'medium') boost -= 1;
+    else if (rq === 'poor') boost -= 3;
+
+    return boost;
+  }
+
+  /**
+   * Bar close surge boost for micro-zones that explicitly opt-in with `barCloseSurge`.
+   * Window: ~1:45am to ~2:30am local time.\n   */
+  private getMicroBarCloseBoost(intensity: NonNullable<MicroZone['barCloseSurge']>, currentTime: Date): number {
+    const hour = currentTime.getHours();
+    const minute = currentTime.getMinutes();
+
+    // Minutes from midnight; adjust post-midnight times into next-day range for easy comparison
+    let t = hour * 60 + minute;
+    if (t < 3 * 60) t += 24 * 60;
+
+    // 1:45am - 2:30am window (in adjusted space)
+    const windowStart = (24 + 1) * 60 + 45;
+    const windowEnd = (24 + 2) * 60 + 30;
+
+    if (t < windowStart || t > windowEnd) return 0;
+
+    // Conservative boosts so we don't blow past 100 when combined with events/weather
+    const boosts: Record<NonNullable<MicroZone['barCloseSurge']>, number> = {
+      low: 10,
+      medium: 18,
+      high: 28,
+      extreme: 40,
+    };
+
+    return boosts[intensity];
   }
 
   private calculateEventBoost(zoneId: string, events: Event[], currentTime: Date): number {
@@ -191,9 +321,20 @@ export class ScoringService {
     return congestionLevel * 0.5;
   }
 
-  private calculateEstimatedEarnings(score: number, hour: number, dayOfWeek: number): number {
+  private calculateEstimatedEarnings(score: number, hour: number, dayOfWeek: number, zoneId?: string): number {
     // Base Seattle Uber rate (simplified model)
-    const baseRate = 18; // $18/hr baseline
+    let baseRate = 18; // $18/hr baseline
+
+    // Micro-zone adjustment: average ride value influences hourly potential
+    // This is intentionally conservative so we don't wildly inflate estimates.
+    if (zoneId) {
+      const micro = this.microZoneById.get(zoneId);
+      if (micro) {
+        if (micro.averageRideValue >= 28) baseRate += 4; // airports/hotels
+        else if (micro.averageRideValue >= 20) baseRate += 2; // high value zones
+        else if (micro.averageRideValue <= 12) baseRate -= 1; // short/low value rides
+      }
+    }
 
     // Score multiplier (score 0-100 maps to 0.5x-2.5x multiplier)
     const scoreMultiplier = 0.5 + (score / 100) * 2.0;

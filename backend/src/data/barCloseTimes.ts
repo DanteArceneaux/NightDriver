@@ -20,8 +20,8 @@ export interface BarZone {
 
 export const BAR_ZONES: BarZone[] = [
   {
-    zoneId: 'capitol_hill',
-    name: 'Capitol Hill',
+    zoneId: 'pike_pine_bars',
+    name: 'Pike/Pine (Capitol Hill)',
     closeTime: '02:00',
     barCount: 50,
     surgeIntensity: 'extreme',
@@ -30,8 +30,8 @@ export const BAR_ZONES: BarZone[] = [
     notes: 'Highest bar density in Seattle. Pine St, Pike St, Broadway. Long rides to suburbs = big $$$.',
   },
   {
-    zoneId: 'belltown',
-    name: 'Belltown',
+    zoneId: 'belltown_bars',
+    name: 'Belltown (Bars)',
     closeTime: '02:00',
     barCount: 35,
     surgeIntensity: 'high',
@@ -40,7 +40,7 @@ export const BAR_ZONES: BarZone[] = [
     notes: '2nd/3rd Ave bars + clubs. Mix of downtown hotels and residential rides.',
   },
   {
-    zoneId: 'fremont',
+    zoneId: 'fremont_center',
     name: 'Fremont',
     closeTime: '02:00',
     barCount: 15,
@@ -50,8 +50,8 @@ export const BAR_ZONES: BarZone[] = [
     notes: 'Smaller but consistent. Less competition from other drivers.',
   },
   {
-    zoneId: 'ballard',
-    name: 'Ballard',
+    zoneId: 'ballard_ave',
+    name: 'Ballard Ave',
     closeTime: '02:00',
     barCount: 25,
     surgeIntensity: 'high',
@@ -60,8 +60,8 @@ export const BAR_ZONES: BarZone[] = [
     notes: 'Ballard Ave is packed. Young professionals = good tips.',
   },
   {
-    zoneId: 'u_district',
-    name: 'U-District',
+    zoneId: 'the_ave',
+    name: 'U-District (The Ave)',
     closeTime: '02:00',
     barCount: 20,
     surgeIntensity: 'medium',
@@ -70,8 +70,8 @@ export const BAR_ZONES: BarZone[] = [
     notes: 'College bars on The Ave. Shorter rides (dorms/Greek Row) but high volume.',
   },
   {
-    zoneId: 'downtown',
-    name: 'Downtown',
+    zoneId: 'pioneer_square_south',
+    name: 'Pioneer Square (Bars)',
     closeTime: '02:00',
     barCount: 30,
     surgeIntensity: 'high',
@@ -80,8 +80,8 @@ export const BAR_ZONES: BarZone[] = [
     notes: 'Pioneer Square bars + clubs. Mix of hotel and residential. Watch for problem riders.',
   },
   {
-    zoneId: 'queen_anne',
-    name: 'Queen Anne',
+    zoneId: 'lower_queen_anne',
+    name: 'Lower Queen Anne',
     closeTime: '02:00',
     barCount: 12,
     surgeIntensity: 'low',
@@ -90,7 +90,7 @@ export const BAR_ZONES: BarZone[] = [
     notes: 'Fewer bars but less driver competition. Residential rides.',
   },
   {
-    zoneId: 'wallingford',
+    zoneId: 'wallingford_45th',
     name: 'Wallingford',
     closeTime: '02:00',
     barCount: 8,
@@ -157,12 +157,12 @@ export function getBarCloseAlerts(currentTime: Date): string[] {
       return intensityOrder[a.surgeIntensity] - intensityOrder[b.surgeIntensity];
     });
 
-    alerts.push(`🍺 BARS CLOSING SOON! Position at ${topZones[0].name} NOW for 2am surge!`);
+    alerts.push(`🍺 BARS CLOSING SOON! Position at ${topZones[0].name} NOW for the 2am surge!`);
   }
 
   // Alert at close time
   if (hour === 2 && minute === 0) {
-    alerts.push(`🔥 BAR CLOSE SURGE! High demand in Capitol Hill, Belltown, Ballard!`);
+    alerts.push(`🔥 BAR CLOSE SURGE! High demand in Pike/Pine, Belltown, Ballard Ave!`);
   }
 
   // Weekend bonus alert

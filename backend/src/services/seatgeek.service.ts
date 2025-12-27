@@ -14,19 +14,19 @@ export class SeatGeekService {
   // Map of venue names/keywords to zone IDs
   private venueToZoneMap: Record<string, string> = {
     // SEATTLE CORE
-    'lumen field': 'stadium',
-    't-mobile park': 'stadium',
-    'climate pledge arena': 'queen_anne',
-    'paramount theatre': 'downtown',
-    'moore theatre': 'belltown',
-    'showbox': 'downtown',
-    'the crocodile': 'belltown',
-    'neumos': 'capitol_hill',
-    'neptune theatre': 'u_district',
-    'husky stadium': 'u_district',
-    'alaska airlines arena': 'u_district',
-    'benaroya hall': 'downtown',
-    'mccaw hall': 'downtown',
+    'lumen field': 'stadium_district',
+    't-mobile park': 'stadium_district',
+    'climate pledge arena': 'seattle_center',
+    'paramount theatre': 'convention_center',
+    'moore theatre': 'belltown_bars',
+    'showbox': 'pike_place_market',
+    'the crocodile': 'belltown_bars',
+    'neumos': 'pike_pine_bars',
+    'neptune theatre': 'the_ave',
+    'husky stadium': 'uw_campus_west',
+    'alaska airlines arena': 'uw_campus_west',
+    'benaroya hall': 'financial_district',
+    'mccaw hall': 'seattle_center',
 
     // NORTH
     'angel of the winds arena': 'everett',
@@ -145,7 +145,7 @@ export class SeatGeekService {
     }
 
     // Fallback to city mapping
-    if (venueCity.includes('seattle')) return 'downtown';
+    if (venueCity.includes('seattle')) return 'retail_core';
     if (venueCity.includes('everett')) return 'everett';
     if (venueCity.includes('tacoma')) return 'tacoma';
     if (venueCity.includes('bellevue')) return 'bellevue';

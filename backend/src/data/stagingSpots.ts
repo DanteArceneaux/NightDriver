@@ -58,7 +58,7 @@ export const STAGING_SPOTS: StagingSpot[] = [
   {
     id: 'airport_cell_lot',
     name: 'SEA Airport Cell Phone Lot',
-    zoneId: 'airport',
+    zoneId: 'seatac',
     coordinates: { lat: 47.4546, lng: -122.2989 },
     type: 'parking_lot',
     cost: 'free',

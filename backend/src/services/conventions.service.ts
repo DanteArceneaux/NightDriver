@@ -135,17 +135,25 @@ export class ConventionsService {
 
       if (now >= start && now <= end) {
         // Downtown zones benefit most
-        if (zoneId === 'downtown' || zoneId === 'capitol_hill') {
-          impact += this.isConventionPeakTime(currentTime) ? 25 : 10;
+        if (
+          zoneId === 'convention_center' ||
+          zoneId === 'financial_district' ||
+          zoneId === 'retail_core' ||
+          zoneId === 'downtown_hotel_row_union'
+        ) {
+          impact += this.isConventionPeakTime(currentTime) ? 25 : 12;
+        } else if (zoneId === 'capitol_hill_madison') {
+          // Nearby overflow (people going to dinner/drinks after sessions)
+          impact += this.isConventionPeakTime(currentTime) ? 10 : 5;
         }
         // Airport benefits during arrival/departure
-        else if (zoneId === 'airport') {
+        else if (zoneId === 'seatac') {
           const hour = currentTime.getHours();
           if (hour >= 7 && hour <= 9) impact += 15; // Morning arrivals
           if (hour >= 16 && hour <= 19) impact += 15; // Evening departures
         }
         // Hotels benefit
-        else if (zoneId === 'belltown' || zoneId === 'waterfront') {
+        else if (zoneId === 'belltown_hotels' || zoneId === 'pier66_cruise_terminal' || zoneId === 'waterfront_piers') {
           impact += 8;
         }
       }
@@ -169,7 +177,7 @@ export class ConventionsService {
       if (now >= start && now <= end) {
         if (this.isConventionPeakTime(now)) {
           alerts.push(
-            `🏢 ${convention.name} peak time! Position at downtown/WSCC for business travelers.`
+            `🏢 ${convention.name} peak time! Position at Convention Center / Downtown Hotel Row for business travelers.`
           );
         }
       }

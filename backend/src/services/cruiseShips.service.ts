@@ -35,13 +35,13 @@ export class CruiseShipsService {
     pier91: {
       name: 'Pier 91 (Smith Cove Terminal)',
       coordinates: { lat: 47.6344, lng: -122.3988 },
-      zoneId: 'magnolia',
+      zoneId: 'pier91_cruise_terminal',
       capacity: 4000,
     },
     pier66: {
       name: 'Pier 66 (Bell Street Cruise Terminal)',
       coordinates: { lat: 47.6116, lng: -122.3515 },
-      zoneId: 'waterfront',
+      zoneId: 'pier66_cruise_terminal',
       capacity: 2500,
     },
   };
@@ -153,7 +153,7 @@ export class CruiseShipsService {
       // Check arrival surge (30 min before to 2 hours after)
       const minutesUntilArrival = (arrival.getTime() - now.getTime()) / (1000 * 60);
       if (minutesUntilArrival >= -120 && minutesUntilArrival <= 30) {
-        const zone = ship.terminal === 'Pier 91' ? 'magnolia' : 'waterfront';
+        const zone = ship.terminal === 'Pier 91' ? 'pier91_cruise_terminal' : 'pier66_cruise_terminal';
         alerts.push({
           ship,
           type: 'arrival',
@@ -166,7 +166,7 @@ export class CruiseShipsService {
       // Check departure surge (2 hours before to 30 min after)
       const minutesUntilDeparture = (departure.getTime() - now.getTime()) / (1000 * 60);
       if (minutesUntilDeparture >= -30 && minutesUntilDeparture <= 120) {
-        const zone = ship.terminal === 'Pier 91' ? 'magnolia' : 'waterfront';
+        const zone = ship.terminal === 'Pier 91' ? 'pier91_cruise_terminal' : 'pier66_cruise_terminal';
         alerts.push({
           ship,
           type: 'departure',
@@ -195,11 +195,13 @@ export class CruiseShipsService {
       const minutesSinceArrival = (currentTime.getTime() - arrival.getTime()) / (1000 * 60);
       if (minutesSinceArrival >= -30 && minutesSinceArrival <= 120) {
         // High impact on terminal zone and airport
-        if (zoneId === 'magnolia' || zoneId === 'waterfront') {
+        if (zoneId === 'pier91_cruise_terminal' || zoneId === 'pier66_cruise_terminal') {
           impact += 30; // Major impact at terminal
-        } else if (zoneId === 'airport') {
+        } else if (zoneId === 'waterfront_piers' || zoneId === 'colman_dock_ferry') {
+          impact += 18; // Overflow around waterfront
+        } else if (zoneId === 'seatac') {
           impact += 20; // Passengers heading to airport
-        } else if (zoneId === 'downtown') {
+        } else if (zoneId === 'belltown_hotels' || zoneId === 'downtown_hotel_row_union') {
           impact += 15; // Passengers heading to hotels
         }
       }
@@ -207,11 +209,11 @@ export class CruiseShipsService {
       // Departure surge window: 2 hours before to 30 min after
       const minutesUntilDeparture = (departure.getTime() - currentTime.getTime()) / (1000 * 60);
       if (minutesUntilDeparture >= -30 && minutesUntilDeparture <= 120) {
-        if (zoneId === 'magnolia' || zoneId === 'waterfront') {
+        if (zoneId === 'pier91_cruise_terminal' || zoneId === 'pier66_cruise_terminal') {
           impact += 25; // Terminal pickup surge
-        } else if (zoneId === 'downtown') {
+        } else if (zoneId === 'belltown_hotels' || zoneId === 'downtown_hotel_row_union') {
           impact += 15; // Hotel pickups heading to terminal
-        } else if (zoneId === 'airport') {
+        } else if (zoneId === 'seatac') {
           impact += 10; // Some passengers from airport
         }
       }

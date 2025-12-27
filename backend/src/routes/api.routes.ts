@@ -7,7 +7,8 @@ import { TrafficService } from '../services/traffic.service.js';
 import { RoutingService } from '../services/routing.service.js';
 import { EventAlertsService } from '../services/eventAlerts.service.js';
 import { DriverPulseService } from '../services/driverPulse.service.js';
-import { zones } from '../data/zones.js';
+import { zones as legacyZones } from '../data/zones.js';
+import { microZones } from '../data/microZones.js';
 import type { WeatherConditions, Event, FlightArrival } from '../types/index.js';
 import {
   weatherCache,
@@ -127,7 +128,7 @@ export function createApiRouter(
   router.get('/zones/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const zone = zones.find(z => z.id === id);
+      const zone = getZoneMetaById(id);
 
       if (!zone) {
         return res.status(404).json({ error: 'Zone not found' });
@@ -530,6 +531,15 @@ export function createApiRouter(
   });
 
   return router;
+}
+
+/**
+ * Zone metadata lookup:
+ * - Micro-zones first (more granular, replaces many Seattle core legacy zones)
+ * - Legacy zones for suburbs/coverage
+ */
+function getZoneMetaById(zoneId: string) {
+  return microZones.find(z => z.id === zoneId) || legacyZones.find(z => z.id === zoneId);
 }
 
 // Helper functions to get cached data or fetch fresh

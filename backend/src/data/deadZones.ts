@@ -25,7 +25,7 @@ export const DEAD_ZONES: DeadZoneWarning[] = [
     daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
     reason: 'Bars closed, no business traffic yet. Ghost town.',
     severity: 'severe',
-    alternativeZones: ['airport'],
+    alternativeZones: ['seatac'],
   },
   {
     zoneId: 'belltown',
@@ -34,7 +34,7 @@ export const DEAD_ZONES: DeadZoneWarning[] = [
     daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
     reason: 'Post-bar close dead period.',
     severity: 'severe',
-    alternativeZones: ['airport'],
+    alternativeZones: ['seatac'],
   },
   {
     zoneId: 'capitol_hill',
@@ -43,7 +43,7 @@ export const DEAD_ZONES: DeadZoneWarning[] = [
     daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
     reason: 'After bar surge ends, completely dead.',
     severity: 'severe',
-    alternativeZones: ['airport'],
+    alternativeZones: ['seatac'],
   },
   {
     zoneId: 'u_district',
@@ -79,7 +79,7 @@ export const DEAD_ZONES: DeadZoneWarning[] = [
     daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
     reason: 'Residential area, dead after bars close.',
     severity: 'moderate',
-    alternativeZones: ['airport', 'downtown'],
+    alternativeZones: ['seatac', 'downtown'],
   },
   {
     zoneId: 'magnolia',

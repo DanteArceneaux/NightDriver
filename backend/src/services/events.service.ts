@@ -23,23 +23,35 @@ export class EventsService {
   // Map of venue names/keywords to zone IDs
   private venueToZoneMap: Record<string, string> = {
     // SEATTLE CORE
-    'lumen field': 'stadium',
-    't-mobile park': 'stadium',
-    'tmobile park': 'stadium',
-    'climate pledge arena': 'queen_anne',
-    'paramount theatre': 'downtown',
-    'moore theatre': 'belltown',
-    'showbox': 'downtown',
-    'crocodile': 'belltown',
-    'neumos': 'capitol_hill',
-    'neptune theatre': 'u_district',
-    'uw': 'u_district',
-    'university of washington': 'u_district',
-    'pike place': 'waterfront',
-    'pier': 'waterfront',
-    'seattle center': 'queen_anne',
-    'mccaw hall': 'downtown',
-    'benaroya hall': 'downtown',
+    // Stadiums / Arenas (micro-zones)
+    'lumen field': 'stadium_district',
+    't-mobile park': 'stadium_district',
+    'tmobile park': 'stadium_district',
+    'showbox sodo': 'stadium_district',
+
+    // Seattle Center (micro-zone)
+    'climate pledge arena': 'seattle_center',
+    'seattle center': 'seattle_center',
+    'mccaw hall': 'seattle_center',
+
+    // Downtown/Belltown (micro-zones)
+    'paramount theatre': 'convention_center',
+    'moore theatre': 'belltown_bars',
+    'showbox': 'pike_place_market', // The Showbox (1st Ave)
+    'crocodile': 'belltown_bars',
+    'benaroya hall': 'financial_district',
+
+    // Capitol Hill (micro-zone)
+    'neumos': 'pike_pine_bars',
+
+    // UW / U-District (micro-zones)
+    'neptune theatre': 'the_ave',
+    'uw': 'uw_campus_west',
+    'university of washington': 'uw_campus_west',
+
+    // Waterfront (micro-zones)
+    'pike place': 'pike_place_market',
+    'pier': 'waterfront_piers',
 
     // NORTH
     'angel of the winds arena': 'everett',
@@ -218,7 +230,8 @@ export class EventsService {
       const mappedEvents: Event[] = nonBlacklistedEvents.map((event: any) => {
         const venue = event._embedded?.venues?.[0];
         const venueName = venue?.name?.toLowerCase() || '';
-        const zoneId = this.mapVenueToZone(venueName);
+        const venueCity = venue?.city?.name?.toLowerCase() || '';
+        const zoneId = this.mapVenueToZone(venueName, venueCity);
         const eventType = this.classifyEvent(event);
 
         // Get the best image (prefer 16:9 ratio or largest width)
@@ -275,8 +288,9 @@ export class EventsService {
     }
   }
 
-  private mapVenueToZone(venueName: string): string {
+  private mapVenueToZone(venueName: string, venueCity: string = ''): string {
     const lowerVenue = venueName.toLowerCase();
+    const lowerCity = venueCity.toLowerCase();
 
     for (const [keyword, zoneId] of Object.entries(this.venueToZoneMap)) {
       if (lowerVenue.includes(keyword)) {
@@ -285,22 +299,28 @@ export class EventsService {
     }
 
     // Try to map by city name if venue name doesn't match
-    if (lowerVenue.includes('everett')) return 'everett';
-    if (lowerVenue.includes('marysville')) return 'marysville';
-    if (lowerVenue.includes('lynnwood')) return 'lynnwood';
-    if (lowerVenue.includes('bellevue')) return 'bellevue';
-    if (lowerVenue.includes('redmond')) return 'redmond';
-    if (lowerVenue.includes('sammamish')) return 'sammamish';
-    if (lowerVenue.includes('kirkland')) return 'kirkland';
-    if (lowerVenue.includes('issaquah')) return 'issaquah';
-    if (lowerVenue.includes('tacoma')) return 'tacoma';
-    if (lowerVenue.includes('kent')) return 'kent';
-    if (lowerVenue.includes('renton')) return 'renton';
-    if (lowerVenue.includes('tukwila')) return 'tukwila';
-    if (lowerVenue.includes('burien')) return 'burien';
-    if (lowerVenue.includes('federal way')) return 'federal_way';
-    if (lowerVenue.includes('lakewood')) return 'lakewood';
-    if (lowerVenue.includes('spanaway')) return 'spanaway';
+    const cityOrVenue = `${lowerVenue} ${lowerCity}`;
+
+    // Seattle fallback: if we know it's Seattle but can't map venue,
+    // default to a central micro-zone rather than dropping it.
+    if (lowerCity.includes('seattle') || lowerVenue.includes('seattle')) return 'retail_core';
+
+    if (cityOrVenue.includes('everett')) return 'everett';
+    if (cityOrVenue.includes('marysville')) return 'marysville';
+    if (cityOrVenue.includes('lynnwood')) return 'lynnwood';
+    if (cityOrVenue.includes('bellevue')) return 'bellevue';
+    if (cityOrVenue.includes('redmond')) return 'redmond';
+    if (cityOrVenue.includes('sammamish')) return 'sammamish';
+    if (cityOrVenue.includes('kirkland')) return 'kirkland';
+    if (cityOrVenue.includes('issaquah')) return 'issaquah';
+    if (cityOrVenue.includes('tacoma')) return 'tacoma';
+    if (cityOrVenue.includes('kent')) return 'kent';
+    if (cityOrVenue.includes('renton')) return 'renton';
+    if (cityOrVenue.includes('tukwila')) return 'tukwila';
+    if (cityOrVenue.includes('burien')) return 'burien';
+    if (cityOrVenue.includes('federal way')) return 'federal_way';
+    if (cityOrVenue.includes('lakewood')) return 'lakewood';
+    if (cityOrVenue.includes('spanaway')) return 'spanaway';
 
     // Default to unknown for venues outside our coverage area
     return 'unknown';
