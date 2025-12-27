@@ -33,8 +33,9 @@ export function useZoneScores(useWebSocket: boolean = true) {
       return () => clearInterval(interval);
     }
 
-    // Connect to WebSocket
-    const newSocket = io('http://localhost:3001', {
+    // Connect to WebSocket - use env variable in production
+    const wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:3001';
+    const newSocket = io(wsUrl, {
       transports: ['websocket', 'polling'],
     });
 

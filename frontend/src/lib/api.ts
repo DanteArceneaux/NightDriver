@@ -1,6 +1,7 @@
 import { ZonesResponse, Forecast, Conditions } from '../types';
 
-const API_BASE = '/api';
+// Use environment variable for production, fallback to local for dev
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export async function fetchZones(): Promise<ZonesResponse> {
   const response = await fetch(`${API_BASE}/zones`);
