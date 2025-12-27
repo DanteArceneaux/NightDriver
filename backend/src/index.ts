@@ -102,16 +102,32 @@ async function broadcastScores() {
       traffic
     );
 
-    const topPick = scoringService.determineTopPick(zoneScores, events, flights);
+    // Apply real-time Driver Pulse modifiers (crowdsourced ground truth)
+    const zonesWithPulses = zoneScores
+      .map((z) => {
+        const pulse = driverPulseService.getScoreModifier(z.id);
+        const score = Math.min(100, Math.max(0, z.score + pulse));
+        return {
+          ...z,
+          score,
+          factors: {
+            ...(z.factors || ({} as any)),
+            pulse,
+          },
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    const topPick = scoringService.determineTopPick(zonesWithPulses as any, events, flights);
 
     const data = {
       timestamp: currentTime.toISOString(),
       topPick,
-      zones: zoneScores,
+      zones: zonesWithPulses,
     };
 
     // Detect surges
-    const surges = surgeService.detectSurges(zoneScores);
+    const surges = surgeService.detectSurges(zonesWithPulses as any);
 
     // Broadcast to all connected clients
     io.emit('scores:update', data);
