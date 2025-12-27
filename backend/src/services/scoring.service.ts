@@ -11,6 +11,7 @@ import { microZones, type MicroZone } from '../data/microZones.js';
 import { FerriesService } from './ferries.service.js';
 import { HotelCheckoutService } from './hotelCheckout.service.js';
 import { HospitalShiftsService } from './hospitalShifts.service.js';
+import { UWClassesService } from './uwClasses.service.js';
 
 export class ScoringService {
   private cruiseShipsService: CruiseShipsService;
@@ -19,6 +20,7 @@ export class ScoringService {
   private ferriesService: FerriesService;
   private hotelCheckoutService: HotelCheckoutService;
   private hospitalShiftsService: HospitalShiftsService;
+  private uwClassesService: UWClassesService;
 
   /**
    * Micro-zone metadata map (fast lookup)
@@ -39,6 +41,7 @@ export class ScoringService {
     this.ferriesService = new FerriesService();
     this.hotelCheckoutService = new HotelCheckoutService();
     this.hospitalShiftsService = new HospitalShiftsService();
+    this.uwClassesService = new UWClassesService();
 
     this.microZoneById = new Map(microZones.map(z => [z.id, z]));
     this.scoringZones = this.buildScoringZones();
@@ -105,6 +108,9 @@ export class ScoringService {
       // 🏥 NEW: Hospital shift-change wave (heuristic)
       const hospitalShiftBoost = this.hospitalShiftsService.calculateHospitalShiftImpact(zone.id, currentTime);
 
+      // 🎓 NEW: UW class-change bursts (heuristic)
+      const uwClassBoost = this.uwClassesService.calculateUWClassImpact(zone.id, currentTime);
+
       // 🌧️ NEW: Apply weather surge multiplier
       const weatherMultiplier = weather ? this.weatherSurgeService.calculateSurgeMultiplier(weather) : 1.0;
 
@@ -113,7 +119,7 @@ export class ScoringService {
 
       // Total score (apply multiplier, then cap at 100)
       let totalScore = baseline + eventBoost + weatherBoost + flightBoost + trafficBoost + 
-                       cruiseBoost + conventionBoost + barCloseBoost + deadZonePenalty + ferryBoost + hotelCheckoutBoost + hospitalShiftBoost +
+                       cruiseBoost + conventionBoost + barCloseBoost + deadZonePenalty + ferryBoost + hotelCheckoutBoost + hospitalShiftBoost + uwClassBoost +
                        microZoneMetaBoost;
       
       // Apply weather multiplier
@@ -145,6 +151,7 @@ export class ScoringService {
           ferries: Math.round(ferryBoost),
           hotelCheckout: Math.round(hotelCheckoutBoost),
           hospitalShifts: Math.round(hospitalShiftBoost),
+          uwClasses: Math.round(uwClassBoost),
         },
         coordinates: zone.coordinates,
       };
