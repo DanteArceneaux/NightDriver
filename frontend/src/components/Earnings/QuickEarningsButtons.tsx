@@ -76,7 +76,7 @@ export function QuickEarningsButtons() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed bottom-24 right-6 z-40 flex flex-col gap-2"
+      className="fixed bottom-24 right-4 z-40 flex flex-col gap-1.5 lg:bottom-8 lg:right-3"
     >
       {quickAmounts.map((amount) => (
         <motion.button
@@ -84,10 +84,10 @@ export function QuickEarningsButtons() {
           whileHover={{ scale: 1.1, x: -5 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => handleAddEarnings(amount)}
-          className="w-16 h-16 glass-strong rounded-full flex flex-col items-center justify-center border-2 border-theme-primary/30 hover:border-theme-primary hover:shadow-lg hover:shadow-theme-primary/50 transition-all group"
+          className="w-12 h-12 lg:w-11 lg:h-11 glass-strong rounded-full flex flex-col items-center justify-center border border-theme-primary/30 hover:border-theme-primary hover:shadow-lg hover:shadow-theme-primary/50 transition-all group text-xs"
         >
-          <Plus className="w-4 h-4 text-theme-primary group-hover:scale-125 transition-transform" />
-          <span className="text-sm font-black text-white">${amount}</span>
+          <Plus className="w-3 h-3 text-theme-primary group-hover:scale-125 transition-transform" />
+          <span className="text-xs font-bold text-white">${amount}</span>
         </motion.button>
       ))}
       
@@ -96,10 +96,10 @@ export function QuickEarningsButtons() {
         whileHover={{ scale: 1.1, x: -5 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setShowSetGoal(true)}
-        className="w-16 h-16 glass-strong rounded-full flex items-center justify-center border-2 border-purple-500/30 hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/50 transition-all mt-2"
+        className="w-12 h-12 lg:w-11 lg:h-11 glass-strong rounded-full flex items-center justify-center border border-purple-500/30 hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/50 transition-all mt-1"
         title="Change Goal"
       >
-        <Target className="w-6 h-6 text-purple-400" />
+        <Target className="w-5 h-5 text-purple-400" />
       </motion.button>
     </motion.div>
   );
