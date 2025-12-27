@@ -23,6 +23,17 @@ export interface ZoneScore {
     weather: number;
     flights: number;
     traffic: number;
+    // v4.0+ (optional extra signal breakdowns)
+    cruise?: number;
+    conventions?: number;
+    barClose?: number;
+    deadZone?: number;
+    microMeta?: number;
+    ferries?: number;
+    hotelCheckout?: number;
+    hospitalShifts?: number;
+    uwClasses?: number;
+    pulse?: number;
   };
   coordinates: Coordinates;
 }

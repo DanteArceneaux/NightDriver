@@ -8,11 +8,13 @@ import { WeatherSurgeService } from './weatherSurge.service.js';
 import { getBarCloseSurgeImpact } from '../data/barCloseTimes.js';
 import { getDeadZonePenalty } from '../data/deadZones.js';
 import { microZones, type MicroZone } from '../data/microZones.js';
+import { FerriesService } from './ferries.service.js';
 
 export class ScoringService {
   private cruiseShipsService: CruiseShipsService;
   private conventionsService: ConventionsService;
   private weatherSurgeService: WeatherSurgeService;
+  private ferriesService: FerriesService;
 
   /**
    * Micro-zone metadata map (fast lookup)
@@ -30,6 +32,7 @@ export class ScoringService {
     this.cruiseShipsService = new CruiseShipsService();
     this.conventionsService = new ConventionsService();
     this.weatherSurgeService = new WeatherSurgeService();
+    this.ferriesService = new FerriesService();
 
     this.microZoneById = new Map(microZones.map(z => [z.id, z]));
     this.scoringZones = this.buildScoringZones();
@@ -87,6 +90,9 @@ export class ScoringService {
       // ⚠️ NEW: Apply dead zone penalty
       const deadZonePenalty = getDeadZonePenalty(zone.id, currentTime);
 
+      // ⛴️ NEW: Ferry wave impact (heuristic)
+      const ferryBoost = this.ferriesService.calculateFerryImpact(zone.id, currentTime);
+
       // 🌧️ NEW: Apply weather surge multiplier
       const weatherMultiplier = weather ? this.weatherSurgeService.calculateSurgeMultiplier(weather) : 1.0;
 
@@ -95,7 +101,7 @@ export class ScoringService {
 
       // Total score (apply multiplier, then cap at 100)
       let totalScore = baseline + eventBoost + weatherBoost + flightBoost + trafficBoost + 
-                       cruiseBoost + conventionBoost + barCloseBoost + deadZonePenalty +
+                       cruiseBoost + conventionBoost + barCloseBoost + deadZonePenalty + ferryBoost +
                        microZoneMetaBoost;
       
       // Apply weather multiplier
@@ -119,6 +125,12 @@ export class ScoringService {
           weather: Math.round(weatherBoost * weatherMultiplier),
           flights: Math.round(flightBoost),
           traffic: Math.round(trafficBoost),
+          cruise: Math.round(cruiseBoost),
+          conventions: Math.round(conventionBoost),
+          barClose: Math.round(barCloseBoost),
+          deadZone: Math.round(deadZonePenalty),
+          microMeta: Math.round(microZoneMetaBoost),
+          ferries: Math.round(ferryBoost),
         },
         coordinates: zone.coordinates,
       };
