@@ -1,29 +1,46 @@
 import { ZonesResponse, Forecast, Conditions } from '../types';
+import { generateMockZones, generateMockForecast, generateMockConditions } from './mockData';
 
 // Use /api which redirects to Netlify Functions in production
+// Falls back to mock data on static hosts like GitHub Pages
 const API_BASE = '/api';
 
 export async function fetchZones(): Promise<ZonesResponse> {
-  const response = await fetch(`${API_BASE}/zones`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch zones');
+  try {
+    const response = await fetch(`${API_BASE}/zones`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch zones');
+    }
+    return response.json();
+  } catch {
+    // Fallback to mock data for static hosting
+    return generateMockZones();
   }
-  return response.json();
 }
 
 export async function fetchForecast(): Promise<Forecast> {
-  const response = await fetch(`${API_BASE}/forecast`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch forecast');
+  try {
+    const response = await fetch(`${API_BASE}/forecast`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch forecast');
+    }
+    return response.json();
+  } catch {
+    // Fallback to mock data for static hosting
+    return generateMockForecast();
   }
-  return response.json();
 }
 
 export async function fetchConditions(): Promise<Conditions> {
-  const response = await fetch(`${API_BASE}/conditions`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch conditions');
+  try {
+    const response = await fetch(`${API_BASE}/conditions`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch conditions');
+    }
+    return response.json();
+  } catch {
+    // Fallback to mock data for static hosting
+    return generateMockConditions();
   }
-  return response.json();
 }
 
