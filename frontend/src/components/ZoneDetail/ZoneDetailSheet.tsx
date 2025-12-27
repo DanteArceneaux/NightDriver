@@ -1,9 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Map, Music, CloudRain, Plane, TrendingUp, MapPin, Clock, ParkingCircle } from 'lucide-react';
+import { Map, Music, CloudRain, Plane, TrendingUp, MapPin, Clock, ParkingCircle } from 'lucide-react';
 import type { ZoneScore, Coordinates, Zone } from '../../types';
 import { calculateDistance, estimateDriveTime, calculateEfficiency } from '../../lib/distance';
 import { openGoogleMaps, openWaze, openAppleMaps } from '../../lib/navigation';
-import { useTheme } from '../../features/theme';
+import { DraggableCard } from '../UI/DraggableCard';
 
 interface ZoneDetailSheetProps {
   zone: ZoneScore | null;
@@ -27,8 +27,6 @@ function getScoreBg(score: number): string {
 }
 
 export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: ZoneDetailSheetProps) {
-  const { tokens } = useTheme();
-  
   if (!zone) return null;
 
   const scoreColor = getScoreColor(zone.score);
@@ -49,6 +47,10 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
     efficiency = calculateEfficiency(zone.score, driveTime);
   }
 
+  // Center position for the card
+  const centerX = typeof window !== 'undefined' ? Math.max(16, (window.innerWidth - 450) / 2) : 100;
+  const centerY = typeof window !== 'undefined' ? Math.max(50, (window.innerHeight - 600) / 2) : 50;
+
   return (
     <AnimatePresence>
       {zone && (
@@ -62,42 +64,34 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
           />
 
-          {/* Sheet */}
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 max-h-[80vh] overflow-y-auto"
+          {/* Draggable Zone Detail Card */}
+          <DraggableCard
+            title={zone.name}
+            icon={<MapPin className="w-5 h-5 text-theme-primary" />}
+            isOpen={!!zone}
+            onClose={onClose}
+            collapsible={true}
+            resizable={true}
+            draggable={true}
+            defaultPosition={{ x: centerX, y: centerY }}
+            defaultSize={{ width: Math.min(450, typeof window !== 'undefined' ? window.innerWidth - 32 : 450), height: 550 }}
+            minSize={{ width: 320, height: 400 }}
+            maxSize={{ width: 600, height: 800 }}
+            zIndex={50}
           >
-            <div className={`${tokens.cardBg} rounded-t-3xl border-t border-l border-r ${tokens.cardBorder} p-6 ${tokens.shadow}`}>
-              {/* Header */}
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex-1">
-                  <h2 className="text-3xl font-black text-white mb-2">
-                    {zone.name}
-                  </h2>
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <MapPin className="w-4 h-4" />
-                    <span>{zone.coordinates.lat.toFixed(4)}, {zone.coordinates.lng.toFixed(4)}</span>
-                  </div>
-                </div>
-
-                {/* Close Button */}
-                <button
-                  onClick={onClose}
-                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <X className="w-6 h-6 text-gray-400" />
-                </button>
+            <div className="p-4 space-y-4 overflow-y-auto">
+              {/* Coordinates */}
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <MapPin className="w-4 h-4" />
+                <span>{zone.coordinates.lat.toFixed(4)}, {zone.coordinates.lng.toFixed(4)}</span>
               </div>
 
               {/* Score Display */}
-              <div className={`mb-6 p-6 rounded-2xl border ${scoreBg}`}>
+              <div className={`p-4 rounded-xl border ${scoreBg}`}>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm text-gray-400 mb-1">Current Score</div>
-                    <div className={`text-5xl font-black ${scoreColor}`}>
+                    <div className={`text-4xl font-black ${scoreColor}`}>
                       {zone.score}
                     </div>
                   </div>
@@ -112,22 +106,22 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
 
               {/* Distance & Efficiency */}
               {distance !== null && driveTime !== null && (
-                <div className="mb-6 grid grid-cols-3 gap-3">
-                  <div className="glass rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-white mb-1">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="glass rounded-xl p-3 text-center">
+                    <div className="text-lg font-bold text-white mb-1">
                       {distance.toFixed(1)} km
                     </div>
                     <div className="text-xs text-gray-400">Distance</div>
                   </div>
-                  <div className="glass rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-white mb-1">
+                  <div className="glass rounded-xl p-3 text-center">
+                    <div className="text-lg font-bold text-white mb-1">
                       {driveTime} min
                     </div>
                     <div className="text-xs text-gray-400">Drive Time</div>
                   </div>
                   {efficiency !== null && (
-                    <div className="glass rounded-xl p-4 text-center">
-                      <div className="text-2xl font-bold text-neon-green mb-1">
+                    <div className="glass rounded-xl p-3 text-center">
+                      <div className="text-lg font-bold text-neon-green mb-1">
                         {efficiency.toFixed(1)}
                       </div>
                       <div className="text-xs text-gray-400">Efficiency</div>
@@ -137,17 +131,17 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
               )}
 
               {/* Score Breakdown */}
-              <div className="mb-6">
-                <h3 className="text-sm font-bold text-gray-300 uppercase tracking-wide mb-3">
+              <div>
+                <h3 className="text-sm font-bold text-gray-300 uppercase tracking-wide mb-2">
                   Score Breakdown
                 </h3>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between glass rounded-lg p-3">
+                  <div className="flex items-center justify-between glass rounded-lg p-2">
                     <span className="text-sm text-gray-300">Baseline</span>
                     <span className="text-white font-bold">{zone.factors.baseline}</span>
                   </div>
                   {zone.factors.events > 0 && (
-                    <div className="flex items-center justify-between glass rounded-lg p-3">
+                    <div className="flex items-center justify-between glass rounded-lg p-2">
                       <div className="flex items-center gap-2">
                         <Music className="w-4 h-4 text-neon-orange" />
                         <span className="text-sm text-gray-300">Events</span>
@@ -156,7 +150,7 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
                     </div>
                   )}
                   {zone.factors.weather > 0 && (
-                    <div className="flex items-center justify-between glass rounded-lg p-3">
+                    <div className="flex items-center justify-between glass rounded-lg p-2">
                       <div className="flex items-center gap-2">
                         <CloudRain className="w-4 h-4 text-blue-400" />
                         <span className="text-sm text-gray-300">Weather</span>
@@ -165,7 +159,7 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
                     </div>
                   )}
                   {zone.factors.flights > 0 && (
-                    <div className="flex items-center justify-between glass rounded-lg p-3">
+                    <div className="flex items-center justify-between glass rounded-lg p-2">
                       <div className="flex items-center gap-2">
                         <Plane className="w-4 h-4 text-neon-green" />
                         <span className="text-sm text-gray-300">Flights</span>
@@ -174,7 +168,7 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
                     </div>
                   )}
                   {zone.factors.traffic > 0 && (
-                    <div className="flex items-center justify-between glass rounded-lg p-3">
+                    <div className="flex items-center justify-between glass rounded-lg p-2">
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-yellow-400" />
                         <span className="text-sm text-gray-300">Traffic</span>
@@ -187,15 +181,15 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
 
               {/* Staging Spot Info */}
               {stagingSpot && (
-                <div className="mb-6 glass rounded-xl p-4 border border-neon-green/30">
-                  <div className="flex items-center gap-3 mb-3">
-                    <ParkingCircle className="w-6 h-6 text-neon-green" />
+                <div className="glass rounded-xl p-3 border border-neon-green/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ParkingCircle className="w-5 h-5 text-neon-green" />
                     <h3 className="text-sm font-bold text-neon-green uppercase tracking-wide">
-                      Recommended Staging Spot
+                      Staging Spot
                     </h3>
                   </div>
-                  <p className="text-sm text-gray-300 mb-3">
-                    Safe parking/waiting location near high-demand areas
+                  <p className="text-xs text-gray-300 mb-2">
+                    Safe parking/waiting location
                   </p>
                   <div className="text-xs text-gray-400 font-mono">
                     {stagingSpot.lat.toFixed(4)}, {stagingSpot.lng.toFixed(4)}
@@ -204,24 +198,24 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
               )}
 
               {/* Navigation Buttons */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => openGoogleMaps(stagingSpot || zone.coordinates)}
-                  className="flex flex-col items-center gap-2 p-4 glass-strong rounded-xl hover:bg-white/10 transition-colors border border-white/10"
+                  className="flex flex-col items-center gap-1 p-3 glass-strong rounded-xl hover:bg-white/10 transition-colors border border-white/10"
                 >
-                  <Map className="w-6 h-6 text-theme-primary" />
-                  <span className="text-xs font-bold text-white">Google Maps</span>
+                  <Map className="w-5 h-5 text-theme-primary" />
+                  <span className="text-xs font-bold text-white">Google</span>
                 </motion.button>
 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => openWaze(stagingSpot || zone.coordinates)}
-                  className="flex flex-col items-center gap-2 p-4 glass-strong rounded-xl hover:bg-white/10 transition-colors border border-white/10"
+                  className="flex flex-col items-center gap-1 p-3 glass-strong rounded-xl hover:bg-white/10 transition-colors border border-white/10"
                 >
-                  <Map className="w-6 h-6 text-theme-primary" />
+                  <Map className="w-5 h-5 text-theme-primary" />
                   <span className="text-xs font-bold text-white">Waze</span>
                 </motion.button>
 
@@ -229,14 +223,14 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => openAppleMaps(stagingSpot || zone.coordinates)}
-                  className="flex flex-col items-center gap-2 p-4 glass-strong rounded-xl hover:bg-white/10 transition-colors border border-white/10"
+                  className="flex flex-col items-center gap-1 p-3 glass-strong rounded-xl hover:bg-white/10 transition-colors border border-white/10"
                 >
-                  <Map className="w-6 h-6 text-theme-primary" />
-                  <span className="text-xs font-bold text-white">Apple Maps</span>
+                  <Map className="w-5 h-5 text-theme-primary" />
+                  <span className="text-xs font-bold text-white">Apple</span>
                 </motion.button>
               </div>
             </div>
-          </motion.div>
+          </DraggableCard>
         </>
       )}
     </AnimatePresence>
