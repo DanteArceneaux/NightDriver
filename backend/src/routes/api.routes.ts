@@ -426,6 +426,109 @@ export function createApiRouter(
     }
   });
 
+  // GET /api/money-makers - Get all money-making intelligence
+  router.get('/money-makers', async (_req: Request, res: Response) => {
+    try {
+      const { CruiseShipsService } = await import('../services/cruiseShips.service.js');
+      const { AirportQueueService } = await import('../services/airportQueue.service.js');
+      const { ConventionsService } = await import('../services/conventions.service.js');
+      const { WeatherSurgeService } = await import('../services/weatherSurge.service.js');
+      const { getBarCloseAlerts, getRecommendedBarZone } = await import('../data/barCloseTimes.js');
+      const { getCurrentDeadZones } = await import('../data/deadZones.js');
+
+      const cruiseService = new CruiseShipsService();
+      const airportService = new AirportQueueService();
+      const conventionsService = new ConventionsService();
+      const weatherSurgeService = new WeatherSurgeService();
+
+      const currentTime = new Date();
+      const [weather, flights] = await Promise.all([
+        getWeatherData(weatherService),
+        getFlightsData(flightsService),
+      ]);
+
+      const [cruiseShips, cruiseAlerts, conventions, queueEstimate, weatherSurge] = await Promise.all([
+        cruiseService.getTodaysShips(),
+        cruiseService.getSurgeAlerts(),
+        conventionsService.getActiveConventions(),
+        airportService.estimateQueueWait(flights, currentTime),
+        Promise.resolve(weatherSurgeService.predictNextHour(weather)),
+      ]);
+
+      const barCloseAlerts = getBarCloseAlerts(currentTime);
+      const recommendedBarZone = getRecommendedBarZone(currentTime);
+      const deadZones = getCurrentDeadZones(currentTime);
+
+      res.json({
+        timestamp: currentTime.toISOString(),
+        cruiseShips: {
+          ships: cruiseShips,
+          alerts: cruiseAlerts,
+        },
+        airportQueue: queueEstimate,
+        conventions: {
+          active: conventions,
+        },
+        barClose: {
+          alerts: barCloseAlerts,
+          recommendedZone: recommendedBarZone,
+        },
+        deadZones,
+        weatherSurge,
+      });
+    } catch (error) {
+      console.error('Error fetching money-makers:', error);
+      res.status(500).json({ error: 'Failed to fetch money-making intelligence' });
+    }
+  });
+
+  // GET /api/staging-spot/:zoneId - Get staging spot for a zone
+  router.get('/staging-spot/:zoneId', async (req: Request, res: Response) => {
+    try {
+      const { getStagingSpotForZone } = await import('../data/stagingSpots.js');
+      const { zoneId } = req.params;
+      const { purpose } = req.query;
+      
+      const spot = getStagingSpotForZone(zoneId, purpose as any);
+      
+      if (!spot) {
+        return res.status(404).json({ error: 'No staging spot found for this zone' });
+      }
+
+      res.json(spot);
+    } catch (error) {
+      console.error('Error fetching staging spot:', error);
+      res.status(500).json({ error: 'Failed to fetch staging spot' });
+    }
+  });
+
+  // POST /api/pace-check - Check earnings pace
+  router.post('/pace-check', async (req: Request, res: Response) => {
+    try {
+      const { PaceAlertsService } = await import('../services/paceAlerts.service.js');
+      const paceService = new PaceAlertsService();
+      
+      const { currentEarnings, hoursWorked, dailyGoal, plannedTotalHours } = req.body;
+
+      if (typeof currentEarnings !== 'number' || typeof hoursWorked !== 'number' ||
+          typeof dailyGoal !== 'number' || typeof plannedTotalHours !== 'number') {
+        return res.status(400).json({ error: 'Invalid parameters' });
+      }
+
+      const paceAlert = paceService.calculatePace(
+        currentEarnings,
+        hoursWorked,
+        dailyGoal,
+        plannedTotalHours
+      );
+
+      res.json(paceAlert);
+    } catch (error) {
+      console.error('Error calculating pace:', error);
+      res.status(500).json({ error: 'Failed to calculate pace' });
+    }
+  });
+
   return router;
 }
 

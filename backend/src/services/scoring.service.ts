@@ -1,8 +1,23 @@
 import { zones } from '../data/zones.js';
 import { getBaselineScore } from '../data/timePatterns.js';
 import { ZoneScore, TopPick, Event, WeatherConditions, FlightArrival } from '../types/index.js';
+import { CruiseShipsService } from './cruiseShips.service.js';
+import { ConventionsService } from './conventions.service.js';
+import { WeatherSurgeService } from './weatherSurge.service.js';
+import { getBarCloseSurgeImpact } from '../data/barCloseTimes.js';
+import { getDeadZonePenalty } from '../data/deadZones.js';
 
 export class ScoringService {
+  private cruiseShipsService: CruiseShipsService;
+  private conventionsService: ConventionsService;
+  private weatherSurgeService: WeatherSurgeService;
+
+  constructor() {
+    this.cruiseShipsService = new CruiseShipsService();
+    this.conventionsService = new ConventionsService();
+    this.weatherSurgeService = new WeatherSurgeService();
+  }
+
   calculateZoneScores(
     currentTime: Date,
     events: Event[] = [],
@@ -29,11 +44,30 @@ export class ScoringService {
       // Calculate traffic boost
       const trafficBoost = this.calculateTrafficBoost(zone.id, trafficData);
 
-      // Total score (cap at 100)
-      const totalScore = Math.min(
-        100,
-        baseline + eventBoost + weatherBoost + flightBoost + trafficBoost
-      );
+      // 🚢 NEW: Calculate cruise ship impact
+      const cruiseBoost = this.cruiseShipsService.calculateCruiseSurgeImpact(zone.id, currentTime);
+
+      // 🏢 NEW: Calculate convention center impact
+      const conventionBoost = this.conventionsService.calculateConventionImpact(zone.id, currentTime);
+
+      // 🍺 NEW: Calculate bar close surge
+      const barCloseBoost = getBarCloseSurgeImpact(zone.id, currentTime);
+
+      // ⚠️ NEW: Apply dead zone penalty
+      const deadZonePenalty = getDeadZonePenalty(zone.id, currentTime);
+
+      // 🌧️ NEW: Apply weather surge multiplier
+      const weatherMultiplier = weather ? this.weatherSurgeService.calculateSurgeMultiplier(weather) : 1.0;
+
+      // Total score (apply multiplier, then cap at 100)
+      let totalScore = baseline + eventBoost + weatherBoost + flightBoost + trafficBoost + 
+                       cruiseBoost + conventionBoost + barCloseBoost + deadZonePenalty;
+      
+      // Apply weather multiplier
+      totalScore = totalScore * weatherMultiplier;
+      
+      // Cap at 100
+      totalScore = Math.min(100, Math.max(0, totalScore));
 
       const finalScore = Math.round(totalScore);
       const estimatedEarnings = this.calculateEstimatedEarnings(finalScore, hour, dayOfWeek);
@@ -47,7 +81,7 @@ export class ScoringService {
         factors: {
           baseline: Math.round(baseline),
           events: Math.round(eventBoost),
-          weather: Math.round(weatherBoost),
+          weather: Math.round(weatherBoost * weatherMultiplier),
           flights: Math.round(flightBoost),
           traffic: Math.round(trafficBoost),
         },
