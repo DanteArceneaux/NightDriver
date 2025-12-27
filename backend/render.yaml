@@ -2,8 +2,9 @@
 services:
   - type: web
     name: night-driver-api
-    env: node
+    runtime: node
     plan: free
+    rootDir: backend
     buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
