@@ -2,15 +2,22 @@ import axios from 'axios';
 import { Event } from '../types/index.js';
 import { EventBlacklistService } from './eventBlacklist.service.js';
 import { SeatGeekService } from './seatgeek.service.js';
+import { calculateEndTime, getSurgeWindows } from '../data/eventDurations.js';
+import { ESPNService } from './espn.service.js';
 
 export class EventsService {
   private apiKey: string;
   private baseUrl = 'https://app.ticketmaster.com/discovery/v2';
   private blacklistService: EventBlacklistService;
   private seatGeekService: SeatGeekService;
+  private espnService: ESPNService;
 
   getBlacklistService(): EventBlacklistService {
     return this.blacklistService;
+  }
+
+  getESPNService(): ESPNService {
+    return this.espnService;
   }
 
   // Map of venue names/keywords to zone IDs
@@ -75,6 +82,7 @@ export class EventsService {
     this.apiKey = apiKey;
     this.blacklistService = blacklistService || new EventBlacklistService();
     this.seatGeekService = new SeatGeekService();
+    this.espnService = new ESPNService();
   }
 
   async getUpcomingEvents(): Promise<Event[]> {
@@ -235,11 +243,18 @@ export class EventsService {
         }
 
         const startTime = event.dates.start.dateTime || event.dates.start.localDate;
-        const endTime = this.estimateEndTime(startTime, eventType);
+        const venueFull = venue?.name || 'Unknown Venue';
+        const eventName = event.name;
+        
+        // Use smart duration database for accurate end time
+        const { endTime, duration } = calculateEndTime(startTime, venueFull, eventType, eventName);
+        
+        // Get surge windows for this event
+        const surgeWindows = getSurgeWindows(startTime, venueFull, eventType, eventName);
 
         return {
-          name: event.name,
-          venue: venue?.name || 'Unknown Venue',
+          name: eventName,
+          venue: venueFull,
           startTime,
           endTime,
           zoneId,
@@ -247,6 +262,9 @@ export class EventsService {
           attendees: event.sales?.public?.startDateTime ? 1000 : undefined,
           imageUrl,
           url: event.url,
+          // Enhanced data from duration database
+          durationMinutes: duration.typical,
+          surgeWindows,
         };
       });
       
@@ -317,30 +335,6 @@ export class EventsService {
     }
 
     return 'other';
-  }
-
-  private estimateEndTime(startTime: string, eventType: string = 'other'): string {
-    const start = new Date(startTime);
-    let durationHours = 3; // Default
-
-    // Adjust duration based on event type
-    switch (eventType) {
-      case 'sports':
-        durationHours = 3.5; // Sports games typically 3-4 hours
-        break;
-      case 'concert':
-        durationHours = 2.5; // Concerts typically 2-3 hours
-        break;
-      case 'conference':
-        durationHours = 8; // All-day events
-        break;
-      case 'festival':
-        durationHours = 10; // Multi-hour events
-        break;
-    }
-
-    const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
-    return end.toISOString();
   }
 
   private getMockEvents(): Event[] {

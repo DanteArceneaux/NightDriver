@@ -387,6 +387,45 @@ export function createApiRouter(
     }
   });
 
+  // GET /api/live-sports - Get live Seattle sports games with real-time status
+  router.get('/live-sports', async (_req: Request, res: Response) => {
+    try {
+      const espnService = eventsService.getESPNService();
+      const games = await espnService.getSeattleGames();
+      
+      res.json({
+        games,
+        timestamp: new Date().toISOString(),
+        count: games.length,
+        liveCount: games.filter(g => g.status === 'in_progress').length,
+        endingSoonCount: games.filter(g => g.nearingEnd).length,
+      });
+    } catch (error) {
+      console.error('Error fetching live sports:', error);
+      res.status(500).json({ error: 'Failed to fetch live sports data' });
+    }
+  });
+
+  // GET /api/surge-alerts - Get surge alerts for games ending soon
+  router.get('/surge-alerts', async (_req: Request, res: Response) => {
+    try {
+      const espnService = eventsService.getESPNService();
+      const [surgeAlerts, endingGames] = await Promise.all([
+        espnService.getSurgeAlerts(),
+        espnService.getEndingSoonGames(),
+      ]);
+      
+      res.json({
+        alerts: surgeAlerts,
+        endingGames,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error fetching surge alerts:', error);
+      res.status(500).json({ error: 'Failed to fetch surge alerts' });
+    }
+  });
+
   return router;
 }
 

@@ -39,6 +39,11 @@ export interface ZonesResponse {
   zones: ZoneScore[];
 }
 
+export interface SurgeWindow {
+  start: string;
+  end: string;
+}
+
 export interface Event {
   name: string;
   venue: string;
@@ -49,6 +54,32 @@ export interface Event {
   type?: 'sports' | 'concert' | 'conference' | 'festival' | 'other';
   imageUrl?: string;
   url?: string;
+  // Enhanced duration data
+  durationMinutes?: number;
+  surgeWindows?: {
+    preSurge: SurgeWindow;
+    postSurge: SurgeWindow;
+  };
+}
+
+export interface LiveSportsGame {
+  id: string;
+  name: string;
+  shortName: string;
+  venue: string;
+  startTime: string;
+  status: 'scheduled' | 'in_progress' | 'halftime' | 'delayed' | 'final' | 'postponed';
+  period: string;
+  clock: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
+  isSeattleTeam: boolean;
+  estimatedEndTime: string;
+  actualEndTime?: string;
+  nearingEnd: boolean;
+  surgeAlert?: string;
 }
 
 export interface WeatherConditions {
