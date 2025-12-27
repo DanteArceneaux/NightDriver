@@ -13,9 +13,10 @@ interface HeaderProps {
   hasLocation: boolean;
   onRefresh: () => void;
   weather?: { temp: number; description: string };
+  lastUpdate?: Date | null;
 }
 
-export function Header({ connected, countdown, hasLocation, onRefresh, weather }: HeaderProps) {
+export function Header({ connected, countdown, hasLocation, onRefresh, weather, lastUpdate }: HeaderProps) {
   const [showLegend, setShowLegend] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -26,6 +27,17 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
   const progress = ((30 - countdown) / 30) * 100;
   const circumference = 2 * Math.PI * 16; // radius = 16
   const strokeDashoffset = circumference - (progress / 100) * circumference;
+  
+  // Format last update time
+  const getLastUpdateText = () => {
+    if (!lastUpdate) return 'Never';
+    const secondsAgo = Math.floor((Date.now() - lastUpdate.getTime()) / 1000);
+    if (secondsAgo < 60) return `${secondsAgo}s ago`;
+    const minutesAgo = Math.floor(secondsAgo / 60);
+    if (minutesAgo < 60) return `${minutesAgo}m ago`;
+    const hoursAgo = Math.floor(minutesAgo / 60);
+    return `${hoursAgo}h ago`;
+  };
 
   return (
     <>
@@ -53,11 +65,12 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
                     connected 
                       ? 'bg-neon-green/20 text-neon-green glow-green' 
-                      : 'bg-yellow-500/20 text-yellow-400'
+                      : 'bg-red-500/20 text-red-400'
                   }`}
+                  title={lastUpdate ? `Last update: ${getLastUpdateText()}` : 'Not connected'}
                 >
                   <Radio className="w-3 h-3" />
-                  {connected ? 'LIVE' : 'CONNECTING'}
+                  {connected ? 'LIVE' : 'OFFLINE'}
                 </motion.div>
 
                 {/* Location Indicator */}

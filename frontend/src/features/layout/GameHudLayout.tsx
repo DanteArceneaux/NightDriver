@@ -31,6 +31,7 @@ export function GameHudLayout(props: LayoutProps) {
         hasLocation={!!props.driverLocation}
         onRefresh={props.onRefresh}
         weather={props.weather}
+        lastUpdate={props.lastUpdate}
       />
 
       {/* Full-screen Map Canvas */}

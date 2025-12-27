@@ -9,6 +9,7 @@ export interface LayoutProps {
   connected: boolean;
   countdown: number;
   weather?: { temp: number; description: string };
+  lastUpdate?: Date | null;
   error?: string;
   onRefresh: () => void;
   onZoneClick?: (zone: ZoneScore) => void;

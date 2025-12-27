@@ -82,3 +82,10 @@ export interface Forecast {
   points: ForecastPoint[];
 }
 
+export interface SurgeAlert {
+  zoneId: string;
+  zoneName: string;
+  multiplier: number;
+  timestamp: string;
+}
+

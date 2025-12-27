@@ -169,6 +169,7 @@ export function NeonCockpitLayout(props: LayoutProps) {
         hasLocation={!!props.driverLocation}
         onRefresh={props.onRefresh}
         weather={props.weather}
+        lastUpdate={props.lastUpdate}
       />
 
       {/* Main Content */}

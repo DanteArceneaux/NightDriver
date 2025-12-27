@@ -16,9 +16,9 @@ import { calculateDistance, estimateDriveTime, calculateEfficiency } from './lib
 import { fetchConditions } from './lib/api';
 
 function App() {
-  const { data, loading, error, connected, refresh } = useZoneScores();
+  const { data, loading, error, connected, lastUpdate, refresh } = useZoneScores();
   const { location: driverLocation } = useDriverLocation();
-  const { countdown } = useAutoRefresh(30000); // 30 seconds for WebSocket
+  const { countdown } = useAutoRefresh(30000); // 30 seconds for WebSocket (used for visual countdown ring)
   const [surges] = useState<any[]>([]);
   const [weather, setWeather] = useState<{ temp: number; description: string } | undefined>();
 
@@ -68,6 +68,7 @@ function App() {
           countdown={30}
           hasLocation={false}
           onRefresh={() => {}}
+          lastUpdate={null}
         />
         <motion.main
           initial={{ opacity: 0 }}
