@@ -36,6 +36,7 @@ export function NeonCockpitLayout(props: LayoutProps) {
       maxHeight: 900,
       collapsible: true,
       resizable: true,
+      allowScroll: false, // Map should not scroll
     },
     {
       id: 'top-pick',
@@ -55,6 +56,7 @@ export function NeonCockpitLayout(props: LayoutProps) {
       maxHeight: 500,
       collapsible: true,
       resizable: true,
+      allowScroll: true, // Allow scroll if content is long
     },
     {
       id: 'conditions',
@@ -70,6 +72,7 @@ export function NeonCockpitLayout(props: LayoutProps) {
       maxHeight: 600,
       collapsible: true,
       resizable: true,
+      allowScroll: false, // Fixed layout, no scroll needed
     },
     {
       id: 'forecast',
@@ -85,6 +88,7 @@ export function NeonCockpitLayout(props: LayoutProps) {
       maxHeight: 500,
       collapsible: true,
       resizable: true,
+      allowScroll: true, // Horizontal scroll for forecast cards
     },
     {
       id: 'events',
@@ -100,6 +104,7 @@ export function NeonCockpitLayout(props: LayoutProps) {
       maxHeight: 700,
       collapsible: true,
       resizable: true,
+      allowScroll: true, // List should scroll when many events
     },
     {
       id: 'zones',
@@ -115,6 +120,7 @@ export function NeonCockpitLayout(props: LayoutProps) {
       maxHeight: 800,
       collapsible: true,
       resizable: true,
+      allowScroll: true, // Zone list should scroll
     },
   ], [props.topPick, props.topZone, props.driverLocation, props.zones]);
 
