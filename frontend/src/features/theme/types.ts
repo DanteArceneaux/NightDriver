@@ -13,10 +13,15 @@ export interface ThemeTokens {
   cardBorder: string;
   cardHover: string;
   
+  // Glass effects
+  glassBg: string;
+  glassBorder: string;
+  
   // Text
   textPrimary: string;
   textSecondary: string;
   textMuted: string;
+  primaryText: string;
   
   // Accent colors (scores)
   accentSurge: string;

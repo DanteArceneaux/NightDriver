@@ -13,10 +13,15 @@ const neonTokens: ThemeTokens = {
   cardBorder: 'border border-white/10',
   cardHover: 'hover:border-neon-cyan/50 hover:shadow-neon-cyan',
   
+  // Glass effects
+  glassBg: 'bg-white/5 backdrop-blur-md',
+  glassBorder: 'border border-white/10',
+  
   // Text
   textPrimary: 'text-white',
   textSecondary: 'text-gray-300',
   textMuted: 'text-gray-500',
+  primaryText: 'text-white',
   
   // Accent colors
   accentSurge: 'text-neon-pink',
@@ -57,10 +62,15 @@ const proTokens: ThemeTokens = {
   cardBorder: 'border border-slate-700/50',
   cardHover: 'hover:border-blue-500/40 hover:bg-slate-800/80',
   
+  // Glass effects
+  glassBg: 'bg-slate-800/60 backdrop-blur-md',
+  glassBorder: 'border border-slate-700/50',
+  
   // Text
   textPrimary: 'text-slate-50',
   textSecondary: 'text-slate-300',
   textMuted: 'text-slate-500',
+  primaryText: 'text-slate-50',
   
   // Accent colors
   accentSurge: 'text-rose-400',
@@ -101,10 +111,15 @@ const hudTokens: ThemeTokens = {
   cardBorder: 'border-2 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.4)]',
   cardHover: 'hover:border-pink-500/80 hover:shadow-[0_0_20px_rgba(236,72,153,0.5)]',
   
+  // Glass effects
+  glassBg: 'bg-indigo-900/40 backdrop-blur-lg',
+  glassBorder: 'border-2 border-purple-500/40',
+  
   // Text
   textPrimary: 'text-white',
   textSecondary: 'text-purple-200',
   textMuted: 'text-purple-400/60',
+  primaryText: 'text-white',
   
   // Accent colors
   accentSurge: 'text-pink-400',
@@ -145,10 +160,15 @@ const carTokens: ThemeTokens = {
   cardBorder: 'border-4 border-white/30',
   cardHover: 'hover:bg-gray-800',
   
+  // Glass effects
+  glassBg: 'bg-gray-900/90',
+  glassBorder: 'border-4 border-white/30',
+  
   // Text - maximum contrast
   textPrimary: 'text-white',
   textSecondary: 'text-gray-300',
   textMuted: 'text-gray-500',
+  primaryText: 'text-white',
   
   // Accent colors - high visibility
   accentSurge: 'text-red-500',

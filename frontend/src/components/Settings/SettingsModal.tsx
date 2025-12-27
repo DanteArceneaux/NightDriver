@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Palette, Bell, Heart, Ban, DollarSign, Volume2, Wifi } from 'lucide-react';
+import { X, Palette, Bell, Heart, DollarSign, Volume2, Wifi } from 'lucide-react';
 import { useState } from 'react';
 import { useSettingsStore } from '../../features/settings/store';
 import { useTheme } from '../../features/theme';

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useTheme } from './useTheme';
 import { useSettingsStore } from '../settings';
 import { getColorVars } from '../settings/colorSchemes';
+import type { ColorScheme } from '../settings/types';
 
 export function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
   const { id: themeId } = useTheme();
@@ -13,7 +14,7 @@ export function ColorSchemeProvider({ children }: { children: React.ReactNode })
   } = useSettingsStore();
 
   useEffect(() => {
-    let colorScheme;
+    let colorScheme: ColorScheme;
     switch (themeId) {
       case 'neon':
         colorScheme = neonColorScheme;
@@ -31,7 +32,7 @@ export function ColorSchemeProvider({ children }: { children: React.ReactNode })
         colorScheme = 'default';
     }
 
-    const colorVars = getColorVars(themeId, colorScheme);
+    const colorVars = getColorVars(themeId as 'neon' | 'pro' | 'hud' | 'car', colorScheme);
     const root = document.documentElement;
 
     Object.entries(colorVars).forEach(([key, value]) => {

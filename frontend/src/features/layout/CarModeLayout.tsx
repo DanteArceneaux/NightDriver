@@ -11,6 +11,11 @@ export function CarModeLayout({ zones, topPick, driverLocation, onZoneClick }: L
     ? [...zones].sort((a, b) => b.score - a.score).slice(0, 3) 
     : [];
 
+  // Find the zone object for the topPick
+  const topPickZone = topPick && zones 
+    ? zones.find(z => z.id === topPick.zoneId) 
+    : null;
+
   // Guard against missing data
   if (!zones || zones.length === 0) {
     return (
@@ -52,7 +57,7 @@ export function CarModeLayout({ zones, topPick, driverLocation, onZoneClick }: L
       {/* Main Content - Ultra Large Touch Targets */}
       <div className="flex-1 p-8 space-y-6">
         {/* Top Pick - Massive Display */}
-        {topPick && topPick.zone && (
+        {topPickZone && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -62,22 +67,22 @@ export function CarModeLayout({ zones, topPick, driverLocation, onZoneClick }: L
               🎯 GO HERE NOW
             </div>
             <div className="text-6xl font-black text-white mb-4">
-              {topPick.zone.name}
+              {topPickZone.name}
             </div>
             <div className="flex items-center gap-6 mb-6">
               <div className="flex items-center gap-3">
                 <Zap className="w-12 h-12 text-yellow-300" />
                 <div>
-                  <div className="text-5xl font-black text-white">{topPick.zone.score}</div>
+                  <div className="text-5xl font-black text-white">{topPickZone.score}</div>
                   <div className="text-xl text-green-200">SCORE</div>
                 </div>
               </div>
-              {topPick.estimatedHourlyRate && (
+              {topPickZone.estimatedHourlyRate && (
                 <div className="flex items-center gap-3">
                   <DollarSign className="w-12 h-12 text-green-300" />
                   <div>
                     <div className="text-5xl font-black text-white">
-                      ${topPick.estimatedHourlyRate.toFixed(0)}
+                      ${topPickZone.estimatedHourlyRate.toFixed(0)}
                     </div>
                     <div className="text-xl text-green-200">/HOUR</div>
                   </div>
@@ -87,8 +92,8 @@ export function CarModeLayout({ zones, topPick, driverLocation, onZoneClick }: L
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={() => {
-                if (topPick.zone?.coordinates) {
-                  const coords = topPick.zone.coordinates;
+                if (topPickZone?.coordinates) {
+                  const coords = topPickZone.coordinates;
                   window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`, '_blank');
                 }
               }}
@@ -101,7 +106,7 @@ export function CarModeLayout({ zones, topPick, driverLocation, onZoneClick }: L
         )}
 
         {/* Fallback: If no topPick, show the best zone prominently */}
-        {(!topPick || !topPick.zone) && topZones.length > 0 && (
+        {!topPickZone && topZones.length > 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -139,9 +144,9 @@ export function CarModeLayout({ zones, topPick, driverLocation, onZoneClick }: L
         {/* Top 3 Zones - Large Cards */}
         <div className="space-y-4">
           <div className="text-3xl font-black text-white uppercase tracking-wider mb-4">
-            {topPick?.zone ? 'OTHER HOT ZONES' : 'HOT ZONES'}
+            {topPickZone ? 'OTHER HOT ZONES' : 'HOT ZONES'}
           </div>
-          {topZones.slice(topPick?.zone ? 0 : 1).map((zone, idx) => (
+          {topZones.slice(topPickZone ? 0 : 1).map((zone, idx) => (
             <motion.button
               key={zone.id}
               whileTap={{ scale: 0.98 }}

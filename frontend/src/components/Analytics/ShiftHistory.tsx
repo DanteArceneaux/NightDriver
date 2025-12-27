@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Calendar, DollarSign, Clock, Target, TrendingUp, MapPin } from 'lucide-react';
+import { Calendar, Clock, TrendingUp, MapPin } from 'lucide-react';
 import { useHistoryStore } from '../../features/history';
 import type { CompletedShift } from '../../features/history';
 
