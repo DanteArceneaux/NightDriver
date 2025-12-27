@@ -4,6 +4,13 @@ A real-time decision support tool that tells Uber/Lyft drivers WHERE to be and W
 
 ![Seattle Driver Optimizer](https://img.shields.io/badge/status-MVP-green)
 
+## 🧠 Resuming Work (Context Pack)
+
+If you (or an AI agent) are resuming work and the prior chat context is missing/truncated:
+
+- Read `CONTEXT.md`
+- Then read `V4_CONTEXT.md`
+
 ## 🎯 What It Does
 
 The app displays a **heatmap** of Seattle zones scored by predicted demand (0-100), combining multiple real-time data sources:
