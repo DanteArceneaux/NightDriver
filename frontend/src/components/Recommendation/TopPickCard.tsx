@@ -1,10 +1,11 @@
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+import { motion, animate } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Music, CloudRain, Plane, Navigation as NavIcon, Zap, Clock, Calendar, Map } from 'lucide-react';
 import { TopPick, ZoneScore, Coordinates, Event } from '../../types';
 import { calculateDistance, estimateDriveTime, calculateEfficiency, formatDistance, formatDriveTime } from '../../lib/distance';
 import { fetchConditions } from '../../lib/api';
 import { openNavigation, getDefaultNavigationApp } from '../../lib/navigation';
+import { useTheme } from '../../features/theme';
 
 interface TopPickCardProps {
   topPick: TopPick;
@@ -12,7 +13,58 @@ interface TopPickCardProps {
   driverLocation?: Coordinates | null;
 }
 
-function getScoreTheme(score: number) {
+function getScoreTheme(score: number, themeId: string) {
+  if (themeId === 'pro') {
+    // Pro Dashboard: cleaner, less glow
+    if (score >= 80) return {
+      gradient: 'bg-gradient-to-br from-rose-500/20 via-rose-600/10 to-transparent',
+      glow: '',
+      text: 'text-rose-400',
+      border: 'border-rose-500/40',
+      label: 'SURGE ZONE'
+    };
+    if (score >= 60) return {
+      gradient: 'bg-gradient-to-br from-amber-500/15 via-amber-600/10 to-transparent',
+      glow: '',
+      text: 'text-amber-400',
+      border: 'border-amber-500/40',
+      label: 'HOT ZONE'
+    };
+    return {
+      gradient: 'bg-gradient-to-br from-blue-500/15 via-blue-600/10 to-transparent',
+      glow: '',
+      text: 'text-blue-400',
+      border: 'border-blue-500/40',
+      label: 'ACTIVE ZONE'
+    };
+  }
+  
+  if (themeId === 'hud') {
+    // Game HUD: stronger borders, purple theme
+    if (score >= 80) return {
+      gradient: 'bg-gradient-to-br from-pink-500/25 via-purple-600/15 to-transparent',
+      glow: 'shadow-[0_0_20px_rgba(236,72,153,0.5)]',
+      text: 'text-pink-400',
+      border: 'border-2 border-pink-500/70',
+      label: 'SURGE DETECTED'
+    };
+    if (score >= 60) return {
+      gradient: 'bg-gradient-to-br from-orange-500/20 via-pink-600/10 to-transparent',
+      glow: 'shadow-[0_0_15px_rgba(249,115,22,0.4)]',
+      text: 'text-orange-400',
+      border: 'border-2 border-orange-500/70',
+      label: 'HIGH DEMAND'
+    };
+    return {
+      gradient: 'bg-gradient-to-br from-purple-500/20 via-indigo-600/10 to-transparent',
+      glow: '',
+      text: 'text-purple-400',
+      border: 'border-2 border-purple-500/70',
+      label: 'ACTIVE'
+    };
+  }
+  
+  // Neon Cockpit: original high-contrast style
   if (score >= 80) return {
     gradient: 'bg-gradient-to-br from-neon-pink/30 via-neon-purple/20 to-transparent',
     glow: 'glow-pink',
@@ -64,7 +116,8 @@ function getEventIcon(type?: string): string {
 }
 
 export function TopPickCard({ topPick, zone, driverLocation }: TopPickCardProps) {
-  const theme = getScoreTheme(topPick.score);
+  const { id: themeId, tokens } = useTheme();
+  const theme = getScoreTheme(topPick.score, themeId);
   const [displayScore, setDisplayScore] = useState(0);
   const [events, setEvents] = useState<Event[]>([]);
 
@@ -105,20 +158,20 @@ export function TopPickCard({ topPick, zone, driverLocation }: TopPickCardProps)
 
   // Get active boost factors
   const boosts = [];
-  if (zone?.factors.events > 0) boosts.push({ icon: Music, label: 'Concert', value: zone.factors.events });
-  if (zone?.factors.weather > 0) boosts.push({ icon: CloudRain, label: 'Rain', value: zone.factors.weather });
-  if (zone?.factors.flights > 0) boosts.push({ icon: Plane, label: 'Flights', value: zone.factors.flights });
+  if (zone?.factors?.events && zone.factors.events > 0) boosts.push({ icon: Music, label: 'Concert', value: zone.factors.events });
+  if (zone?.factors?.weather && zone.factors.weather > 0) boosts.push({ icon: CloudRain, label: 'Rain', value: zone.factors.weather });
+  if (zone?.factors?.flights && zone.factors.flights > 0) boosts.push({ icon: Plane, label: 'Flights', value: zone.factors.flights });
 
   return (
     <motion.div
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.5, type: "spring" }}
-      className={`relative overflow-hidden rounded-3xl border-2 ${theme.border} ${theme.glow}`}
+      className={`relative overflow-hidden ${tokens.borderRadius} ${theme.border} ${theme.glow}`}
     >
       {/* Animated Background Gradient */}
       <div className={`absolute inset-0 ${theme.gradient}`} />
-      <div className="absolute inset-0 glass-strong" />
+      <div className={`absolute inset-0 ${tokens.cardBg}`} />
       
       {/* Content */}
       <div className="relative p-8">
@@ -222,33 +275,33 @@ export function TopPickCard({ topPick, zone, driverLocation }: TopPickCardProps)
             </div>
             <div className="space-y-2">
               {events.slice(0, 2).map((event, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 + idx * 0.1 }}
-                  className="glass-strong rounded-xl p-3 border border-white/10"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-2 flex-1 min-w-0">
-                      <span className="text-2xl flex-shrink-0">{getEventIcon(event.type)}</span>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-bold text-white text-sm mb-1 truncate">
-                          {event.name}
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 + idx * 0.1 }}
+                    className="glass-strong rounded-xl p-3 border border-white/10"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-2 flex-1 min-w-0">
+                        <span className="text-2xl flex-shrink-0">{getEventIcon(event.type)}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-white text-sm mb-1 truncate">
+                            {event.name}
+                          </div>
+                          <div className="text-xs text-gray-400">{event.venue}</div>
                         </div>
-                        <div className="text-xs text-gray-400">{event.venue}</div>
+                      </div>
+                      <div className="flex items-center gap-1 px-2 py-1 bg-neon-green/20 border border-neon-green/50 rounded-full text-xs font-bold text-neon-green whitespace-nowrap">
+                        <Clock className="w-3 h-3" />
+                        {getTimeUntilEnd(event.endTime)}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 px-2 py-1 bg-neon-green/20 border border-neon-green/50 rounded-full text-xs font-bold text-neon-green whitespace-nowrap">
-                      <Clock className="w-3 h-3" />
-                      {getTimeUntilEnd(event.endTime)}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
               {events.length > 2 && (
                 <div className="text-xs text-gray-400 text-center pt-1">
-                  +{events.length - 2} more event{events.length - 2 !== 1 ? 's' : ''}
+                  +{events.length - 2} more event{events.length - 2 > 1 ? 's' : ''}
                 </div>
               )}
             </div>

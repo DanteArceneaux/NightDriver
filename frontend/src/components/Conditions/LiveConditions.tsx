@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { CloudRain, Music, Plane, Droplets, Activity } from 'lucide-react';
 import { Conditions } from '../../types';
 import { fetchConditions } from '../../lib/api';
+import { useTheme } from '../../features/theme';
 
 export function LiveConditions() {
+  const { tokens } = useTheme();
   const [conditions, setConditions] = useState<Conditions | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -75,7 +77,7 @@ export function LiveConditions() {
   }
 
   return (
-    <div className="glass-strong rounded-2xl p-6 border border-white/10">
+    <div className={`${tokens.cardBg} ${tokens.borderRadius} p-6 ${tokens.cardBorder}`}>
       <div className="flex items-center gap-2 mb-4">
         <Activity className="w-5 h-5 text-neon-green" />
         <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">

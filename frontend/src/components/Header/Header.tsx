@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Radio, MapPin, CloudRain, RefreshCw, HelpCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Radio, MapPin, CloudRain, RefreshCw, HelpCircle, Palette, ChevronDown } from 'lucide-react';
 import { ScoreLegend } from '../Legend/ScoreLegend';
-import type { LiveConditionsData } from '../../types';
+import { useTheme } from '../../features/theme';
+import { themes } from '../../features/theme/themes';
 
 interface HeaderProps {
   connected: boolean;
@@ -14,6 +15,8 @@ interface HeaderProps {
 
 export function Header({ connected, countdown, hasLocation, onRefresh, weather }: HeaderProps) {
   const [showLegend, setShowLegend] = useState(false);
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const { id: currentThemeId, name: currentThemeName, setThemeId } = useTheme();
   
   // Calculate circular progress (0-100%)
   const progress = ((30 - countdown) / 30) * 100;
@@ -101,6 +104,58 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
                 <span className="text-xs font-bold text-neon-cyan z-10">
                   {countdown}
                 </span>
+              </div>
+
+              {/* Theme Switcher */}
+              <div className="relative">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowThemeMenu(!showThemeMenu)}
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-xl transition-colors border border-white/10"
+                  title="Change theme"
+                >
+                  <Palette className="w-4 h-4 text-neon-cyan" />
+                  <span className="text-xs font-medium hidden md:inline">{currentThemeName}</span>
+                  <ChevronDown className="w-3 h-3" />
+                </motion.button>
+
+                <AnimatePresence>
+                  {showThemeMenu && (
+                    <>
+                      {/* Backdrop */}
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowThemeMenu(false)}
+                      />
+                      
+                      {/* Dropdown */}
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute right-0 top-full mt-2 w-48 glass-strong rounded-xl border border-white/20 shadow-2xl overflow-hidden z-50"
+                      >
+                        {Object.values(themes).map((theme) => (
+                          <button
+                            key={theme.id}
+                            onClick={() => {
+                              setThemeId(theme.id);
+                              setShowThemeMenu(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors ${
+                              currentThemeId === theme.id
+                                ? 'bg-neon-cyan/20 text-neon-cyan'
+                                : 'text-gray-300 hover:bg-white/10'
+                            }`}
+                          >
+                            {theme.name}
+                          </button>
+                        ))}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Help Button */}

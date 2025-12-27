@@ -3,6 +3,7 @@ import { Trophy, Music, CloudRain, Plane, Navigation, Zap, Map } from 'lucide-re
 import { ZoneScore, Coordinates } from '../../types';
 import { calculateDistance, estimateDriveTime, calculateEfficiency } from '../../lib/distance';
 import { openNavigation, getDefaultNavigationApp } from '../../lib/navigation';
+import { useTheme } from '../../features/theme';
 
 interface LeaderboardProps {
   zones: ZoneScore[];
@@ -31,8 +32,10 @@ function getProgressBarColor(score: number): string {
 }
 
 export function Leaderboard({ zones, driverLocation }: LeaderboardProps) {
+  const { tokens } = useTheme();
+  
   return (
-    <div className="glass-strong rounded-2xl p-6 border border-white/10">
+    <div className={`${tokens.cardBg} ${tokens.borderRadius} p-6 ${tokens.cardBorder}`}>
       <div className="flex items-center gap-2 mb-6">
         <Trophy className="w-5 h-5 text-yellow-400" />
         <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">

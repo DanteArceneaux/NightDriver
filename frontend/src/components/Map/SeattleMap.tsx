@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, CircleMarker, Marker, Tooltip, useMap } from '
 import L from 'leaflet';
 import { ZoneScore, Event } from '../../types';
 import { fetchConditions } from '../../lib/api';
+import { useTheme } from '../../features/theme';
 import 'leaflet/dist/leaflet.css';
 
 interface SeattleMapProps {
@@ -58,21 +59,47 @@ function getVenueCoordinates(venueName: string): { lat: number; lng: number } | 
   return null;
 }
 
-// Create custom event icon
-function createEventIcon(emoji: string, isStartingSoon: boolean) {
+// Create custom event icon with urgency ring
+function createEventIcon(emoji: string, isUrgent: boolean, themeId: string) {
+  const ringColor = themeId === 'pro' 
+    ? 'rgba(59, 130, 246, 0.8)'  // Pro: blue
+    : themeId === 'hud'
+    ? 'rgba(168, 85, 247, 0.9)'  // HUD: purple
+    : 'rgba(255, 170, 0, 0.9)';   // Neon: orange
+    
+  const glowColor = themeId === 'pro'
+    ? 'rgba(59, 130, 246, 0.5)'
+    : themeId === 'hud'
+    ? 'rgba(236, 72, 153, 0.6)'
+    : 'rgba(255, 0, 85, 0.6)';
+
   return L.divIcon({
     className: 'custom-event-marker',
     html: `
-      <div class="${isStartingSoon ? 'animate-pulse' : ''}" style="
-        font-size: 28px;
-        text-shadow: 0 0 10px rgba(255, 170, 0, 0.8);
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-      ">
-        ${emoji}
+      <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+        ${isUrgent ? `
+          <div class="animate-pulse" style="
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 3px solid ${ringColor};
+            border-radius: 50%;
+            box-shadow: 0 0 15px ${glowColor};
+          "></div>
+        ` : ''}
+        <div style="
+          font-size: 32px;
+          text-shadow: 0 0 10px ${glowColor};
+          filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.6));
+          position: relative;
+          z-index: 10;
+        ">
+          ${emoji}
+        </div>
       </div>
     `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
   });
 }
 
@@ -93,7 +120,7 @@ function getEventEmoji(type?: string): string {
 
 // Component to add pulsing animation style to map
 function MapStyleInjector() {
-  const map = useMap();
+  useMap(); // Just to ensure component is within MapContainer
   
   useEffect(() => {
     // Inject pulsing animation CSS
@@ -140,6 +167,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   const center: [number, number] = [47.6205, -122.3493];
   const zoom = 11;
   const [events, setEvents] = useState<Event[]>([]);
+  const { id: themeId } = useTheme();
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -228,29 +256,53 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
 
           const now = new Date();
           const start = new Date(event.startTime);
-          const hoursUntil = (start.getTime() - now.getTime()) / (1000 * 60 * 60);
-          const isStartingSoon = hoursUntil > 0 && hoursUntil < 2;
+          const end = new Date(event.endTime);
+          const minsUntilStart = (start.getTime() - now.getTime()) / (1000 * 60);
+          const minsUntilEnd = (end.getTime() - now.getTime()) / (1000 * 60);
+          
+          // Urgent if ending in <2h or starting in <2h
+          const isUrgent = (minsUntilEnd > 0 && minsUntilEnd < 120) || (minsUntilStart > 0 && minsUntilStart < 120);
+          const isLive = minsUntilStart < 0 && minsUntilEnd > 0;
+          
+          let statusText = '';
+          if (isLive) {
+            statusText = minsUntilEnd < 60 ? `Ends in ${Math.floor(minsUntilEnd)}m` : `Live Now`;
+          } else if (minsUntilStart > 0 && minsUntilStart < 120) {
+            const hours = Math.floor(minsUntilStart / 60);
+            const mins = Math.floor(minsUntilStart % 60);
+            statusText = hours === 0 ? `Starts in ${mins}m` : `Starts in ${hours}h`;
+          }
 
           return (
             <Marker
               key={`event-${idx}`}
               position={[coords.lat, coords.lng]}
-              icon={createEventIcon(getEventEmoji(event.type), isStartingSoon)}
+              icon={createEventIcon(getEventEmoji(event.type), isUrgent, themeId)}
             >
-              <Tooltip direction="top" offset={[0, -16]} opacity={1}>
-                <div className="text-sm">
-                  <div className="font-bold text-white mb-1">{event.name}</div>
+              <Tooltip direction="top" offset={[0, -24]} opacity={1}>
+                <div className="text-sm max-w-xs">
+                  <div className="font-bold text-white text-base mb-1">{event.name}</div>
                   <div className="text-neon-orange text-xs mb-1">{event.venue}</div>
-                  <div className="text-gray-300 text-xs">
+                  <div className="text-gray-300 text-xs mb-1">
                     {new Date(event.startTime).toLocaleTimeString('en-US', { 
                       hour: 'numeric', 
                       minute: '2-digit' 
                     })}
                   </div>
-                  {isStartingSoon && (
-                    <div className="text-neon-orange font-bold text-xs mt-1">
-                      Starting Soon!
+                  {statusText && (
+                    <div className={`font-bold text-xs mt-1 ${
+                      isLive ? 'text-neon-green' : 'text-neon-orange'
+                    }`}>
+                      {statusText}
                     </div>
+                  )}
+                  {event.imageUrl && (
+                    <img
+                      src={event.imageUrl}
+                      alt={event.name}
+                      className="w-full h-20 object-cover rounded mt-2"
+                      onError={(e) => e.currentTarget.style.display = 'none'}
+                    />
                   )}
                 </div>
               </Tooltip>

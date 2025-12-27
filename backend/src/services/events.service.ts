@@ -67,6 +67,27 @@ export class EventsService {
         const zoneId = this.mapVenueToZone(venueName);
         const eventType = this.classifyEvent(event);
 
+        // Get the best image (prefer 16:9 ratio or largest width)
+        let imageUrl: string | undefined;
+        if (event.images && event.images.length > 0) {
+          // Sort by width descending and prefer ratio close to 16:9
+          const sortedImages = [...event.images].sort((a: any, b: any) => {
+            const ratioA = a.width && a.height ? a.width / a.height : 0;
+            const ratioB = b.width && b.height ? b.width / b.height : 0;
+            const targetRatio = 16 / 9;
+            const diffA = Math.abs(ratioA - targetRatio);
+            const diffB = Math.abs(ratioB - targetRatio);
+            
+            // If one is much closer to 16:9, prefer it
+            if (Math.abs(diffA - diffB) > 0.3) {
+              return diffA - diffB;
+            }
+            // Otherwise prefer larger width
+            return (b.width || 0) - (a.width || 0);
+          });
+          imageUrl = sortedImages[0]?.url;
+        }
+
         return {
           name: event.name,
           venue: venue?.name || 'Unknown Venue',
@@ -75,6 +96,8 @@ export class EventsService {
           zoneId,
           type: eventType,
           attendees: event.sales?.public?.startDateTime ? 1000 : undefined,
+          imageUrl,
+          url: event.url,
         };
       }).filter((e: Event) => e.zoneId !== 'unknown');
     } catch (error) {
@@ -169,6 +192,8 @@ export class EventsService {
           zoneId: 'stadium',
           type: 'sports',
           attendees: 68000,
+          imageUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=400',
+          url: 'https://www.seahawks.com',
         });
       }
     }
@@ -186,6 +211,8 @@ export class EventsService {
         zoneId: 'queen_anne',
         type: 'concert',
         attendees: 15000,
+        imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400',
+        url: 'https://www.climatepledgearena.com',
       });
     }
 

@@ -1,4 +1,4 @@
-import { zones, getZoneById } from '../data/zones.js';
+import { zones } from '../data/zones.js';
 import { getBaselineScore } from '../data/timePatterns.js';
 import { ZoneScore, TopPick, Event, WeatherConditions, FlightArrival } from '../types/index.js';
 
@@ -186,7 +186,7 @@ export class ScoringService {
     return Math.round(estimatedRate);
   }
 
-  determineTopPick(scores: ZoneScore[], events: Event[], flights: FlightArrival[]): TopPick {
+  determineTopPick(scores: ZoneScore[], events: Event[], _flights: FlightArrival[]): TopPick {
     if (scores.length === 0) {
       return {
         zoneId: 'downtown',

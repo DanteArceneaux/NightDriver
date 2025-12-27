@@ -42,8 +42,12 @@ export function showSurgeNotification(surge: SurgeAlert) {
     badge: '/icon-badge.png',
     tag: 'surge-' + surge.zoneId,
     requireInteraction: true,
-    vibrate: [200, 100, 200],
   });
+
+  // Vibrate separately (not part of NotificationOptions in TypeScript)
+  if ('vibrate' in navigator) {
+    navigator.vibrate([200, 100, 200]);
+  }
 
   // Play sound
   try {

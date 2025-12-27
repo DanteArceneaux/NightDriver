@@ -3,28 +3,20 @@ import { motion } from 'framer-motion';
 import { useZoneScores } from './hooks/useZoneScores';
 import { useDriverLocation } from './hooks/useDriverLocation';
 import { useAutoRefresh } from './hooks/useAutoRefresh';
+import { AppLayout } from './features/layout';
 import { Header } from './components/Header/Header';
-import { SeattleMap } from './components/Map/SeattleMap';
-import { TopPickCard } from './components/Recommendation/TopPickCard';
-import { ForecastTimeline } from './components/Timeline/ForecastTimeline';
-import { LiveConditions } from './components/Conditions/LiveConditions';
-import { Leaderboard } from './components/ZoneList/Leaderboard';
-import { EventsPanel } from './components/Events/EventsPanel';
-import { ZoneDetailSheet } from './components/ZoneDetail/ZoneDetailSheet';
 import { SurgeAlert } from './components/SurgeAlert';
 import { SkeletonHero, SkeletonMap, SkeletonTimeline, SkeletonLeaderboard } from './components/Skeleton/Skeleton';
 import { requestNotificationPermission } from './lib/notifications';
 import { calculateDistance, estimateDriveTime, calculateEfficiency } from './lib/distance';
 import { fetchConditions } from './lib/api';
-import type { ZoneScore } from './types';
 
 function App() {
   const { data, loading, error, connected, refresh } = useZoneScores(true); // Use WebSocket
-  const { location: driverLocation, permission } = useDriverLocation();
+  const { location: driverLocation } = useDriverLocation();
   const { countdown } = useAutoRefresh(30000); // 30 seconds for WebSocket
-  const [surges, setSurges] = useState<any[]>([]);
+  const [surges] = useState<any[]>([]);
   const [weather, setWeather] = useState<{ temp: number; description: string } | undefined>();
-  const [selectedZone, setSelectedZone] = useState<ZoneScore | null>(null);
 
   // Request notification permission on mount
   useEffect(() => {
@@ -117,105 +109,23 @@ function App() {
   const topZone = sortedZones.find(z => z.id === data.topPick.zoneId) || data.zones.find(z => z.id === data.topPick.zoneId);
 
   return (
-    <div className="min-h-screen text-white pb-12">
+    <>
       {/* Surge Alert */}
       <SurgeAlert surges={surges} />
 
-      {/* Header */}
-      <Header
+      {/* Theme-aware Layout */}
+      <AppLayout
+        zones={sortedZones}
+        topPick={data.topPick}
+        topZone={topZone}
+        driverLocation={driverLocation}
         connected={connected}
         countdown={countdown}
-        hasLocation={permission === 'granted' && !!driverLocation}
-        onRefresh={refresh}
         weather={weather}
+        error={error || undefined}
+        onRefresh={refresh}
       />
-
-      {/* Main Content */}
-      <motion.main
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-7xl mx-auto px-4 pt-28 space-y-6"
-      >
-        {/* Top Recommendation - Hero */}
-        <TopPickCard topPick={data.topPick} zone={topZone} driverLocation={driverLocation} />
-
-        {/* Map */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="h-[400px] md:h-[500px]"
-        >
-          <SeattleMap zones={sortedZones} onZoneClick={setSelectedZone} />
-        </motion.div>
-
-        {/* Timeline Forecast */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <ForecastTimeline />
-        </motion.div>
-
-        {/* Live Conditions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <LiveConditions />
-        </motion.div>
-
-        {/* Events Panel */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45 }}
-        >
-          <EventsPanel />
-        </motion.div>
-
-        {/* Zone Leaderboard */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Leaderboard zones={sortedZones} driverLocation={driverLocation} />
-        </motion.div>
-      </motion.main>
-
-      {/* Zone Detail Sheet */}
-      <ZoneDetailSheet 
-        zone={selectedZone} 
-        onClose={() => setSelectedZone(null)}
-        driverLocation={driverLocation}
-      />
-
-      {/* Footer */}
-      <motion.footer
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6 }}
-        className="mt-12 glass-strong border-t border-white/10"
-      >
-        <div className="max-w-7xl mx-auto px-4 py-6 text-center text-sm">
-          <p className="text-gray-400">
-            Last updated: <span className="text-neon-cyan font-mono">{new Date(data.timestamp).toLocaleTimeString()}</span>
-          </p>
-          <p className="mt-2 text-gray-500">
-            {connected ? '⚡ Live updates via WebSocket' : '📡 Reconnecting...'}
-          </p>
-          {error && (
-            <p className="mt-2 text-neon-orange">
-              ⚠️ {error}
-            </p>
-          )}
-        </div>
-      </motion.footer>
-    </div>
+    </>
   );
 }
 

@@ -133,7 +133,7 @@ export function createApiRouter(
   });
 
   // GET /api/forecast - Get 4-hour forecast
-  router.get('/forecast', async (req: Request, res: Response) => {
+  router.get('/forecast', async (_req: Request, res: Response) => {
     try {
       const forecast = scoringService.generateForecast(4);
 

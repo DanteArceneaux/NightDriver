@@ -3,6 +3,7 @@ import { X, Map, Music, CloudRain, Plane, TrendingUp, MapPin, Clock } from 'luci
 import type { ZoneScore, Coordinates } from '../../types';
 import { calculateDistance, estimateDriveTime, calculateEfficiency } from '../../lib/distance';
 import { openGoogleMaps, openWaze, openAppleMaps } from '../../lib/navigation';
+import { useTheme } from '../../features/theme';
 
 interface ZoneDetailSheetProps {
   zone: ZoneScore | null;
@@ -25,6 +26,8 @@ function getScoreBg(score: number): string {
 }
 
 export function ZoneDetailSheet({ zone, onClose, driverLocation }: ZoneDetailSheetProps) {
+  const { tokens } = useTheme();
+  
   if (!zone) return null;
 
   const scoreColor = getScoreColor(zone.score);
@@ -62,7 +65,7 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation }: ZoneDetailShe
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 z-50 max-h-[80vh] overflow-y-auto"
           >
-            <div className="glass-strong rounded-t-3xl border-t border-l border-r border-white/20 p-6 shadow-2xl">
+            <div className={`${tokens.cardBg} rounded-t-3xl border-t border-l border-r ${tokens.cardBorder} p-6 ${tokens.shadow}`}>
               {/* Header */}
               <div className="flex items-start justify-between mb-6">
                 <div className="flex-1">

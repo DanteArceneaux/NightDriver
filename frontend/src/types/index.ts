@@ -44,7 +44,10 @@ export interface Event {
   startTime: string;
   endTime: string;
   zoneId: string;
+  type?: 'sports' | 'concert' | 'conference' | 'festival' | 'other';
   attendees?: number;
+  imageUrl?: string;
+  url?: string;
 }
 
 export interface WeatherConditions {
@@ -70,6 +73,7 @@ export interface Conditions {
 
 export interface ForecastPoint {
   time: string;
+  hour: number;
   topZones: Array<{ id: string; name: string; score: number }>;
 }
 

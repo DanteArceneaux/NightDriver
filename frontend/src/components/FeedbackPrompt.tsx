@@ -9,7 +9,7 @@ interface FeedbackPromptProps {
 }
 
 export function FeedbackPrompt({
-  zoneId,
+  zoneId: _zoneId,
   zoneName,
   predictedScore,
   onSubmit,

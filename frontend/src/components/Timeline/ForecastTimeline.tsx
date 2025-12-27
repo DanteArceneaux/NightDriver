@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { TrendingUp, Clock } from 'lucide-react';
 import { Forecast } from '../../types';
 import { fetchForecast } from '../../lib/api';
+import { useTheme } from '../../features/theme';
 
 function formatHour(hour: number): string {
   if (hour === 0) return '12am';
@@ -26,6 +27,7 @@ function getScoreBgColor(score: number): string {
 }
 
 export function ForecastTimeline() {
+  const { tokens } = useTheme();
   const [forecast, setForecast] = useState<Forecast | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -46,8 +48,8 @@ export function ForecastTimeline() {
 
   if (loading || !forecast) {
     return (
-      <div className="glass p-6 rounded-2xl">
-        <div className="text-gray-400 flex items-center gap-2">
+      <div className={`${tokens.cardBg} p-6 ${tokens.borderRadius} ${tokens.cardBorder}`}>
+        <div className={`${tokens.textMuted} flex items-center gap-2`}>
           <Clock className="w-4 h-4 animate-spin" />
           Loading forecast...
         </div>
@@ -71,7 +73,7 @@ export function ForecastTimeline() {
   }).join(' ');
 
   return (
-    <div className="glass-strong rounded-2xl p-6 border border-white/10">
+    <div className={`${tokens.cardBg} ${tokens.borderRadius} p-6 ${tokens.cardBorder}`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-neon-cyan" />
@@ -128,21 +130,6 @@ export function ForecastTimeline() {
               <div className={`inline-flex items-center justify-center px-3 py-1 rounded-full border text-xs font-black ${bgClass} ${colorClass}`}>
                 {topZone.score}
               </div>
-
-              {/* Factors */}
-              {topZone.factors && (
-                <div className="mt-3 flex gap-1">
-                  {topZone.factors.events > 0 && (
-                    <span className="text-xs opacity-70">🎵</span>
-                  )}
-                  {topZone.factors.weather > 0 && (
-                    <span className="text-xs opacity-70">🌧️</span>
-                  )}
-                  {topZone.factors.flights > 0 && (
-                    <span className="text-xs opacity-70">✈️</span>
-                  )}
-                </div>
-              )}
             </motion.div>
           );
         })}
