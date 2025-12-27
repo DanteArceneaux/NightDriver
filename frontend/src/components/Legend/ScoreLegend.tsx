@@ -32,7 +32,7 @@ export function ScoreLegend({ isOpen, onClose }: ScoreLegendProps) {
               {/* Header */}
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <HelpCircle className="w-8 h-8 text-neon-cyan" />
+                  <HelpCircle className="w-8 h-8 text-theme-primary" />
                   <h2 className="text-3xl font-black text-white">
                     How Scores Work
                   </h2>
@@ -134,7 +134,7 @@ export function ScoreLegend({ isOpen, onClose }: ScoreLegendProps) {
               {/* Score Colors */}
               <div className="glass-strong rounded-2xl p-6 border border-white/10">
                 <div className="flex items-center gap-3 mb-4">
-                  <TrendingUp className="w-6 h-6 text-neon-cyan" />
+                  <TrendingUp className="w-6 h-6 text-theme-primary" />
                   <h3 className="text-xl font-bold text-white">Score Colors</h3>
                 </div>
                 <div className="space-y-3">
@@ -146,9 +146,9 @@ export function ScoreLegend({ isOpen, onClose }: ScoreLegendProps) {
                     <span className="text-white font-bold">60-79: HOT</span>
                     <span className="text-neon-orange font-bold">High demand</span>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-neon-cyan/20 border border-neon-cyan/50">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-theme-primary/20 border border-theme-primary/50">
                     <span className="text-white font-bold">40-59: WARM</span>
-                    <span className="text-neon-cyan font-semibold">Moderate</span>
+                    <span className="text-theme-primary font-semibold">Moderate</span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-xl bg-blue-500/20 border border-blue-500/50">
                     <span className="text-white font-bold">0-39: COOL</span>
@@ -160,7 +160,7 @@ export function ScoreLegend({ isOpen, onClose }: ScoreLegendProps) {
               {/* Formula */}
               <div className="mt-6 p-4 rounded-xl bg-gray-800/50 border border-gray-700">
                 <div className="text-center text-sm text-gray-400 mb-2">Final Score Formula</div>
-                <div className="text-center font-mono text-neon-cyan font-bold">
+                <div className="text-center font-mono text-theme-primary font-bold">
                   Baseline + Events + Weather + Flights + Traffic = Score (max 100)
                 </div>
               </div>

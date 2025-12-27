@@ -15,14 +15,14 @@ function formatHour(hour: number): string {
 function getScoreColor(score: number): string {
   if (score >= 80) return 'text-neon-pink';
   if (score >= 60) return 'text-neon-orange';
-  if (score >= 40) return 'text-neon-cyan';
+  if (score >= 40) return 'text-theme-primary';
   return 'text-blue-400';
 }
 
 function getScoreBgColor(score: number): string {
   if (score >= 80) return 'bg-neon-pink/20 border-neon-pink/50';
   if (score >= 60) return 'bg-neon-orange/20 border-neon-orange/50';
-  if (score >= 40) return 'bg-neon-cyan/20 border-neon-cyan/50';
+  if (score >= 40) return 'bg-theme-primary/20 border-theme-primary/50';
   return 'bg-blue-500/20 border-blue-500/50';
 }
 
@@ -76,7 +76,7 @@ export function ForecastTimeline() {
     <div className={`${tokens.cardBg} ${tokens.borderRadius} p-6 ${tokens.cardBorder}`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-neon-cyan" />
+          <TrendingUp className="w-5 h-5 text-theme-primary" />
           <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">
             4-Hour Forecast
           </h3>
@@ -113,7 +113,7 @@ export function ForecastTimeline() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex-shrink-0 w-40 glass rounded-xl p-4 border border-white/10 hover:border-neon-cyan/50 transition-all cursor-pointer"
+              className="flex-shrink-0 w-40 glass rounded-xl p-4 border border-white/10 hover:border-theme-primary/50 transition-all cursor-pointer"
             >
               {/* Time Label */}
               <div className="text-xs text-gray-400 font-medium mb-3 flex items-center justify-between">

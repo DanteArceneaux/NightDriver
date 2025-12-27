@@ -66,7 +66,7 @@ export function NeonCockpitLayout(props: LayoutProps) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${
                   activeTab === tab.id
-                    ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/50'
+                    ? 'bg-theme-primary/20 text-theme-primary border border-theme-primary/50'
                     : 'text-gray-400 hover:text-gray-200'
                 }`}
               >

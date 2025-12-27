@@ -37,7 +37,7 @@ export function AnalyticsView({ isOpen, onClose }: AnalyticsViewProps) {
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-white/10">
                 <div className="flex items-center gap-3">
-                  <BarChart3 className="w-6 h-6 text-neon-cyan" />
+                  <BarChart3 className="w-6 h-6 text-theme-primary" />
                   <h2 className="text-2xl font-black text-white uppercase tracking-wider">
                     Analytics
                   </h2>
@@ -56,7 +56,7 @@ export function AnalyticsView({ isOpen, onClose }: AnalyticsViewProps) {
                   onClick={() => setActiveTab('weekly')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all ${
                     activeTab === 'weekly'
-                      ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/50'
+                      ? 'bg-theme-primary/20 text-theme-primary border border-theme-primary/50'
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
@@ -66,7 +66,7 @@ export function AnalyticsView({ isOpen, onClose }: AnalyticsViewProps) {
                   onClick={() => setActiveTab('history')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all ${
                     activeTab === 'history'
-                      ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/50'
+                      ? 'bg-theme-primary/20 text-theme-primary border border-theme-primary/50'
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
@@ -76,7 +76,7 @@ export function AnalyticsView({ isOpen, onClose }: AnalyticsViewProps) {
                   onClick={() => setActiveTab('performance')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all ${
                     activeTab === 'performance'
-                      ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/50'
+                      ? 'bg-theme-primary/20 text-theme-primary border border-theme-primary/50'
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
                   }`}
                 >

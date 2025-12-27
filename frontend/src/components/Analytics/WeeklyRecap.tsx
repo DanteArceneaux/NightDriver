@@ -86,23 +86,23 @@ export function WeeklyRecap() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="glass-strong rounded-xl p-4 border border-neon-green/30"
+              className="glass-strong rounded-xl p-4 border border-theme-accent/30"
             >
               <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="w-5 h-5 text-neon-green" />
+                <DollarSign className="w-5 h-5 text-theme-accent" />
                 <span className="text-xs text-gray-400 uppercase">Total</span>
               </div>
-              <div className="text-3xl font-black text-neon-green">${stats.totalEarnings.toFixed(0)}</div>
+              <div className="text-3xl font-black text-theme-accent">${stats.totalEarnings.toFixed(0)}</div>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="glass-strong rounded-xl p-4 border border-neon-cyan/30"
+              className="glass-strong rounded-xl p-4 border border-theme-primary/30"
             >
               <div className="flex items-center gap-2 mb-2">
-                <Calendar className="w-5 h-5 text-neon-cyan" />
+                <Calendar className="w-5 h-5 text-theme-primary" />
                 <span className="text-xs text-gray-400 uppercase">Shifts</span>
               </div>
               <div className="text-3xl font-black text-white">{stats.totalShifts}</div>
@@ -112,10 +112,10 @@ export function WeeklyRecap() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="glass-strong rounded-xl p-4 border border-neon-purple/30"
+              className="glass-strong rounded-xl p-4 border border-theme-secondary/30"
             >
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-5 h-5 text-neon-purple" />
+                <Clock className="w-5 h-5 text-theme-secondary" />
                 <span className="text-xs text-gray-400 uppercase">Total Time</span>
               </div>
               <div className="text-2xl font-black text-white">{formatDuration(stats.totalMinutes)}</div>
@@ -164,7 +164,7 @@ export function WeeklyRecap() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-3xl font-black text-neon-green">
+                  <div className="text-3xl font-black text-theme-accent">
                     ${stats.bestShift.estimatedEarnings.toFixed(0)}
                   </div>
                   <div className="text-sm text-gray-400">

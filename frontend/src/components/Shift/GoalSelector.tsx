@@ -15,7 +15,7 @@ const goals: Array<{
     name: 'Balanced',
     icon: Zap,
     description: 'Good earnings + reasonable distance',
-    color: 'text-neon-cyan',
+    color: 'text-theme-primary',
   },
   {
     id: 'max_earnings',
@@ -52,7 +52,7 @@ export function GoalSelector() {
               onClick={() => setCurrentGoal(goal.id)}
               className={`p-4 rounded-xl border-2 transition-all ${
                 isActive
-                  ? 'bg-white/10 border-neon-cyan shadow-[0_0_15px_rgba(0,255,238,0.3)]'
+                  ? 'bg-white/10 border-theme-primary shadow-[0_0_15px_rgba(0,255,238,0.3)]'
                   : 'bg-white/5 border-white/10 hover:border-white/30'
               }`}
             >

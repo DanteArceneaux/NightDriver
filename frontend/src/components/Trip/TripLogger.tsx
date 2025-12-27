@@ -66,7 +66,7 @@ export function TripLogger({ isOpen, onClose }: TripLoggerProps) {
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-white/10">
                 <div className="flex items-center gap-3">
-                  <Plus className="w-6 h-6 text-neon-green" />
+                  <Plus className="w-6 h-6 text-theme-accent" />
                   <h2 className="text-2xl font-black text-white uppercase tracking-wider">
                     Log Trip
                   </h2>
@@ -92,7 +92,7 @@ export function TripLogger({ isOpen, onClose }: TripLoggerProps) {
                     value={zoneId}
                     onChange={(e) => setZoneId(e.target.value)}
                     required
-                    className="w-full px-4 py-3 bg-black/40 border border-white/20 rounded-xl text-white font-medium focus:border-neon-cyan focus:outline-none focus:ring-2 focus:ring-neon-cyan/30"
+                    className="w-full px-4 py-3 bg-black/40 border border-white/20 rounded-xl text-white font-medium focus:border-theme-primary focus:outline-none focus:ring-2 focus:ring-neon-cyan/30"
                   >
                     <option value="">Select a zone...</option>
                     {zones.map((zone) => (
@@ -106,11 +106,11 @@ export function TripLogger({ isOpen, onClose }: TripLoggerProps) {
                 {/* Earnings */}
                 <div>
                   <label className="flex items-center gap-2 text-sm font-bold text-white mb-2">
-                    <DollarSign className="w-4 h-4 text-neon-green" />
+                    <DollarSign className="w-4 h-4 text-theme-accent" />
                     Actual Earnings *
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neon-green font-bold">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-theme-accent font-bold">$</span>
                     <input
                       type="number"
                       step="0.01"
@@ -118,7 +118,7 @@ export function TripLogger({ isOpen, onClose }: TripLoggerProps) {
                       onChange={(e) => setEarnings(e.target.value)}
                       placeholder="0.00"
                       required
-                      className="w-full pl-8 pr-4 py-3 bg-black/40 border border-white/20 rounded-xl text-white font-medium focus:border-neon-cyan focus:outline-none focus:ring-2 focus:ring-neon-cyan/30"
+                      className="w-full pl-8 pr-4 py-3 bg-black/40 border border-white/20 rounded-xl text-white font-medium focus:border-theme-primary focus:outline-none focus:ring-2 focus:ring-neon-cyan/30"
                     />
                   </div>
                 </div>
@@ -135,7 +135,7 @@ export function TripLogger({ isOpen, onClose }: TripLoggerProps) {
                     onChange={(e) => setDuration(e.target.value)}
                     placeholder="30"
                     required
-                    className="w-full px-4 py-3 bg-black/40 border border-white/20 rounded-xl text-white font-medium focus:border-neon-cyan focus:outline-none focus:ring-2 focus:ring-neon-cyan/30"
+                    className="w-full px-4 py-3 bg-black/40 border border-white/20 rounded-xl text-white font-medium focus:border-theme-primary focus:outline-none focus:ring-2 focus:ring-neon-cyan/30"
                   />
                 </div>
 
@@ -149,7 +149,7 @@ export function TripLogger({ isOpen, onClose }: TripLoggerProps) {
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="Any notes about this trip..."
                     rows={2}
-                    className="w-full px-4 py-3 bg-black/40 border border-white/20 rounded-xl text-white font-medium focus:border-neon-cyan focus:outline-none focus:ring-2 focus:ring-neon-cyan/30 resize-none"
+                    className="w-full px-4 py-3 bg-black/40 border border-white/20 rounded-xl text-white font-medium focus:border-theme-primary focus:outline-none focus:ring-2 focus:ring-neon-cyan/30 resize-none"
                   />
                 </div>
 
@@ -158,7 +158,7 @@ export function TripLogger({ isOpen, onClose }: TripLoggerProps) {
                   type="submit"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full px-6 py-4 bg-gradient-to-r from-neon-green to-neon-cyan rounded-xl text-black font-black text-lg uppercase tracking-wider shadow-lg hover:shadow-neon-green/50 transition-all"
+                  className="w-full px-6 py-4 bg-gradient-to-r from-theme-primary to-theme-secondary rounded-xl text-black font-black text-lg uppercase tracking-wider shadow-lg hover:shadow-theme-primary/50 transition-all"
                 >
                   Log Trip
                 </motion.button>

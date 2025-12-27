@@ -40,7 +40,7 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
             {/* Left: Title + Status Pills */}
             <div className="flex items-center gap-4 flex-wrap">
               <h1 className="text-xl md:text-2xl font-bold tracking-tight">
-                🚗 <span className="bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent">
+                🚗 <span className="bg-gradient-to-r from-theme-primary to-theme-secondary bg-clip-text text-transparent">
                   Night Driver
                 </span>
               </h1>
@@ -62,7 +62,7 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
 
                 {/* Location Indicator */}
                 {hasLocation && (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-neon-cyan/20 text-neon-cyan">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-theme-primary/20 text-theme-primary">
                     <MapPin className="w-3 h-3" />
                     <span className="hidden sm:inline">GPS</span>
                   </div>
@@ -97,7 +97,7 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
                     cx="24"
                     cy="24"
                     r="16"
-                    className="stroke-neon-cyan transition-all duration-1000"
+                    className="stroke-theme-primary transition-all duration-1000"
                     strokeWidth="3"
                     fill="none"
                     strokeDasharray={circumference}
@@ -105,7 +105,7 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
                     strokeLinecap="round"
                   />
                 </svg>
-                <span className="text-xs font-bold text-neon-cyan z-10">
+                <span className="text-xs font-bold text-theme-primary z-10">
                   {countdown}
                 </span>
               </div>
@@ -119,7 +119,7 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
                   className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-xl transition-colors border border-white/10"
                   title="Change theme"
                 >
-                  <Palette className="w-4 h-4 text-neon-cyan" />
+                  <Palette className="w-4 h-4 text-theme-primary" />
                   <span className="text-xs font-medium hidden md:inline">{currentThemeName}</span>
                   <ChevronDown className="w-3 h-3" />
                 </motion.button>
@@ -149,7 +149,7 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
                             }}
                             className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors ${
                               currentThemeId === theme.id
-                                ? 'bg-neon-cyan/20 text-neon-cyan'
+                                ? 'bg-theme-primary/20 text-theme-primary'
                                 : 'text-gray-300 hover:bg-white/10'
                             }`}
                           >
@@ -170,7 +170,7 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
                 className="p-2 hover:bg-white/10 rounded-xl transition-colors"
                 title="Analytics"
               >
-                <BarChart3 className="w-5 h-5 text-neon-cyan" />
+                <BarChart3 className="w-5 h-5 text-theme-primary" />
               </motion.button>
 
               {/* Settings Button */}
@@ -181,7 +181,7 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
                 className="p-2 hover:bg-white/10 rounded-xl transition-colors"
                 title="Settings"
               >
-                <Settings className="w-5 h-5 text-neon-cyan" />
+                <Settings className="w-5 h-5 text-theme-primary" />
               </motion.button>
 
               {/* Help Button */}
@@ -192,7 +192,7 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
                 className="p-2 hover:bg-white/10 rounded-xl transition-colors"
                 title="How scores work"
               >
-                <HelpCircle className="w-5 h-5 text-neon-cyan" />
+                <HelpCircle className="w-5 h-5 text-theme-primary" />
               </motion.button>
 
               {/* Refresh Button */}
@@ -200,7 +200,7 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onRefresh}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-neon-cyan/20 to-neon-purple/20 hover:from-neon-cyan/30 hover:to-neon-purple/30 rounded-xl text-sm font-medium text-white border border-neon-cyan/30 transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-theme-primary/20 to-theme-secondary/20 hover:from-theme-primary/30 hover:to-theme-secondary/30 rounded-xl text-sm font-medium text-white border border-theme-primary/30 transition-all"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span className="hidden sm:inline">Refresh</span>

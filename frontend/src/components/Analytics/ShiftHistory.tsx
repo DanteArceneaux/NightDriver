@@ -58,7 +58,7 @@ export function ShiftHistory() {
             key={shift.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass rounded-xl p-4 border border-white/10 hover:border-neon-cyan/50 transition-all"
+            className="glass rounded-xl p-4 border border-white/10 hover:border-theme-primary/50 transition-all"
           >
             <div className="flex items-start justify-between mb-3">
               <div>
@@ -66,13 +66,13 @@ export function ShiftHistory() {
                   {formatDate(shift.startTime)} → {formatDate(shift.endTime)}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs px-2 py-1 rounded-full bg-neon-purple/20 text-neon-purple font-bold">
+                  <span className="text-xs px-2 py-1 rounded-full bg-theme-secondary/20 text-theme-secondary font-bold">
                     {getGoalLabel(shift.goal)}
                   </span>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-black text-neon-green">
+                <div className="text-2xl font-black text-theme-accent">
                   ${shift.estimatedEarnings.toFixed(0)}
                 </div>
                 <div className="text-xs text-gray-400">estimated</div>

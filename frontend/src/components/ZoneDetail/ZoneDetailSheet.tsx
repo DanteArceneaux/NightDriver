@@ -15,14 +15,14 @@ interface ZoneDetailSheetProps {
 function getScoreColor(score: number): string {
   if (score >= 80) return 'text-neon-pink';
   if (score >= 60) return 'text-neon-orange';
-  if (score >= 40) return 'text-neon-cyan';
+  if (score >= 40) return 'text-theme-primary';
   return 'text-blue-400';
 }
 
 function getScoreBg(score: number): string {
   if (score >= 80) return 'bg-neon-pink/20 border-neon-pink/50';
   if (score >= 60) return 'bg-neon-orange/20 border-neon-orange/50';
-  if (score >= 40) return 'bg-neon-cyan/20 border-neon-cyan/50';
+  if (score >= 40) return 'bg-theme-primary/20 border-theme-primary/50';
   return 'bg-blue-500/20 border-blue-500/50';
 }
 
@@ -211,7 +211,7 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
                   onClick={() => openGoogleMaps(stagingSpot || zone.coordinates)}
                   className="flex flex-col items-center gap-2 p-4 glass-strong rounded-xl hover:bg-white/10 transition-colors border border-white/10"
                 >
-                  <Map className="w-6 h-6 text-neon-cyan" />
+                  <Map className="w-6 h-6 text-theme-primary" />
                   <span className="text-xs font-bold text-white">Google Maps</span>
                 </motion.button>
 
@@ -221,7 +221,7 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
                   onClick={() => openWaze(stagingSpot || zone.coordinates)}
                   className="flex flex-col items-center gap-2 p-4 glass-strong rounded-xl hover:bg-white/10 transition-colors border border-white/10"
                 >
-                  <Map className="w-6 h-6 text-neon-cyan" />
+                  <Map className="w-6 h-6 text-theme-primary" />
                   <span className="text-xs font-bold text-white">Waze</span>
                 </motion.button>
 
@@ -231,7 +231,7 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
                   onClick={() => openAppleMaps(stagingSpot || zone.coordinates)}
                   className="flex flex-col items-center gap-2 p-4 glass-strong rounded-xl hover:bg-white/10 transition-colors border border-white/10"
                 >
-                  <Map className="w-6 h-6 text-neon-cyan" />
+                  <Map className="w-6 h-6 text-theme-primary" />
                   <span className="text-xs font-bold text-white">Apple Maps</span>
                 </motion.button>
               </div>

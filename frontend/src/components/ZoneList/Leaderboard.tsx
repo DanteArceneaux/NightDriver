@@ -20,7 +20,7 @@ function getRankBadge(rank: number) {
 function getScoreColor(score: number): string {
   if (score >= 80) return 'text-neon-pink';
   if (score >= 60) return 'text-neon-orange';
-  if (score >= 40) return 'text-neon-cyan';
+  if (score >= 40) return 'text-theme-primary';
   return 'text-blue-400';
 }
 
@@ -73,7 +73,7 @@ export function Leaderboard({ zones, driverLocation }: LeaderboardProps) {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="relative glass rounded-xl p-4 border border-white/5 hover:border-neon-cyan/30 transition-all group cursor-pointer"
+              className="relative glass rounded-xl p-4 border border-white/5 hover:border-theme-primary/30 transition-all group cursor-pointer"
             >
               {/* Background Progress Bar */}
               <div className="absolute inset-0 rounded-xl overflow-hidden">
@@ -160,7 +160,7 @@ export function Leaderboard({ zones, driverLocation }: LeaderboardProps) {
                     }}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-3 py-2 bg-neon-cyan/20 hover:bg-neon-cyan/30 border border-neon-cyan/50 rounded-lg text-neon-cyan text-xs font-bold"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-3 py-2 bg-theme-primary/20 hover:bg-theme-primary/30 border border-theme-primary/50 rounded-lg text-theme-primary text-xs font-bold"
                   >
                     <Map className="w-3 h-3" />
                     GO

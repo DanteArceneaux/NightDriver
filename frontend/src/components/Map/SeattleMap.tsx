@@ -195,7 +195,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
     if (themeId === 'pro') {
       return 'bg-blue-600/80 text-white border-2 border-blue-400 shadow-lg';
     }
-    return 'bg-neon-cyan/30 text-neon-cyan border-2 border-neon-cyan/50 shadow-[0_0_15px_rgba(0,255,238,0.4)]';
+    return 'bg-theme-primary/30 text-theme-primary border-2 border-theme-primary/50 shadow-[0_0_15px_rgba(0,255,238,0.4)]';
   };
 
   const getInactiveButtonClass = () => {
@@ -324,7 +324,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
               >
                 <div className="text-sm">
                   <div className="font-bold text-white text-base mb-1">{zone.name}</div>
-                  <div className="text-neon-cyan font-bold text-lg mb-2">Score: {zone.score}</div>
+                  <div className="text-theme-primary font-bold text-lg mb-2">Score: {zone.score}</div>
                   <div className="text-xs text-gray-300 space-y-1">
                     <div className="text-gray-400">Base: {zone.factors.baseline}</div>
                     {zone.factors.events > 0 && (

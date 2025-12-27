@@ -91,7 +91,7 @@ function App() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center glass-strong p-12 rounded-3xl border border-neon-pink/30"
+          className="text-center glass-strong p-12 rounded-3xl border border-theme-accent/30"
         >
           <div className="text-neon-pink text-2xl font-bold mb-4">Connection Error</div>
           <div className="text-gray-300 mb-6">{error}</div>
@@ -99,7 +99,7 @@ function App() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={refresh}
-            className="px-8 py-3 bg-gradient-to-r from-neon-cyan to-neon-purple rounded-xl text-white font-bold"
+            className="px-8 py-3 bg-gradient-to-r from-theme-primary to-theme-secondary rounded-xl text-white font-bold"
           >
             Retry Connection
           </motion.button>

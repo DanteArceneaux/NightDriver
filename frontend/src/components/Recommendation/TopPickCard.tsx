@@ -80,10 +80,10 @@ function getScoreTheme(score: number, themeId: string) {
     label: 'HOT ZONE'
   };
   return {
-    gradient: 'bg-gradient-to-br from-neon-cyan/20 via-blue-500/10 to-transparent',
+    gradient: 'bg-gradient-to-br from-theme-primary/20 via-blue-500/10 to-transparent',
     glow: '',
-    text: 'text-neon-cyan',
-    border: 'border-neon-cyan/50',
+    text: 'text-theme-primary',
+    border: 'border-theme-primary/50',
     label: 'ACTIVE ZONE'
   };
 }
@@ -190,7 +190,7 @@ export function TopPickCard({ topPick, zone, driverLocation }: TopPickCardProps)
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => openNavigation(zone.coordinates, getDefaultNavigationApp())}
-                className="flex items-center gap-2 px-4 py-2 bg-neon-cyan/20 hover:bg-neon-cyan/30 border border-neon-cyan/50 rounded-xl text-neon-cyan font-bold text-xs transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-theme-primary/20 hover:bg-theme-primary/30 border border-theme-primary/50 rounded-xl text-theme-primary font-bold text-xs transition-all"
               >
                 <Map className="w-4 h-4" />
                 NAVIGATE

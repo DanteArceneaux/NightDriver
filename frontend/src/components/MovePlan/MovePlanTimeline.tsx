@@ -107,13 +107,13 @@ export function MovePlanTimeline({ zones, events }: MovePlanTimelineProps) {
     <div className={`${tokens.cardBg} ${tokens.borderRadius} p-6 ${tokens.cardBorder}`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Calendar className="w-6 h-6 text-neon-cyan" />
+          <Calendar className="w-6 h-6 text-theme-primary" />
           <h3 className={`text-lg ${tokens.fontDisplay} ${tokens.primaryText}`}>
             4-Hour Move Plan
           </h3>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-black text-neon-green">
+          <div className="text-2xl font-black text-theme-accent">
             ${totalEstimatedEarnings.toFixed(0)}
           </div>
           <div className="text-xs text-gray-400">Potential Earnings</div>
@@ -131,14 +131,14 @@ export function MovePlanTimeline({ zones, events }: MovePlanTimelineProps) {
           >
             {/* Timeline connector */}
             {idx < movePlan.length - 1 && (
-              <div className="absolute left-8 top-full w-0.5 h-4 bg-neon-cyan/30" />
+              <div className="absolute left-8 top-full w-0.5 h-4 bg-theme-primary/30" />
             )}
 
             <div className="flex items-start gap-4">
               {/* Step number */}
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-full bg-neon-cyan/20 border-2 border-neon-cyan flex items-center justify-center">
-                  <span className="text-xl font-black text-neon-cyan">{idx + 1}</span>
+                <div className="w-12 h-12 rounded-full bg-theme-primary/20 border-2 border-theme-primary flex items-center justify-center">
+                  <span className="text-xl font-black text-theme-primary">{idx + 1}</span>
                 </div>
               </div>
 
@@ -151,12 +151,12 @@ export function MovePlanTimeline({ zones, events }: MovePlanTimelineProps) {
                 </div>
 
                 <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="w-5 h-5 text-neon-cyan" />
+                  <MapPin className="w-5 h-5 text-theme-primary" />
                   <span className="text-lg font-bold text-white">{step.zone.name}</span>
                   <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
-                    step.zone.score >= 80 ? 'bg-neon-pink/20 text-neon-pink' :
-                    step.zone.score >= 60 ? 'bg-neon-orange/20 text-neon-orange' :
-                    'bg-neon-cyan/20 text-neon-cyan'
+                    step.zone.score >= 80 ? 'bg-theme-accent/20 text-theme-accent' :
+                    step.zone.score >= 60 ? 'bg-theme-secondary/20 text-theme-secondary' :
+                    'bg-theme-primary/20 text-theme-primary'
                   }`}>
                     {step.zone.score}
                   </span>
@@ -167,8 +167,8 @@ export function MovePlanTimeline({ zones, events }: MovePlanTimelineProps) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-neon-green" />
-                  <span className="text-sm font-bold text-neon-green">
+                  <TrendingUp className="w-4 h-4 text-theme-accent" />
+                  <span className="text-sm font-bold text-theme-accent">
                     ${step.estimatedEarnings.toFixed(0)}/hr
                   </span>
                 </div>
@@ -178,7 +178,7 @@ export function MovePlanTimeline({ zones, events }: MovePlanTimelineProps) {
         ))}
       </div>
 
-      <div className="mt-6 p-4 bg-neon-cyan/10 rounded-xl border border-neon-cyan/30">
+      <div className="mt-6 p-4 bg-theme-primary/10 rounded-xl border border-theme-primary/30">
         <p className="text-sm text-gray-300 text-center">
           💡 <span className="font-bold">Pro Tip:</span> Follow this plan to maximize earnings during your shift
         </p>

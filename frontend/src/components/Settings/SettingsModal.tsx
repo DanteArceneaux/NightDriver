@@ -89,7 +89,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     onClick={() => setActiveTab(tab.id as any)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all ${
                       activeTab === tab.id
-                        ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/50'
+                        ? 'bg-theme-primary/20 text-theme-primary border border-theme-primary/50'
                         : 'text-gray-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
@@ -106,7 +106,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <>
                     <div>
                       <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-                        <Palette className="w-5 h-5 text-neon-cyan" />
+                        <Palette className="w-5 h-5 text-theme-primary" />
                         Color Scheme for {currentThemeId === 'neon' ? 'Neon Cockpit' : currentThemeId === 'pro' ? 'Pro Dashboard' : currentThemeId === 'hud' ? 'Game HUD' : 'Car Mode'}
                       </h3>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -118,7 +118,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             onClick={() => setColorScheme(scheme.id)}
                             className={`p-4 rounded-xl border-2 transition-all ${
                               getCurrentColorScheme() === scheme.id
-                                ? 'border-neon-cyan bg-neon-cyan/10'
+                                ? 'border-theme-primary bg-theme-primary/10'
                                 : 'border-white/10 hover:border-white/30'
                             }`}
                           >
@@ -136,7 +136,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <>
                     <div>
                       <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-                        <Bell className="w-5 h-5 text-neon-cyan" />
+                        <Bell className="w-5 h-5 text-theme-primary" />
                         Alert Settings
                       </h3>
                       <div className="space-y-4">
@@ -152,7 +152,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           <button
                             onClick={() => settings.updateSettings({ voiceAlerts: !settings.voiceAlerts })}
                             className={`w-12 h-6 rounded-full transition-colors ${
-                              settings.voiceAlerts ? 'bg-neon-green' : 'bg-gray-600'
+                              settings.voiceAlerts ? 'bg-theme-primary' : 'bg-gray-600'
                             }`}
                           >
                             <div className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
@@ -208,7 +208,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <>
                     <div>
                       <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-neon-green" />
+                        <DollarSign className="w-5 h-5 text-theme-accent" />
                         Personal Settings
                       </h3>
                       <div className="space-y-4">
@@ -243,7 +243,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           <button
                             onClick={() => settings.updateSettings({ offlineMode: !settings.offlineMode })}
                             className={`w-12 h-6 rounded-full transition-colors ${
-                              settings.offlineMode ? 'bg-neon-green' : 'bg-gray-600'
+                              settings.offlineMode ? 'bg-theme-primary' : 'bg-gray-600'
                             }`}
                           >
                             <div className={`w-5 h-5 bg-white rounded-full transform transition-transform ${

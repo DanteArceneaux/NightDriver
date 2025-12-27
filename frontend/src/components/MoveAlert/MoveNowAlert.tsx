@@ -73,7 +73,7 @@ export function MoveNowAlert({ recommendation, onDismiss, onNavigate }: MoveNowA
               <div className="text-xs text-gray-400">Distance</div>
             </div>
             <div className="glass rounded-lg p-3 text-center">
-              <Clock className="w-5 h-5 text-neon-cyan mx-auto mb-1" />
+              <Clock className="w-5 h-5 text-theme-primary mx-auto mb-1" />
               <div className="text-lg font-bold text-white">
                 {recommendation.driveTime} min
               </div>

@@ -158,7 +158,7 @@ export function EventsPanel() {
                         : timeInfo.status === 'starting'
                         ? 'border-neon-orange/50 bg-neon-orange/5'
                         : 'border-white/5'
-                    } ${event.url ? 'cursor-pointer hover:border-neon-cyan/50' : ''}`}
+                    } ${event.url ? 'cursor-pointer hover:border-theme-primary/50' : ''}`}
                     onClick={() => event.url && window.open(event.url, '_blank')}
                   >
                     <div className="flex gap-3 p-4">
@@ -225,9 +225,9 @@ export function EventsPanel() {
                         </div>
 
                         {/* Zone Boost Badge */}
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-neon-cyan/20 border border-neon-cyan/50 rounded-lg">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-theme-primary/20 border border-theme-primary/50 rounded-lg">
                           <span className="text-xs text-gray-300">Boosting:</span>
-                          <span className="text-xs text-neon-cyan font-bold uppercase">
+                          <span className="text-xs text-theme-primary font-bold uppercase">
                             {event.zoneId.replace('_', ' ')}
                           </span>
                           <span className="text-neon-orange font-bold text-sm">

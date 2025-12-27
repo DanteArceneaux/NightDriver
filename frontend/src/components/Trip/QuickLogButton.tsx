@@ -19,7 +19,7 @@ export function QuickLogButton() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setShowLogger(true)}
-        className="fixed bottom-6 right-6 z-40 w-16 h-16 bg-gradient-to-r from-neon-green to-neon-cyan rounded-full shadow-2xl flex items-center justify-center hover:shadow-neon-green/50 transition-shadow"
+        className="fixed bottom-6 right-6 z-40 w-16 h-16 bg-gradient-to-r from-theme-primary to-theme-secondary rounded-full shadow-2xl flex items-center justify-center hover:shadow-theme-primary/50 transition-shadow"
         title="Log Trip"
       >
         <Plus className="w-8 h-8 text-black" strokeWidth={3} />

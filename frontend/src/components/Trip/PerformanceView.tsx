@@ -36,10 +36,10 @@ export function PerformanceView() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-strong rounded-xl p-4 border border-neon-green/30"
+          className="glass-strong rounded-xl p-4 border border-theme-accent/30"
         >
-          <DollarSign className="w-5 h-5 text-neon-green mb-2" />
-          <div className="text-2xl font-black text-neon-green">${totalEarnings.toFixed(0)}</div>
+          <DollarSign className="w-5 h-5 text-theme-accent mb-2" />
+          <div className="text-2xl font-black text-theme-accent">${totalEarnings.toFixed(0)}</div>
           <div className="text-xs text-gray-400">Total Logged</div>
         </motion.div>
 
@@ -47,9 +47,9 @@ export function PerformanceView() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="glass-strong rounded-xl p-4 border border-neon-cyan/30"
+          className="glass-strong rounded-xl p-4 border border-theme-primary/30"
         >
-          <MapPin className="w-5 h-5 text-neon-cyan mb-2" />
+          <MapPin className="w-5 h-5 text-theme-primary mb-2" />
           <div className="text-2xl font-black text-white">{totalTrips}</div>
           <div className="text-xs text-gray-400">Total Trips</div>
         </motion.div>
@@ -74,7 +74,7 @@ export function PerformanceView() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.05 }}
-            className="glass rounded-xl p-4 flex items-center justify-between border border-white/10 hover:border-neon-cyan/50 transition-all"
+            className="glass rounded-xl p-4 flex items-center justify-between border border-white/10 hover:border-theme-primary/50 transition-all"
           >
             <div className="flex items-center gap-3">
               {idx === 0 && <Award className="w-5 h-5 text-yellow-400" />}
@@ -84,7 +84,7 @@ export function PerformanceView() {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-xl font-black text-neon-green">${Math.round(perf.actualHourlyRate)}/hr</div>
+              <div className="text-xl font-black text-theme-accent">${Math.round(perf.actualHourlyRate)}/hr</div>
               <div className="text-xs text-gray-400">${perf.totalEarnings.toFixed(0)} total</div>
             </div>
           </motion.div>
