@@ -22,7 +22,7 @@ export function SurgeAlert({ surges }: SurgeAlertProps) {
       setVisible(true);
 
       // Play sound
-      playS urgeSound();
+      playSurgeSound();
 
       // Haptic vibration
       triggerHapticFeedback();
