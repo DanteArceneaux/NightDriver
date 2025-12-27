@@ -31,6 +31,46 @@ export function createApiRouter(
 ): Router {
   const router = Router();
 
+  // GET /api/status - Get API status for each data source
+  router.get('/status', async (_req: Request, res: Response) => {
+    try {
+      const status = {
+        timestamp: new Date().toISOString(),
+        sources: {
+          weather: {
+            enabled: !!weatherService,
+            source: process.env.WEATHER_API_KEY ? 'real' : 'mock',
+            provider: process.env.WEATHER_API_KEY ? 'OpenWeatherMap' : 'Mock',
+            lastFetch: getCached(weatherCache, 'weather')?.timestamp || null,
+          },
+          events: {
+            enabled: !!eventsService,
+            source: process.env.TICKETMASTER_API_KEY ? 'real' : 'mock',
+            provider: process.env.TICKETMASTER_API_KEY ? 'Ticketmaster' : 'Mock',
+            lastFetch: getCached(eventsCache, 'events')?.timestamp || null,
+          },
+          flights: {
+            enabled: !!flightsService,
+            source: process.env.AVIATION_STACK_API_KEY ? 'real' : 'mock',
+            provider: process.env.AVIATION_STACK_API_KEY ? 'AviationStack' : 'Mock',
+            lastFetch: getCached(flightsCache, 'flights')?.timestamp || null,
+          },
+          traffic: {
+            enabled: !!trafficService,
+            source: 'mock', // Traffic is currently always mock
+            provider: 'Mock',
+            lastFetch: getCached(trafficCache, 'traffic')?.timestamp || null,
+          },
+        },
+      };
+
+      res.json(status);
+    } catch (error) {
+      console.error('Error in /status:', error);
+      res.status(500).json({ error: 'Failed to get status' });
+    }
+  });
+
   // GET /api/zones - Get all zones with current scores
   router.get('/zones', async (_req: Request, res: Response) => {
     try {

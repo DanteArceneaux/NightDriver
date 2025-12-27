@@ -4,6 +4,7 @@ import { Radio, MapPin, CloudRain, RefreshCw, HelpCircle, Palette, ChevronDown, 
 import { ScoreLegend } from '../Legend/ScoreLegend';
 import { SettingsModal } from '../Settings/SettingsModal';
 import { AnalyticsView } from '../Analytics/AnalyticsView';
+import { DataStatusBadges } from './DataStatusBadges';
 import { useTheme } from '../../features/theme';
 import { themes } from '../../features/theme/themes';
 
@@ -72,6 +73,9 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather, 
                   <Radio className="w-3 h-3" />
                   {connected ? 'LIVE' : 'OFFLINE'}
                 </motion.div>
+
+                {/* Data Status Badges */}
+                <DataStatusBadges />
 
                 {/* Location Indicator */}
                 {hasLocation && (
