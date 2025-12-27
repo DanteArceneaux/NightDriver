@@ -453,6 +453,53 @@ export function createApiRouter(
     }
   });
 
+  // GET /api/trip-chain/:fromZoneId - "Where should I end up next?"
+  router.get('/trip-chain/:fromZoneId', async (req: Request, res: Response) => {
+    try {
+      const { fromZoneId } = req.params;
+      const currentTime = new Date();
+
+      // Use cached base scores if available; otherwise compute.
+      const cached = getCached(scoresCache, 'zones') as any | undefined;
+      let baseZones: ZoneScore[] | undefined = cached?.zones;
+
+      if (!baseZones || !Array.isArray(baseZones) || baseZones.length === 0) {
+        const [weather, events, flights, traffic] = await Promise.all([
+          getWeatherData(weatherService),
+          getEventsData(eventsService),
+          getFlightsData(flightsService),
+          getTrafficData(trafficService),
+        ]);
+
+        baseZones = scoringService.calculateZoneScores(
+          currentTime,
+          events,
+          weather,
+          flights,
+          traffic
+        );
+      }
+
+      // Apply real-time pulses
+      const zonesWithPulses = applyPulseModifiers(baseZones, driverPulseService);
+
+      const { TripChainService } = await import('../services/tripChain.service.js');
+      const tripChainService = new TripChainService();
+
+      const recommendations = tripChainService.getRecommendations(fromZoneId, zonesWithPulses, 3);
+
+      res.json({
+        timestamp: currentTime.toISOString(),
+        fromZoneId,
+        recommendations,
+        note: 'Heuristic chain suggestions (metadata + live scores + distance penalty).',
+      });
+    } catch (error) {
+      console.error('Error in /trip-chain:', error);
+      res.status(500).json({ error: 'Failed to generate trip chain recommendations' });
+    }
+  });
+
   // GET /api/money-makers - Get all money-making intelligence
   router.get('/money-makers', async (_req: Request, res: Response) => {
     try {
