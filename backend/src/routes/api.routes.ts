@@ -709,14 +709,26 @@ export function createApiRouter(
   // POST /api/shift-planner - Generate optimal shift plan (NEW)
   router.post('/shift-planner', async (req: Request, res: Response) => {
     try {
+      console.log('📅 Shift planner request received:', req.body);
+      
       const { ShiftPlannerService } = await import('../services/shiftPlanner.service.js');
       const plannerService = new ShiftPlannerService();
 
       const { startTime, endTime, startingLocation, vehicleType, currentBatteryPercent, goals } = req.body;
 
       if (!startTime || !endTime || !startingLocation) {
+        console.error('❌ Missing required fields:', { startTime, endTime, startingLocation });
         return res.status(400).json({ error: 'startTime, endTime, and startingLocation required' });
       }
+
+      console.log('📅 Planning shift with params:', {
+        startTime,
+        endTime,
+        startingLocation,
+        vehicleType,
+        currentBatteryPercent,
+        goals,
+      });
 
       const plan = await plannerService.planShift({
         startTime: new Date(startTime),
@@ -727,10 +739,19 @@ export function createApiRouter(
         goals,
       });
 
+      console.log('✅ Shift plan generated successfully:', {
+        totalHours: plan.totalHours,
+        segments: plan.segments.length,
+        estimatedEarnings: plan.estimatedTotalEarnings,
+      });
+
       res.json(plan);
     } catch (error) {
-      console.error('Error planning shift:', error);
-      res.status(500).json({ error: 'Failed to plan shift' });
+      console.error('❌ Error planning shift:', error);
+      res.status(500).json({ 
+        error: 'Failed to plan shift', 
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

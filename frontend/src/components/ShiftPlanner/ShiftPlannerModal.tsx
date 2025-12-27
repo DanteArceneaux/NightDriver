@@ -41,7 +41,17 @@ export function ShiftPlannerModal({ currentLocation, onClose }: ShiftPlannerModa
       const now = new Date();
       const endTime = new Date(now.getTime() + 8 * 60 * 60 * 1000); // 8 hours from now
 
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shift-planner`, {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+      console.log('📅 Shift Planner Request:', {
+        url: `${backendUrl}/api/shift-planner`,
+        startTime: now.toISOString(),
+        endTime: endTime.toISOString(),
+        startingLocation: currentLocation,
+        vehicleType,
+        currentBatteryPercent: vehicleType === 'ev' ? batteryPercent : undefined,
+      });
+
+      const response = await fetch(`${backendUrl}/api/shift-planner`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -54,11 +64,20 @@ export function ShiftPlannerModal({ currentLocation, onClose }: ShiftPlannerModa
         }),
       });
 
+      console.log('📅 Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('📅 API Error:', errorText);
+        throw new Error(`API returned ${response.status}: ${errorText}`);
+      }
+
       const data = await response.json();
+      console.log('📅 Shift Plan Generated:', data);
       setPlan(data);
     } catch (error) {
-      console.error('Error generating shift plan:', error);
-      alert('Failed to generate shift plan');
+      console.error('❌ Error generating shift plan:', error);
+      alert(`Failed to generate shift plan: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
