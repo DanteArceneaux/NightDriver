@@ -186,7 +186,7 @@ export class ScoringService {
     return Math.round(estimatedRate);
   }
 
-  determineTopPick(scores: ZoneScore[], events: Event[], _flights: FlightArrival[]): TopPick {
+  determineTopPick(scores: ZoneScore[], events: Event[], flights: FlightArrival[]): TopPick {
     if (scores.length === 0) {
       return {
         zoneId: 'downtown',

@@ -238,6 +238,55 @@ export const timePatterns: ZonePatterns = {
   ],
 };
 
+// Helper function to create standard suburban patterns
+function createSuburbanPattern(): TimePattern[] {
+  return [
+    // Weekday morning commute (6am-9am)
+    ...Array.from({ length: 5 }, (_, day) => 
+      Array.from({ length: 3 }, (_, i) => ({
+        hour: 6 + i,
+        dayOfWeek: day + 1,
+        score: 25,
+      }))
+    ).flat(),
+    // Weekday evening commute (4pm-7pm)
+    ...Array.from({ length: 5 }, (_, day) => 
+      Array.from({ length: 3 }, (_, i) => ({
+        hour: 16 + i,
+        dayOfWeek: day + 1,
+        score: 28,
+      }))
+    ).flat(),
+    // Weekend evenings (6pm-10pm)
+    ...Array.from({ length: 2 }, (_, day) => 
+      Array.from({ length: 4 }, (_, i) => ({
+        hour: 18 + i,
+        dayOfWeek: day === 0 ? 6 : 0,
+        score: 22,
+      }))
+    ).flat(),
+  ];
+}
+
+// Add patterns for new zones
+timePatterns.marysville = createSuburbanPattern();
+timePatterns.everett = createSuburbanPattern();
+timePatterns.lynnwood = createSuburbanPattern();
+timePatterns.shoreline = createSuburbanPattern();
+timePatterns.bellevue = createSuburbanPattern();
+timePatterns.redmond = createSuburbanPattern();
+timePatterns.sammamish = createSuburbanPattern();
+timePatterns.kirkland = createSuburbanPattern();
+timePatterns.issaquah = createSuburbanPattern();
+timePatterns.renton = createSuburbanPattern();
+timePatterns.tukwila = createSuburbanPattern();
+timePatterns.burien = createSuburbanPattern();
+timePatterns.federal_way = createSuburbanPattern();
+timePatterns.kent = createSuburbanPattern();
+timePatterns.tacoma = createSuburbanPattern();
+timePatterns.lakewood = createSuburbanPattern();
+timePatterns.spanaway = createSuburbanPattern();
+
 export function getBaselineScore(zoneId: string, dayOfWeek: number, hour: number): number {
   const patterns = timePatterns[zoneId];
   if (!patterns) return 10; // Default low baseline

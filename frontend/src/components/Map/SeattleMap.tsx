@@ -164,8 +164,9 @@ function MapStyleInjector() {
 }
 
 export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
-  const center: [number, number] = [47.6205, -122.3493];
-  const zoom = 11;
+  // Center map between Marysville (north) and Spanaway (south), Seattle (west) and Sammamish (east)
+  const center: [number, number] = [47.5500, -122.2000]; // Adjusted to show full metro area
+  const zoom = 9; // Zoomed out to show from Marysville to Spanaway
   const [events, setEvents] = useState<Event[]>([]);
   const { id: themeId } = useTheme();
 

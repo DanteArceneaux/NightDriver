@@ -7,6 +7,7 @@ export class EventsService {
 
   // Map of venue names/keywords to zone IDs
   private venueToZoneMap: Record<string, string> = {
+    // SEATTLE CORE
     'lumen field': 'stadium',
     't-mobile park': 'stadium',
     'tmobile park': 'stadium',
@@ -22,6 +23,44 @@ export class EventsService {
     'pike place': 'waterfront',
     'pier': 'waterfront',
     'seattle center': 'queen_anne',
+    'mccaw hall': 'downtown',
+    'benaroya hall': 'downtown',
+
+    // NORTH
+    'angel of the winds arena': 'everett',
+    'everett': 'everett',
+    'tulalip': 'marysville',
+    'tulalip casino': 'marysville',
+    'tulalip resort': 'marysville',
+    'marysville': 'marysville',
+    'lynnwood': 'lynnwood',
+    'alderwood': 'lynnwood',
+    'shoreline': 'shoreline',
+
+    // EAST
+    'meydenbauer': 'bellevue',
+    'bellevue': 'bellevue',
+    'redmond': 'redmond',
+    'sammamish': 'sammamish',
+    'kirkland': 'kirkland',
+    'issaquah': 'issaquah',
+    'microsoft': 'redmond',
+
+    // SOUTH
+    'tacoma dome': 'tacoma',
+    'tacoma': 'tacoma',
+    'theater on the square': 'tacoma',
+    'spanish ballroom': 'tacoma',
+    'showare center': 'kent',
+    'kent': 'kent',
+    'renton': 'renton',
+    'the landing': 'renton',
+    'tukwila': 'tukwila',
+    'southcenter': 'tukwila',
+    'burien': 'burien',
+    'federal way': 'federal_way',
+    'lakewood': 'lakewood',
+    'spanaway': 'spanaway',
   };
 
   constructor(apiKey: string) {
@@ -47,19 +86,44 @@ export class EventsService {
       tomorrow.setHours(23, 59, 59, 0);
       const endDate = tomorrow.toISOString().split('.')[0] + 'Z';
 
-      const response = await axios.get(`${this.baseUrl}/events.json`, {
-        params: {
-          apikey: this.apiKey,
-          city: 'Seattle',
-          stateCode: 'WA',
-          startDateTime: startDate,
-          endDateTime: endDate,
-          size: 50,
-          sort: 'date,asc',
-        },
-      });
+      // Query multiple cities in the metro area
+      // Ticketmaster API doesn't support multiple cities in one query, so we need to make multiple requests
+      const cities = ['Seattle', 'Tacoma', 'Everett', 'Bellevue', 'Renton', 'Federal Way'];
+      
+      const allEventPromises = cities.map(city =>
+        axios.get(`${this.baseUrl}/events.json`, {
+          params: {
+            apikey: this.apiKey,
+            city: city,
+            stateCode: 'WA',
+            startDateTime: startDate,
+            endDateTime: endDate,
+            size: 30,
+            sort: 'date,asc',
+          },
+        }).catch(err => {
+          console.log(`Failed to fetch events for ${city}:`, err.message);
+          return { data: { _embedded: { events: [] } } };
+        })
+      );
 
-      const events = response.data._embedded?.events || [];
+      const responses = await Promise.all(allEventPromises);
+      
+      // Combine all events and remove duplicates by event ID
+      const allEvents: any[] = [];
+      const seenEventIds = new Set<string>();
+      
+      for (const response of responses) {
+        const cityEvents = response.data._embedded?.events || [];
+        for (const event of cityEvents) {
+          if (!seenEventIds.has(event.id)) {
+            seenEventIds.add(event.id);
+            allEvents.push(event);
+          }
+        }
+      }
+
+      const events = allEvents;
 
       // Filter out suspicious/non-public events
       const validEvents = events.filter((event: any) => {
@@ -128,8 +192,26 @@ export class EventsService {
       }
     }
 
-    // Default zones for unknown venues
-    return 'downtown';
+    // Try to map by city name if venue name doesn't match
+    if (lowerVenue.includes('everett')) return 'everett';
+    if (lowerVenue.includes('marysville')) return 'marysville';
+    if (lowerVenue.includes('lynnwood')) return 'lynnwood';
+    if (lowerVenue.includes('bellevue')) return 'bellevue';
+    if (lowerVenue.includes('redmond')) return 'redmond';
+    if (lowerVenue.includes('sammamish')) return 'sammamish';
+    if (lowerVenue.includes('kirkland')) return 'kirkland';
+    if (lowerVenue.includes('issaquah')) return 'issaquah';
+    if (lowerVenue.includes('tacoma')) return 'tacoma';
+    if (lowerVenue.includes('kent')) return 'kent';
+    if (lowerVenue.includes('renton')) return 'renton';
+    if (lowerVenue.includes('tukwila')) return 'tukwila';
+    if (lowerVenue.includes('burien')) return 'burien';
+    if (lowerVenue.includes('federal way')) return 'federal_way';
+    if (lowerVenue.includes('lakewood')) return 'lakewood';
+    if (lowerVenue.includes('spanaway')) return 'spanaway';
+
+    // Default to unknown for venues outside our coverage area
+    return 'unknown';
   }
 
   private classifyEvent(event: any): 'sports' | 'concert' | 'conference' | 'festival' | 'other' {
