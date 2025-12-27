@@ -4,7 +4,7 @@ import { ZonesResponse } from '../types';
 import { fetchZones } from '../lib/api';
 import { showSurgeNotification } from '../lib/notifications';
 
-export function useZoneScores(useWebSocket: boolean = true) {
+export function useZoneScores(useWebSocket: boolean = false) {
   const [data, setData] = useState<ZonesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

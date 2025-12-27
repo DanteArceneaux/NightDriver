@@ -1,11 +1,31 @@
 [build]
-  command = "npm run build"
+  command = "npm install && npm run build"
   publish = "dist"
-  base = "frontend"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "18"
 
+[functions]
+  node_bundler = "esbuild"
+
+# API routes to serverless functions
+[[redirects]]
+  from = "/api/zones"
+  to = "/.netlify/functions/zones"
+  status = 200
+
+[[redirects]]
+  from = "/api/conditions"
+  to = "/.netlify/functions/conditions"
+  status = 200
+
+[[redirects]]
+  from = "/api/forecast"
+  to = "/.netlify/functions/forecast"
+  status = 200
+
+# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"

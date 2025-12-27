@@ -1,7 +1,7 @@
 import { ZonesResponse, Forecast, Conditions } from '../types';
 
-// Use environment variable for production, fallback to local for dev
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// Use /api which redirects to Netlify Functions in production
+const API_BASE = '/api';
 
 export async function fetchZones(): Promise<ZonesResponse> {
   const response = await fetch(`${API_BASE}/zones`);
