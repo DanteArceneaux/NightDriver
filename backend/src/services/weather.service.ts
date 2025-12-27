@@ -93,7 +93,7 @@ export class WeatherService {
   }
 
   private getMockWeather(): WeatherConditions {
-    const hour = new Date().getHours();
+    // Mock weather with random rain chance
     const isRaining = Math.random() > 0.7; // 30% chance of rain in mock
 
     return {

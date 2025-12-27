@@ -3,10 +3,13 @@ import { FlightArrival } from '../types/index.js';
 
 export class FlightsService {
   private apiKey: string;
-  private baseUrl = 'http://api.aviationstack.com/v1';
+  // Base URL for Aviation Stack API (to be used with paid tier)
+  private readonly AVIATION_STACK_URL = 'http://api.aviationstack.com/v1';
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
+    // Log the API URL for debugging
+    console.log(`FlightsService initialized with API at ${this.AVIATION_STACK_URL}`);
   }
 
   async getArrivals(): Promise<FlightArrival[]> {

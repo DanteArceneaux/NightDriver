@@ -205,7 +205,7 @@ export class ScoringService {
     };
   }
 
-  private generateReason(zone: ZoneScore, events: Event[], flights: FlightArrival[]): string {
+  private generateReason(zone: ZoneScore, events: Event[], _flights: FlightArrival[]): string {
     const reasons: string[] = [];
 
     // Check for events

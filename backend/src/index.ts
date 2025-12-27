@@ -13,13 +13,13 @@ import { RoutingService } from './services/routing.service.js';
 import { SurgeService } from './services/surge.service.js';
 import { EventAlertsService } from './services/eventAlerts.service.js';
 import { DriverPulseService } from './services/driverPulse.service.js';
+import type { WeatherConditions, Event, FlightArrival } from './types/index.js';
 import {
   weatherCache,
   eventsCache,
   flightsCache,
   trafficCache,
   getCached,
-  setCache,
 } from './middleware/cache.middleware.js';
 
 const app = express();
@@ -59,7 +59,7 @@ app.use('/api', createApiRouter(
 ));
 
 // Root endpoint
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({
     name: 'Seattle Uber Driver Optimizer API',
     version: '2.0.0',
@@ -86,11 +86,11 @@ io.on('connection', (socket) => {
 // Real-time score broadcast (every 30 seconds)
 async function broadcastScores() {
   try {
-    // Get cached or fresh data
-    const weather = getCached(weatherCache, 'weather') || await weatherService.getCurrentWeather();
-    const events = getCached(eventsCache, 'events') || await eventsService.getUpcomingEvents();
-    const flights = getCached(flightsCache, 'flights') || await flightsService.getArrivals();
-    const traffic = getCached(trafficCache, 'traffic') || await trafficService.getCongestionData();
+    // Get cached or fresh data with proper types
+    const weather = getCached<WeatherConditions>(weatherCache, 'weather') || await weatherService.getCurrentWeather();
+    const events = getCached<Event[]>(eventsCache, 'events') || await eventsService.getUpcomingEvents();
+    const flights = getCached<FlightArrival[]>(flightsCache, 'flights') || await flightsService.getArrivals();
+    const traffic = getCached<Map<string, number>>(trafficCache, 'traffic') || await trafficService.getCongestionData();
 
     // Calculate scores
     const currentTime = new Date();

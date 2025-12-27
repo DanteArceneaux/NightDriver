@@ -8,6 +8,7 @@ import { RoutingService } from '../services/routing.service.js';
 import { EventAlertsService } from '../services/eventAlerts.service.js';
 import { DriverPulseService } from '../services/driverPulse.service.js';
 import { zones } from '../data/zones.js';
+import type { WeatherConditions, Event, FlightArrival } from '../types/index.js';
 import {
   weatherCache,
   eventsCache,
@@ -31,7 +32,7 @@ export function createApiRouter(
   const router = Router();
 
   // GET /api/zones - Get all zones with current scores
-  router.get('/zones', async (req: Request, res: Response) => {
+  router.get('/zones', async (_req: Request, res: Response) => {
     try {
       // Check cache first
       const cached = getCached(scoresCache, 'zones');
@@ -153,7 +154,7 @@ export function createApiRouter(
   });
 
   // GET /api/conditions - Get current conditions
-  router.get('/conditions', async (req: Request, res: Response) => {
+  router.get('/conditions', async (_req: Request, res: Response) => {
     try {
       const [weather, events, flights] = await Promise.all([
         getWeatherData(weatherService),
@@ -194,7 +195,7 @@ export function createApiRouter(
   });
 
   // GET /api/health - Health check
-  router.get('/health', (req: Request, res: Response) => {
+  router.get('/health', (_req: Request, res: Response) => {
     res.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -343,8 +344,8 @@ export function createApiRouter(
 }
 
 // Helper functions to get cached data or fetch fresh
-async function getWeatherData(weatherService: WeatherService) {
-  const cached = getCached(weatherCache, 'weather');
+async function getWeatherData(weatherService: WeatherService): Promise<WeatherConditions> {
+  const cached = getCached<WeatherConditions>(weatherCache, 'weather');
   if (cached) return cached;
 
   const weather = await weatherService.getCurrentWeather();
@@ -352,8 +353,8 @@ async function getWeatherData(weatherService: WeatherService) {
   return weather;
 }
 
-async function getEventsData(eventsService: EventsService) {
-  const cached = getCached(eventsCache, 'events');
+async function getEventsData(eventsService: EventsService): Promise<Event[]> {
+  const cached = getCached<Event[]>(eventsCache, 'events');
   if (cached) return cached;
 
   const events = await eventsService.getUpcomingEvents();
@@ -361,8 +362,8 @@ async function getEventsData(eventsService: EventsService) {
   return events;
 }
 
-async function getFlightsData(flightsService: FlightsService) {
-  const cached = getCached(flightsCache, 'flights');
+async function getFlightsData(flightsService: FlightsService): Promise<FlightArrival[]> {
+  const cached = getCached<FlightArrival[]>(flightsCache, 'flights');
   if (cached) return cached;
 
   const flights = await flightsService.getArrivals();
@@ -370,8 +371,8 @@ async function getFlightsData(flightsService: FlightsService) {
   return flights;
 }
 
-async function getTrafficData(trafficService: TrafficService) {
-  const cached = getCached(trafficCache, 'traffic');
+async function getTrafficData(trafficService: TrafficService): Promise<Map<string, number>> {
+  const cached = getCached<Map<string, number>>(trafficCache, 'traffic');
   if (cached) return cached;
 
   const traffic = await trafficService.getCongestionData();
