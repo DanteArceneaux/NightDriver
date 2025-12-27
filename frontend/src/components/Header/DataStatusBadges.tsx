@@ -6,7 +6,7 @@ interface SourceStatus {
   enabled: boolean;
   source: 'real' | 'mock';
   provider: string;
-  lastFetch: string | null;
+  cached: boolean;
 }
 
 interface StatusResponse {
@@ -145,9 +145,6 @@ interface DataSourceRowProps {
 
 function DataSourceRow({ icon, name, status }: DataSourceRowProps) {
   const isReal = status.source === 'real';
-  const lastFetchText = status.lastFetch
-    ? new Date(status.lastFetch).toLocaleTimeString()
-    : 'Never';
 
   return (
     <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
@@ -168,8 +165,8 @@ function DataSourceRow({ icon, name, status }: DataSourceRowProps) {
         >
           {isReal ? 'Live' : 'Mock'}
         </span>
-        {status.lastFetch && (
-          <span className="text-xs text-gray-500">{lastFetchText}</span>
+        {status.cached && (
+          <span className="text-xs text-gray-500">Cached</span>
         )}
       </div>
     </div>

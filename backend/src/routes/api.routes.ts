@@ -39,27 +39,27 @@ export function createApiRouter(
         sources: {
           weather: {
             enabled: !!weatherService,
-            source: process.env.WEATHER_API_KEY ? 'real' : 'mock',
-            provider: process.env.WEATHER_API_KEY ? 'OpenWeatherMap' : 'Mock',
-            lastFetch: getCached(weatherCache, 'weather')?.timestamp || null,
+            source: process.env.OPENWEATHER_API_KEY ? 'real' : 'mock',
+            provider: process.env.OPENWEATHER_API_KEY ? 'OpenWeatherMap' : 'Mock',
+            cached: !!getCached(weatherCache, 'weather'),
           },
           events: {
             enabled: !!eventsService,
             source: process.env.TICKETMASTER_API_KEY ? 'real' : 'mock',
             provider: process.env.TICKETMASTER_API_KEY ? 'Ticketmaster' : 'Mock',
-            lastFetch: getCached(eventsCache, 'events')?.timestamp || null,
+            cached: !!getCached(eventsCache, 'events'),
           },
           flights: {
             enabled: !!flightsService,
-            source: process.env.AVIATION_STACK_API_KEY ? 'real' : 'mock',
-            provider: process.env.AVIATION_STACK_API_KEY ? 'AviationStack' : 'Mock',
-            lastFetch: getCached(flightsCache, 'flights')?.timestamp || null,
+            source: process.env.AVIATIONSTACK_API_KEY ? 'real' : 'mock',
+            provider: process.env.AVIATIONSTACK_API_KEY ? 'AviationStack' : 'Mock',
+            cached: !!getCached(flightsCache, 'flights'),
           },
           traffic: {
             enabled: !!trafficService,
-            source: 'mock', // Traffic is currently always mock
-            provider: 'Mock',
-            lastFetch: getCached(trafficCache, 'traffic')?.timestamp || null,
+            source: process.env.TOMTOM_API_KEY ? 'real' : 'mock',
+            provider: process.env.TOMTOM_API_KEY ? 'TomTom' : 'Mock',
+            cached: !!getCached(trafficCache, 'traffic'),
           },
         },
       };
