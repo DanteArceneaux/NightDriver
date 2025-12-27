@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { TrendingUp, Calendar, Activity, Trophy, Map, Navigation } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { TrendingUp, Calendar, Activity, Trophy, Map, Navigation, LayoutGrid, Columns2 } from 'lucide-react';
 import type { LayoutProps } from './types';
 import { Header } from '../../components/Header/Header';
 import { SeattleMap } from '../../components/Map/SeattleMap';
@@ -10,34 +10,61 @@ import { EventsPanel } from '../../components/Events/EventsPanel';
 import { Leaderboard } from '../../components/ZoneList/Leaderboard';
 import { ZoneDetailSheet } from '../../components/ZoneDetail/ZoneDetailSheet';
 import { DraggableCardGrid, CardConfig } from '../../components/UI/DraggableCardGrid';
+import { motion } from 'framer-motion';
+
+type LayoutMode = 'stack' | 'split';
 
 export function NeonCockpitLayout(props: LayoutProps) {
   const [selectedZone, setSelectedZone] = useState<typeof props.zones[0] | null>(null);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
+    // Load saved layout mode from localStorage
+    const saved = localStorage.getItem('cockpit-layout-mode');
+    return (saved as LayoutMode) || 'split';
+  });
+  
+  // Detect screen size
+  const [isDesktop, setIsDesktop] = useState(false);
+  
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024); // lg breakpoint
+    };
+    
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
+  
+  // Save layout mode to localStorage
+  useEffect(() => {
+    localStorage.setItem('cockpit-layout-mode', layoutMode);
+  }, [layoutMode]);
 
   const handleZoneClick = (zone: typeof props.zones[0]) => {
     setSelectedZone(zone);
     props.onZoneClick?.(zone);
   };
 
-  // Define cards for the grid - memoized to prevent re-renders
-  // Map is FIRST, with larger default sizes for better visibility
-  const cards: CardConfig[] = useMemo(() => [
-    {
-      id: 'map',
-      title: 'Seattle Map',
-      icon: <Map className="w-4 h-4 text-theme-primary" />,
-      content: (
-        <div className="w-full h-full">
-          <SeattleMap zones={props.zones} onZoneClick={handleZoneClick} />
-        </div>
-      ),
-      defaultHeight: 500,
-      minHeight: 300,
-      maxHeight: 900,
-      collapsible: true,
-      resizable: true,
-      allowScroll: false, // Map should not scroll
-    },
+  // Define map card separately (for split layout)
+  const mapCard: CardConfig = useMemo(() => ({
+    id: 'seattle-map',
+    title: 'Seattle Map',
+    icon: <Map className="w-4 h-4 text-theme-primary" />,
+    content: (
+      <div className="w-full h-full">
+        <SeattleMap zones={props.zones} onZoneClick={handleZoneClick} />
+      </div>
+    ),
+    defaultHeight: 500,
+    minHeight: 300,
+    maxHeight: 900,
+    collapsible: true,
+    resizable: true,
+    allowScroll: false,
+  }), [props.zones]);
+
+  // Define other cards (for right panel in split mode, or all cards in stack mode)
+  const infoCards: CardConfig[] = useMemo(() => [
     {
       id: 'top-pick',
       title: 'Top Pick',
@@ -56,7 +83,7 @@ export function NeonCockpitLayout(props: LayoutProps) {
       maxHeight: 500,
       collapsible: true,
       resizable: true,
-      allowScroll: true, // Allow scroll if content is long
+      allowScroll: true,
     },
     {
       id: 'conditions',
@@ -72,7 +99,7 @@ export function NeonCockpitLayout(props: LayoutProps) {
       maxHeight: 600,
       collapsible: true,
       resizable: true,
-      allowScroll: false, // Fixed layout, no scroll needed
+      allowScroll: false,
     },
     {
       id: 'forecast',
@@ -88,7 +115,7 @@ export function NeonCockpitLayout(props: LayoutProps) {
       maxHeight: 500,
       collapsible: true,
       resizable: true,
-      allowScroll: true, // Horizontal scroll for forecast cards
+      allowScroll: true,
     },
     {
       id: 'events',
@@ -104,7 +131,7 @@ export function NeonCockpitLayout(props: LayoutProps) {
       maxHeight: 700,
       collapsible: true,
       resizable: true,
-      allowScroll: true, // List should scroll when many events
+      allowScroll: true,
     },
     {
       id: 'zones',
@@ -120,9 +147,18 @@ export function NeonCockpitLayout(props: LayoutProps) {
       maxHeight: 800,
       collapsible: true,
       resizable: true,
-      allowScroll: true, // Zone list should scroll
+      allowScroll: true,
     },
   ], [props.topPick, props.topZone, props.driverLocation, props.zones]);
+  
+  // All cards for stack mode
+  const allCards: CardConfig[] = useMemo(() => [
+    mapCard,
+    ...infoCards,
+  ], [mapCard, infoCards]);
+
+  // Determine which layout to show
+  const shouldUseSplitLayout = isDesktop && layoutMode === 'split';
 
   return (
     <div className="min-h-screen text-white pb-12">
@@ -135,13 +171,79 @@ export function NeonCockpitLayout(props: LayoutProps) {
         weather={props.weather}
       />
 
-      {/* Main: Draggable Card Grid Layout */}
+      {/* Main Content */}
       <main className="pt-24 px-4 pb-20">
-        <DraggableCardGrid
-          cards={cards}
-          storageKey="neon-cockpit-layout"
-          className="max-w-4xl mx-auto"
-        />
+        <div className="max-w-[2000px] mx-auto">
+          {/* Layout Toggle (desktop only) */}
+          {isDesktop && (
+            <div className="flex justify-end mb-4">
+              <div className="flex gap-2 bg-glass-dark/60 backdrop-blur-xl border border-white/10 rounded-lg p-1">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setLayoutMode('stack')}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    layoutMode === 'stack'
+                      ? 'bg-theme-primary/30 text-theme-primary border border-theme-primary/50'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  aria-label="Switch to stack layout"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                  Stack
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setLayoutMode('split')}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    layoutMode === 'split'
+                      ? 'bg-theme-primary/30 text-theme-primary border border-theme-primary/50'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  aria-label="Switch to split layout"
+                >
+                  <Columns2 className="w-4 h-4" />
+                  Split
+                </motion.button>
+              </div>
+            </div>
+          )}
+
+          {/* Stack Layout (mobile or desktop stack mode) */}
+          {!shouldUseSplitLayout && (
+            <div className="max-w-4xl mx-auto">
+              <DraggableCardGrid
+                cards={allCards}
+                storageKey="neon-cockpit-stack"
+                showLayoutControls
+              />
+            </div>
+          )}
+
+          {/* Split Layout (desktop split mode) */}
+          {shouldUseSplitLayout && (
+            <div className="grid grid-cols-2 gap-4">
+              {/* Left: Map (pinned) */}
+              <div className="h-[calc(100vh-180px)] sticky top-28">
+                <DraggableCardGrid
+                  cards={[mapCard]}
+                  storageKey="neon-cockpit-map"
+                  showLayoutControls={false}
+                />
+              </div>
+
+              {/* Right: Info Cards (reorderable) */}
+              <div className="min-h-[calc(100vh-180px)]">
+                <DraggableCardGrid
+                  cards={infoCards}
+                  storageKey="neon-cockpit-info"
+                  showLayoutControls
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </main>
 
       {/* Zone Detail Sheet */}
@@ -153,4 +255,3 @@ export function NeonCockpitLayout(props: LayoutProps) {
     </div>
   );
 }
-
