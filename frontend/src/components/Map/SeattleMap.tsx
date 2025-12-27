@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Marker, Tooltip, useMap } from 'react-leaflet';
+import { motion } from 'framer-motion';
+import { Map as MapIcon, Satellite } from 'lucide-react';
 import L from 'leaflet';
 import { ZoneScore, Event } from '../../types';
 import { fetchConditions } from '../../lib/api';
@@ -169,6 +171,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   const zoom = 9; // Zoomed out to show from Marysville to Spanaway
   const [events, setEvents] = useState<Event[]>([]);
   const { id: themeId } = useTheme();
+  const [mapLayer, setMapLayer] = useState<'dark' | 'satellite'>('dark');
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -183,22 +186,74 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   }, []);
 
   return (
-    <div className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+    <div className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative">
+      {/* Map Layer Toggle */}
+      <div className="absolute top-4 right-4 z-[1000] flex gap-2">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setMapLayer('dark')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+            mapLayer === 'dark'
+              ? 'bg-neon-cyan/30 text-neon-cyan border-2 border-neon-cyan/50 shadow-[0_0_15px_rgba(0,255,238,0.4)]'
+              : 'bg-black/60 text-gray-400 border border-white/20 hover:bg-black/80'
+          }`}
+        >
+          <MapIcon className="w-4 h-4" />
+          Dark
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setMapLayer('satellite')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+            mapLayer === 'satellite'
+              ? 'bg-neon-cyan/30 text-neon-cyan border-2 border-neon-cyan/50 shadow-[0_0_15px_rgba(0,255,238,0.4)]'
+              : 'bg-black/60 text-gray-400 border border-white/20 hover:bg-black/80'
+          }`}
+        >
+          <Satellite className="w-4 h-4" />
+          Satellite
+        </motion.button>
+      </div>
+
       <MapContainer
         center={center}
         zoom={zoom}
         className="w-full h-full"
         zoomControl={true}
-        style={{ background: '#0a0e27' }}
+        style={{ background: mapLayer === 'dark' ? '#0a0e27' : '#000' }}
       >
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        />
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"
-          attribution=''
-        />
+        {/* Dark Mode Tiles */}
+        {mapLayer === 'dark' && (
+          <>
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            />
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"
+              attribution=''
+            />
+          </>
+        )}
+
+        {/* Satellite Tiles */}
+        {mapLayer === 'satellite' && (
+          <>
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+              maxZoom={19}
+            />
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"
+              attribution=''
+              opacity={0.8}
+            />
+          </>
+        )}
+
         <MapStyleInjector />
 
         {/* Zone Markers */}
