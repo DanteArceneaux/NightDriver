@@ -92,20 +92,18 @@ export function LiveConditions() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.1 }}
-            className={`glass rounded-xl p-4 border border-white/10 ${pill.bg}`}
+            className={`glass rounded-xl p-3 border border-white/10 ${pill.bg}`}
           >
-            <div className="flex items-start gap-3">
-              <pill.icon className={`w-6 h-6 ${pill.color} flex-shrink-0`} />
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-gray-400 font-medium mb-1 uppercase tracking-wider">
-                  {pill.label}
-                </div>
-                <div className={`text-2xl font-black ${pill.color} mb-1`}>
-                  {pill.value}
-                </div>
-                <div className="text-xs text-gray-400 line-clamp-2">
-                  {pill.subtitle}
-                </div>
+            <div className="flex flex-col items-center text-center">
+              <pill.icon className={`w-8 h-8 ${pill.color} mb-2`} />
+              <div className="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">
+                {pill.label}
+              </div>
+              <div className={`text-3xl font-black ${pill.color} mb-1 leading-none`}>
+                {pill.value}
+              </div>
+              <div className="text-xs text-gray-300 line-clamp-2 w-full">
+                {pill.subtitle}
               </div>
             </div>
           </motion.div>
