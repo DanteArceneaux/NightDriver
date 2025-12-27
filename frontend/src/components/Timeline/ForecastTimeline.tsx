@@ -26,7 +26,11 @@ function getScoreBgColor(score: number): string {
   return 'bg-blue-500/20 border-blue-500/50';
 }
 
-export function ForecastTimeline() {
+interface ForecastTimelineProps {
+  hideWrapper?: boolean;
+}
+
+export function ForecastTimeline({ hideWrapper = false }: ForecastTimelineProps) {
   const { tokens } = useTheme();
   const [forecast, setForecast] = useState<Forecast | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,7 +52,7 @@ export function ForecastTimeline() {
 
   if (loading || !forecast) {
     return (
-      <div className={`${tokens.cardBg} p-6 ${tokens.borderRadius} ${tokens.cardBorder}`}>
+      <div className={hideWrapper ? '' : `${tokens.cardBg} p-6 ${tokens.borderRadius} ${tokens.cardBorder}`}>
         <div className={`${tokens.textMuted} flex items-center gap-2`}>
           <Clock className="w-4 h-4 animate-spin" />
           Loading forecast...
@@ -72,33 +76,35 @@ export function ForecastTimeline() {
     return `${x},${y}`;
   }).join(' ');
 
-  return (
-    <div className={`${tokens.cardBg} ${tokens.borderRadius} p-6 ${tokens.cardBorder}`}>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-theme-primary" />
-          <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">
-            4-Hour Forecast
-          </h3>
+  const content = (
+    <>
+      {!hideWrapper && (
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-theme-primary" />
+            <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">
+              4-Hour Forecast
+            </h3>
+          </div>
+          {/* Mini Sparkline */}
+          <svg width={width} height={height} className="opacity-50">
+            <polyline
+              points={points}
+              fill="none"
+              stroke="url(#gradient)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#00ffee" />
+                <stop offset="100%" stopColor="#aa00ff" />
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
-        {/* Mini Sparkline */}
-        <svg width={width} height={height} className="opacity-50">
-          <polyline
-            points={points}
-            fill="none"
-            stroke="url(#gradient)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#00ffee" />
-              <stop offset="100%" stopColor="#aa00ff" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
+      )}
 
       {/* Horizontal Scrollable Timeline */}
       <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
@@ -149,6 +155,16 @@ export function ForecastTimeline() {
           </>
         )}
       </div>
+    </>
+  );
+
+  if (hideWrapper) {
+    return content;
+  }
+
+  return (
+    <div className={`${tokens.cardBg} ${tokens.borderRadius} p-6 ${tokens.cardBorder}`}>
+      {content}
     </div>
   );
 }

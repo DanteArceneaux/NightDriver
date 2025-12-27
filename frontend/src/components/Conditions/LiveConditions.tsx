@@ -5,7 +5,11 @@ import { Conditions } from '../../types';
 import { fetchConditions } from '../../lib/api';
 import { useTheme } from '../../features/theme';
 
-export function LiveConditions() {
+interface LiveConditionsProps {
+  hideWrapper?: boolean; // When used in DraggableCardGrid, hide the internal wrapper
+}
+
+export function LiveConditions({ hideWrapper = false }: LiveConditionsProps) {
   const { tokens } = useTheme();
   const [conditions, setConditions] = useState<Conditions | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,6 +80,37 @@ export function LiveConditions() {
     });
   }
 
+  const content = (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {pills.map((pill, idx) => (
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: idx * 0.1 }}
+          className={`glass rounded-xl p-3 border border-white/10 ${pill.bg}`}
+        >
+          <div className="flex flex-col items-center text-center">
+            <pill.icon className={`w-8 h-8 ${pill.color} mb-2`} />
+            <div className="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">
+              {pill.label}
+            </div>
+            <div className={`text-3xl font-black ${pill.color} mb-1 leading-none`}>
+              {pill.value}
+            </div>
+            <div className="text-xs text-gray-300 line-clamp-2 w-full">
+              {pill.subtitle}
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+
+  if (hideWrapper) {
+    return content;
+  }
+
   return (
     <div className={`${tokens.cardBg} ${tokens.borderRadius} p-6 ${tokens.cardBorder}`}>
       <div className="flex items-center gap-2 mb-4">
@@ -84,31 +119,7 @@ export function LiveConditions() {
           Live Conditions
         </h3>
       </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {pills.map((pill, idx) => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: idx * 0.1 }}
-            className={`glass rounded-xl p-3 border border-white/10 ${pill.bg}`}
-          >
-            <div className="flex flex-col items-center text-center">
-              <pill.icon className={`w-8 h-8 ${pill.color} mb-2`} />
-              <div className="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">
-                {pill.label}
-              </div>
-              <div className={`text-3xl font-black ${pill.color} mb-1 leading-none`}>
-                {pill.value}
-              </div>
-              <div className="text-xs text-gray-300 line-clamp-2 w-full">
-                {pill.subtitle}
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      {content}
     </div>
   );
 }

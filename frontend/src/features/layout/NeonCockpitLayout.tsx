@@ -46,6 +46,9 @@ export function NeonCockpitLayout(props: LayoutProps) {
   };
 
   // Define map card separately (for split layout)
+  // In split mode, use a larger default height to fill the viewport
+  const mapDefaultHeight = isDesktop && layoutMode === 'split' ? 800 : 500;
+  
   const mapCard: CardConfig = useMemo(() => ({
     id: 'seattle-map',
     title: 'Seattle Map',
@@ -55,13 +58,13 @@ export function NeonCockpitLayout(props: LayoutProps) {
         <SeattleMap zones={props.zones} onZoneClick={handleZoneClick} />
       </div>
     ),
-    defaultHeight: 500,
+    defaultHeight: mapDefaultHeight,
     minHeight: 300,
-    maxHeight: 900,
-    collapsible: true,
+    maxHeight: 1200,
+    collapsible: false, // Don't collapse map in split mode
     resizable: true,
     allowScroll: false,
-  }), [props.zones]);
+  }), [props.zones, mapDefaultHeight]);
 
   // Define other cards (for right panel in split mode, or all cards in stack mode)
   const infoCards: CardConfig[] = useMemo(() => [
@@ -91,12 +94,12 @@ export function NeonCockpitLayout(props: LayoutProps) {
       icon: <Activity className="w-4 h-4 text-neon-green" />,
       content: (
         <div className="p-4">
-          <LiveConditions />
+          <LiveConditions hideWrapper />
         </div>
       ),
-      defaultHeight: 320,
-      minHeight: 200,
-      maxHeight: 600,
+      defaultHeight: 280,
+      minHeight: 150,
+      maxHeight: 500,
       collapsible: true,
       resizable: true,
       allowScroll: false,
@@ -107,12 +110,12 @@ export function NeonCockpitLayout(props: LayoutProps) {
       icon: <TrendingUp className="w-4 h-4 text-theme-primary" />,
       content: (
         <div className="p-4">
-          <ForecastTimeline />
+          <ForecastTimeline hideWrapper />
         </div>
       ),
-      defaultHeight: 280,
-      minHeight: 180,
-      maxHeight: 500,
+      defaultHeight: 250,
+      minHeight: 150,
+      maxHeight: 450,
       collapsible: true,
       resizable: true,
       allowScroll: true,
@@ -224,18 +227,16 @@ export function NeonCockpitLayout(props: LayoutProps) {
 
           {/* Split Layout (desktop split mode) */}
           {shouldUseSplitLayout && (
-            <div className="grid grid-cols-2 gap-4">
-              {/* Left: Map (pinned) */}
-              <div className="h-[calc(100vh-180px)] sticky top-28">
-                <DraggableCardGrid
-                  cards={[mapCard]}
-                  storageKey="neon-cockpit-map"
-                  showLayoutControls={false}
-                />
+            <div className="grid grid-cols-[1fr_400px] gap-6 lg:grid-cols-[1fr_450px] xl:grid-cols-[1fr_500px]">
+              {/* Left: Map (fills viewport) */}
+              <div className="sticky top-28" style={{ height: 'calc(100vh - 160px)' }}>
+                <div className="h-full rounded-2xl overflow-hidden bg-glass-dark/60 backdrop-blur-xl border border-white/10 shadow-xl">
+                  <SeattleMap zones={props.zones} onZoneClick={handleZoneClick} />
+                </div>
               </div>
 
-              {/* Right: Info Cards (reorderable) */}
-              <div className="min-h-[calc(100vh-180px)]">
+              {/* Right: Info Cards (reorderable, scrollable) */}
+              <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 160px)' }}>
                 <DraggableCardGrid
                   cards={infoCards}
                   storageKey="neon-cockpit-info"
