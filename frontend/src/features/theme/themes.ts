@@ -132,6 +132,50 @@ const hudTokens: ThemeTokens = {
   borderRadius: 'rounded-lg',
 };
 
+// Car Mode Theme (ultra-minimal, high-contrast for driving)
+const carTokens: ThemeTokens = {
+  // Background - pure black for OLED
+  bgPrimary: 'bg-black',
+  bgSecondary: 'bg-gray-900',
+  bgTertiary: 'bg-gray-800',
+  bgGradient: 'bg-gradient-to-br from-green-600/20 to-transparent',
+  
+  // Cards - thick borders for visibility
+  cardBg: 'bg-gray-900',
+  cardBorder: 'border-4 border-white/30',
+  cardHover: 'hover:bg-gray-800',
+  
+  // Text - maximum contrast
+  textPrimary: 'text-white',
+  textSecondary: 'text-gray-300',
+  textMuted: 'text-gray-500',
+  
+  // Accent colors - high visibility
+  accentSurge: 'text-red-500',
+  accentHot: 'text-orange-500',
+  accentWarm: 'text-yellow-400',
+  accentCool: 'text-green-400',
+  
+  // Effects - bold shadows
+  glow: 'shadow-2xl shadow-green-500/30',
+  shadow: 'shadow-2xl shadow-black/80',
+  backdrop: '',
+  
+  // Buttons - large touch targets
+  btnPrimary: 'bg-green-600 hover:bg-green-500 border-4 border-green-400',
+  btnPrimaryHover: 'hover:shadow-xl',
+  btnSecondary: 'bg-gray-800 hover:bg-gray-700 border-4 border-white/20',
+  btnSecondaryHover: '',
+  
+  // Typography - extra bold for glanceability
+  fontDisplay: 'font-black tracking-widest uppercase',
+  fontBody: 'font-bold',
+  
+  // Spacing - generous for touch
+  spacing: 'space-y-6',
+  borderRadius: 'rounded-3xl',
+};
+
 export const themes: Record<string, Theme> = {
   neon: {
     id: 'neon',
@@ -150,6 +194,12 @@ export const themes: Record<string, Theme> = {
     name: 'Game HUD',
     layoutId: 'hud',
     tokens: hudTokens,
+  },
+  car: {
+    id: 'car',
+    name: 'Car Mode',
+    layoutId: 'car',
+    tokens: carTokens,
   },
 };
 

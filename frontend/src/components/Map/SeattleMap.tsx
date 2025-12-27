@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Marker, Tooltip, useMap } from 'react-leaflet';
 import { motion } from 'framer-motion';
-import { Map as MapIcon, Satellite } from 'lucide-react';
+import { Map as MapIcon, Satellite, TrendingUp } from 'lucide-react';
 import L from 'leaflet';
 import { ZoneScore, Event } from '../../types';
 import { fetchConditions } from '../../lib/api';
 import { useTheme } from '../../features/theme';
+import { HeatmapOverlay } from './HeatmapOverlay';
 import 'leaflet/dist/leaflet.css';
 
 interface SeattleMapProps {
@@ -172,6 +173,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   const [events, setEvents] = useState<Event[]>([]);
   const { id: themeId } = useTheme();
   const [mapLayer, setMapLayer] = useState<'dark' | 'satellite'>('dark');
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -208,29 +210,45 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
 
   return (
     <div className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative">
-      {/* Map Layer Toggle */}
-      <div className="absolute top-4 right-4 z-[1000] flex gap-2">
+      {/* Map Controls */}
+      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+        {/* Map Layer Toggle */}
+        <div className="flex gap-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setMapLayer('dark')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+              mapLayer === 'dark' ? getActiveButtonClass() : getInactiveButtonClass()
+            }`}
+          >
+            <MapIcon className="w-4 h-4" />
+            <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>Dark</span>
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setMapLayer('satellite')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+              mapLayer === 'satellite' ? getActiveButtonClass() : getInactiveButtonClass()
+            }`}
+          >
+            <Satellite className="w-4 h-4" />
+            <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>Satellite</span>
+          </motion.button>
+        </div>
+        
+        {/* Heatmap Toggle */}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => setMapLayer('dark')}
+          onClick={() => setShowHeatmap(!showHeatmap)}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
-            mapLayer === 'dark' ? getActiveButtonClass() : getInactiveButtonClass()
+            showHeatmap ? getActiveButtonClass() : getInactiveButtonClass()
           }`}
         >
-          <MapIcon className="w-4 h-4" />
-          <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>Dark</span>
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setMapLayer('satellite')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
-            mapLayer === 'satellite' ? getActiveButtonClass() : getInactiveButtonClass()
-          }`}
-        >
-          <Satellite className="w-4 h-4" />
-          <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>Satellite</span>
+          <TrendingUp className="w-4 h-4" />
+          <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>My History</span>
         </motion.button>
       </div>
 
@@ -272,6 +290,9 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         )}
 
         <MapStyleInjector />
+
+        {/* Personal Heatmap Overlay */}
+        <HeatmapOverlay enabled={showHeatmap} />
 
         {/* Zone Markers */}
         {zones.map((zone) => {

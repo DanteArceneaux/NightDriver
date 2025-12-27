@@ -4,6 +4,9 @@ import { WeatherService } from '../services/weather.service.js';
 import { EventsService } from '../services/events.service.js';
 import { FlightsService } from '../services/flights.service.js';
 import { TrafficService } from '../services/traffic.service.js';
+import { RoutingService } from '../services/routing.service.js';
+import { EventAlertsService } from '../services/eventAlerts.service.js';
+import { DriverPulseService } from '../services/driverPulse.service.js';
 import { zones } from '../data/zones.js';
 import {
   weatherCache,
@@ -20,7 +23,10 @@ export function createApiRouter(
   eventsService: EventsService,
   flightsService: FlightsService,
   trafficService: TrafficService,
-  scoringService: ScoringService
+  scoringService: ScoringService,
+  routingService: RoutingService,
+  eventAlertsService: EventAlertsService,
+  driverPulseService: DriverPulseService
 ): Router {
   const router = Router();
 
@@ -167,6 +173,26 @@ export function createApiRouter(
     }
   });
 
+  // GET /api/event-alerts - Get smart event alerts (Doors Open, Encore)
+  router.get('/event-alerts', async (req: Request, res: Response) => {
+    try {
+      const { alertMinutes } = req.query;
+      const minutes = alertMinutes ? parseInt(alertMinutes as string) : 60;
+      
+      const events = await getEventsData(eventsService);
+      const currentTime = new Date();
+      const alerts = eventAlertsService.detectEventAlerts(events, currentTime, minutes);
+
+      res.json({
+        alerts,
+        timestamp: currentTime.toISOString(),
+      });
+    } catch (error) {
+      console.error('Error in /event-alerts:', error);
+      res.status(500).json({ error: 'Failed to get event alerts' });
+    }
+  });
+
   // GET /api/health - Health check
   router.get('/health', (req: Request, res: Response) => {
     res.json({
@@ -203,6 +229,113 @@ export function createApiRouter(
     } catch (error) {
       console.error('Error processing feedback:', error);
       res.status(500).json({ error: 'Failed to process feedback' });
+    }
+  });
+
+  // POST /api/events/report - Report a bad/wrong event
+  router.post('/events/report', async (req: Request, res: Response) => {
+    try {
+      const { eventId, eventName, reason } = req.body;
+
+      if (!eventId || !eventName) {
+        return res.status(400).json({ error: 'eventId and eventName are required' });
+      }
+
+      // Get the blacklist service from EventsService
+      const blacklistService = eventsService.getBlacklistService();
+      blacklistService.reportEvent(eventId, eventName, reason);
+
+      res.json({
+        success: true,
+        message: 'Event reported and blacklisted',
+        blacklistedCount: blacklistService.getBlacklistedCount(),
+      });
+    } catch (error) {
+      console.error('Error reporting event:', error);
+      res.status(500).json({ error: 'Failed to report event' });
+    }
+  });
+
+  // POST /api/route - Calculate route between two points
+  router.post('/route', async (req: Request, res: Response) => {
+    try {
+      const { from, to, departAt } = req.body;
+
+      if (!from || !to || !from.lat || !from.lng || !to.lat || !to.lng) {
+        return res.status(400).json({ error: 'from and to coordinates are required' });
+      }
+
+      const departTime = departAt ? new Date(departAt) : undefined;
+      const routeInfo = await routingService.calculateRoute(from, to, departTime);
+
+      res.json(routeInfo);
+    } catch (error) {
+      console.error('Error calculating route:', error);
+      res.status(500).json({ error: 'Failed to calculate route' });
+    }
+  });
+
+  // POST /api/route/multi-stop - Calculate route with waypoints
+  router.post('/route/multi-stop', async (req: Request, res: Response) => {
+    try {
+      const { stops, departAt } = req.body;
+
+      if (!stops || !Array.isArray(stops) || stops.length < 2) {
+        return res.status(400).json({ error: 'At least 2 stops are required' });
+      }
+
+      const departTime = departAt ? new Date(departAt) : undefined;
+      const routeInfo = await routingService.calculateMultiStopRoute(stops, departTime);
+
+      res.json(routeInfo);
+    } catch (error) {
+      console.error('Error calculating multi-stop route:', error);
+      res.status(500).json({ error: 'Failed to calculate multi-stop route' });
+    }
+  });
+
+  // POST /api/pulse/report - Report driver pulse (ground truth)
+  router.post('/pulse/report', async (req: Request, res: Response) => {
+    try {
+      const { zoneId, type } = req.body;
+
+      if (!zoneId || !type) {
+        return res.status(400).json({ error: 'zoneId and type are required' });
+      }
+
+      const validTypes = ['airport_full', 'surge_fake', 'traffic_bad', 'high_demand', 'quiet'];
+      if (!validTypes.includes(type)) {
+        return res.status(400).json({ error: 'Invalid pulse type' });
+      }
+
+      const report = driverPulseService.reportPulse(zoneId, type);
+      res.json({ success: true, report });
+    } catch (error) {
+      console.error('Error reporting pulse:', error);
+      res.status(500).json({ error: 'Failed to report pulse' });
+    }
+  });
+
+  // GET /api/pulse - Get all active pulses
+  router.get('/pulse', async (_req: Request, res: Response) => {
+    try {
+      const pulses = driverPulseService.getAllPulses();
+      res.json({ pulses });
+    } catch (error) {
+      console.error('Error fetching pulses:', error);
+      res.status(500).json({ error: 'Failed to fetch pulses' });
+    }
+  });
+
+  // GET /api/pulse/:zoneId - Get pulses for a specific zone
+  router.get('/pulse/:zoneId', async (req: Request, res: Response) => {
+    try {
+      const { zoneId } = req.params;
+      const pulses = driverPulseService.getPulsesForZone(zoneId);
+      res.json({ pulses });
+    } catch (error) {
+      console.error('Error fetching zone pulses:', error);
+      res.status(500).json({ error: 'Failed to fetch zone pulses' });
     }
   });
 

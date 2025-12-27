@@ -9,7 +9,10 @@ import { WeatherService } from './services/weather.service.js';
 import { EventsService } from './services/events.service.js';
 import { FlightsService } from './services/flights.service.js';
 import { TrafficService } from './services/traffic.service.js';
+import { RoutingService } from './services/routing.service.js';
 import { SurgeService } from './services/surge.service.js';
+import { EventAlertsService } from './services/eventAlerts.service.js';
+import { DriverPulseService } from './services/driverPulse.service.js';
 import {
   weatherCache,
   eventsCache,
@@ -37,8 +40,11 @@ const weatherService = new WeatherService(config.apis.weather.key);
 const eventsService = new EventsService(config.apis.ticketmaster.key);
 const flightsService = new FlightsService(config.apis.flights.key);
 const trafficService = new TrafficService(config.apis.traffic.key);
+const routingService = new RoutingService(config.apis.traffic.key); // TomTom key same as traffic
 const scoringService = new ScoringService();
 const surgeService = new SurgeService();
+const eventAlertsService = new EventAlertsService();
+const driverPulseService = new DriverPulseService();
 
 // Routes
 app.use('/api', createApiRouter(
@@ -46,7 +52,10 @@ app.use('/api', createApiRouter(
   eventsService,
   flightsService,
   trafficService,
-  scoringService
+  scoringService,
+  routingService,
+  eventAlertsService,
+  driverPulseService
 ));
 
 // Root endpoint

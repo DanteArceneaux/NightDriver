@@ -3,13 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#111827" />
-    <title>Seattle Driver Optimizer</title>
+    <meta name="theme-color" content="#00ffee" />
+    <meta name="description" content="Real-time demand prediction for Uber drivers in Seattle" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>Night Driver - Seattle Optimizer</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Register Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(reg => console.log('✅ Service Worker registered:', reg.scope))
+            .catch(err => console.error('❌ Service Worker registration failed:', err));
+        });
+      }
+    </script>
   </body>
 </html>
 

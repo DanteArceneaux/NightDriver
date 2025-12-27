@@ -6,6 +6,10 @@ import { useAutoRefresh } from './hooks/useAutoRefresh';
 import { AppLayout } from './features/layout';
 import { Header } from './components/Header/Header';
 import { SurgeAlert } from './components/SurgeAlert';
+import { QuickLogButton } from './components/Trip/QuickLogButton';
+import { EventAlertBanner } from './components/Alerts/EventAlertBanner';
+import { GoalProgressWidget } from './components/Earnings/GoalProgressWidget';
+import { QuickEarningsButtons } from './components/Earnings/QuickEarningsButtons';
 import { SkeletonHero, SkeletonMap, SkeletonTimeline, SkeletonLeaderboard } from './components/Skeleton/Skeleton';
 import { requestNotificationPermission } from './lib/notifications';
 import { calculateDistance, estimateDriveTime, calculateEfficiency } from './lib/distance';
@@ -112,6 +116,18 @@ function App() {
     <>
       {/* Surge Alert */}
       <SurgeAlert surges={surges} />
+
+      {/* Event Alerts */}
+      <EventAlertBanner />
+
+      {/* Goal Progress Widget */}
+      <GoalProgressWidget />
+
+      {/* Quick Earnings Buttons */}
+      <QuickEarningsButtons />
+
+      {/* Quick Log Button */}
+      <QuickLogButton />
 
       {/* Theme-aware Layout */}
       <AppLayout

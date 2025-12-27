@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Radio, MapPin, CloudRain, RefreshCw, HelpCircle, Palette, ChevronDown } from 'lucide-react';
+import { Radio, MapPin, CloudRain, RefreshCw, HelpCircle, Palette, ChevronDown, Settings, BarChart3 } from 'lucide-react';
 import { ScoreLegend } from '../Legend/ScoreLegend';
+import { SettingsModal } from '../Settings/SettingsModal';
+import { AnalyticsView } from '../Analytics/AnalyticsView';
 import { useTheme } from '../../features/theme';
 import { themes } from '../../features/theme/themes';
 
@@ -15,6 +17,8 @@ interface HeaderProps {
 
 export function Header({ connected, countdown, hasLocation, onRefresh, weather }: HeaderProps) {
   const [showLegend, setShowLegend] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const { id: currentThemeId, name: currentThemeName, setThemeId } = useTheme();
   
@@ -158,6 +162,28 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
                 </AnimatePresence>
               </div>
 
+              {/* Analytics Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowAnalytics(true)}
+                className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                title="Analytics"
+              >
+                <BarChart3 className="w-5 h-5 text-neon-cyan" />
+              </motion.button>
+
+              {/* Settings Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowSettings(true)}
+                className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                title="Settings"
+              >
+                <Settings className="w-5 h-5 text-neon-cyan" />
+              </motion.button>
+
               {/* Help Button */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -187,6 +213,12 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather }
 
     {/* Score Legend Modal */}
     <ScoreLegend isOpen={showLegend} onClose={() => setShowLegend(false)} />
+    
+    {/* Analytics View */}
+    <AnalyticsView isOpen={showAnalytics} onClose={() => setShowAnalytics(false)} />
+    
+    {/* Settings Modal */}
+    <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
   </>
   );
 }

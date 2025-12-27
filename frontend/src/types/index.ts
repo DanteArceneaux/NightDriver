@@ -8,6 +8,7 @@ export interface Zone {
   name: string;
   coordinates: Coordinates;
   demandDrivers: string[];
+  stagingSpot?: Coordinates; // Recommended safe parking/waiting location
 }
 
 export interface ZoneScore {

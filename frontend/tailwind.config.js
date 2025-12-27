@@ -14,6 +14,11 @@ export default {
         'neon-green': '#00ff66',
         'neon-purple': '#aa00ff',
         
+        // Dynamic Theme Colors (CSS Variables)
+        'theme-primary': 'var(--color-primary, #00ffee)',
+        'theme-secondary': 'var(--color-secondary, #a855f7)',
+        'theme-accent': 'var(--color-accent, #ff006e)',
+        
         // Demand Colors (Enhanced)
         'demand-cold': '#1e40af',
         'demand-cool': '#00ffee',

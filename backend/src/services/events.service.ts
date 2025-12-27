@@ -1,9 +1,15 @@
 import axios from 'axios';
 import { Event } from '../types/index.js';
+import { EventBlacklistService } from './eventBlacklist.service.js';
 
 export class EventsService {
   private apiKey: string;
   private baseUrl = 'https://app.ticketmaster.com/discovery/v2';
+  private blacklistService: EventBlacklistService;
+
+  getBlacklistService(): EventBlacklistService {
+    return this.blacklistService;
+  }
 
   // Map of venue names/keywords to zone IDs
   private venueToZoneMap: Record<string, string> = {
@@ -63,8 +69,9 @@ export class EventsService {
     'spanaway': 'spanaway',
   };
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, blacklistService?: EventBlacklistService) {
     this.apiKey = apiKey;
+    this.blacklistService = blacklistService || new EventBlacklistService();
   }
 
   async getUpcomingEvents(): Promise<Event[]> {
@@ -86,56 +93,61 @@ export class EventsService {
       tomorrow.setHours(23, 59, 59, 0);
       const endDate = tomorrow.toISOString().split('.')[0] + 'Z';
 
-      // Query multiple cities in the metro area
-      // Ticketmaster API doesn't support multiple cities in one query, so we need to make multiple requests
-      const cities = ['Seattle', 'Tacoma', 'Everett', 'Bellevue', 'Renton', 'Federal Way'];
-      
-      const allEventPromises = cities.map(city =>
-        axios.get(`${this.baseUrl}/events.json`, {
-          params: {
-            apikey: this.apiKey,
-            city: city,
-            stateCode: 'WA',
-            startDateTime: startDate,
-            endDateTime: endDate,
-            size: 30,
-            sort: 'date,asc',
-          },
-        }).catch(err => {
-          console.log(`Failed to fetch events for ${city}:`, err.message);
-          return { data: { _embedded: { events: [] } } };
-        })
-      );
+      // Use radius search centered on Seattle metro area
+      // Center point: approximately between Seattle and Tacoma
+      const centerLat = 47.5500;
+      const centerLng = -122.2000;
+      const radiusKm = 50; // 50km radius covers Marysville to Spanaway
 
-      const responses = await Promise.all(allEventPromises);
-      
-      // Combine all events and remove duplicates by event ID
-      const allEvents: any[] = [];
-      const seenEventIds = new Set<string>();
-      
-      for (const response of responses) {
-        const cityEvents = response.data._embedded?.events || [];
-        for (const event of cityEvents) {
-          if (!seenEventIds.has(event.id)) {
-            seenEventIds.add(event.id);
-            allEvents.push(event);
-          }
-        }
-      }
+      const response = await axios.get(`${this.baseUrl}/events.json`, {
+        params: {
+          apikey: this.apiKey,
+          geoPoint: `${centerLat},${centerLng}`,
+          radius: radiusKm,
+          unit: 'km',
+          startDateTime: startDate,
+          endDateTime: endDate,
+          size: 100, // Get more events since we're covering larger area
+          sort: 'date,asc',
+        },
+      });
 
-      const events = allEvents;
+      const events = response.data._embedded?.events || [];
 
-      // Filter out suspicious/non-public events
+      // Filter out suspicious/non-public events and canceled/postponed
       const validEvents = events.filter((event: any) => {
         const name = event.name?.toLowerCase() || '';
-        // Exclude suite passes, guest passes, and other non-public events
+        const status = event.dates?.status?.code?.toLowerCase() || '';
+        
+        // Exclude canceled, postponed, rescheduled events
+        if (status === 'cancelled' || status === 'canceled') return false;
+        if (status === 'postponed') return false;
+        if (status === 'rescheduled') return false;
+        
+        // Exclude non-public/junk events by keywords
+        const junkKeywords = [
+          'suite pass', 'guest pass', 'vip pass', 'vip package',
+          'parking pass', 'upgrade', 'meet and greet pass',
+          'early entry', 'soundcheck', 'pre-party pass',
+          'lounge access', 'club access'
+        ];
+        
+        for (const keyword of junkKeywords) {
+          if (name.includes(keyword)) return false;
+        }
+        
+        // Exclude if name is just "suite" or "pass" alone
         if (name.includes('suite') && name.includes('pass')) return false;
-        if (name.includes('guest pass')) return false;
-        if (name.includes('vip pass')) return false;
+        
         return true;
       });
 
-      return validEvents.map((event: any) => {
+      // Further filter out blacklisted events
+      const nonBlacklistedEvents = validEvents.filter((event: any) => {
+        return !this.blacklistService.isBlacklisted(event.id, event.name);
+      });
+
+      return nonBlacklistedEvents.map((event: any) => {
         const venue = event._embedded?.venues?.[0];
         const venueName = venue?.name?.toLowerCase() || '';
         const zoneId = this.mapVenueToZone(venueName);
