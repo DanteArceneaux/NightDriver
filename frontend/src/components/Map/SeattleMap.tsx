@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Marker, Tooltip, useMap } from 'react-leaflet';
 import { motion } from 'framer-motion';
 import { Map as MapIcon, Satellite, TrendingUp } from 'lucide-react';
@@ -121,9 +121,9 @@ function getEventEmoji(type?: string): string {
   }
 }
 
-// Component to add pulsing animation style to map
-function MapStyleInjector() {
-  useMap(); // Just to ensure component is within MapContainer
+// Component to handle map resize and add styling
+function MapResizeHandler() {
+  const map = useMap();
   
   useEffect(() => {
     // Inject pulsing animation CSS
@@ -158,10 +158,37 @@ function MapStyleInjector() {
     `;
     document.head.appendChild(style);
     
+    // Set up ResizeObserver to handle container size changes
+    const container = map.getContainer();
+    let resizeTimeout: NodeJS.Timeout | null = null;
+    
+    const resizeObserver = new ResizeObserver(() => {
+      // Throttle invalidateSize calls with requestAnimationFrame
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      
+      resizeTimeout = setTimeout(() => {
+        requestAnimationFrame(() => {
+          map.invalidateSize();
+        });
+      }, 100); // Debounce 100ms to avoid excessive calls during drag
+    });
+    
+    resizeObserver.observe(container);
+    
+    // Also call invalidateSize after a short delay to handle initial render
+    const initialTimeout = setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+    
     return () => {
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+      clearTimeout(initialTimeout);
+      resizeObserver.disconnect();
       document.head.removeChild(style);
     };
-  }, []);
+  }, [map]);
   
   return null;
 }
@@ -174,6 +201,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   const { id: themeId } = useTheme();
   const [mapLayer, setMapLayer] = useState<'dark' | 'satellite'>('dark');
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -209,7 +237,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   };
 
   return (
-    <div className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative">
+    <div ref={mapContainerRef} className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative">
       {/* Map Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         {/* Map Layer Toggle */}
@@ -289,7 +317,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           </>
         )}
 
-        <MapStyleInjector />
+        <MapResizeHandler />
 
         {/* Personal Heatmap Overlay */}
         <HeatmapOverlay enabled={showHeatmap} />
