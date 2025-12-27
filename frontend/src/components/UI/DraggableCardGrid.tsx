@@ -29,14 +29,28 @@ interface CardState {
   maximized: boolean;
 }
 
+// Layout version - increment to reset user layouts when defaults change
+const LAYOUT_VERSION = 2;
+
 export function DraggableCardGrid({
   cards,
   storageKey = 'card-grid-layout',
   className,
   onOrderChange,
 }: DraggableCardGridProps) {
-  // Initialize order from localStorage or default
+  // Initialize order from localStorage or default (with version check)
   const [order, setOrder] = useState<string[]>(() => {
+    const savedVersion = localStorage.getItem(`${storageKey}-version`);
+    const currentVersion = LAYOUT_VERSION.toString();
+    
+    // Reset if version changed
+    if (savedVersion !== currentVersion) {
+      localStorage.removeItem(`${storageKey}-order`);
+      localStorage.removeItem(`${storageKey}-states`);
+      localStorage.setItem(`${storageKey}-version`, currentVersion);
+      return cards.map(c => c.id);
+    }
+    
     const saved = localStorage.getItem(`${storageKey}-order`);
     if (saved) {
       try {
@@ -50,6 +64,14 @@ export function DraggableCardGrid({
 
   // Initialize card states from localStorage
   const [cardStates, setCardStates] = useState<Record<string, CardState>>(() => {
+    const savedVersion = localStorage.getItem(`${storageKey}-version`);
+    const currentVersion = LAYOUT_VERSION.toString();
+    
+    // Skip if version mismatch (already handled above)
+    if (savedVersion !== currentVersion) {
+      return {};
+    }
+    
     const saved = localStorage.getItem(`${storageKey}-states`);
     if (saved) {
       try {

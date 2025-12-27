@@ -20,7 +20,23 @@ export function NeonCockpitLayout(props: LayoutProps) {
   };
 
   // Define cards for the grid - memoized to prevent re-renders
+  // Map is FIRST, with larger default sizes for better visibility
   const cards: CardConfig[] = useMemo(() => [
+    {
+      id: 'map',
+      title: 'Seattle Map',
+      icon: <Map className="w-4 h-4 text-theme-primary" />,
+      content: (
+        <div className="w-full h-full">
+          <SeattleMap zones={props.zones} onZoneClick={handleZoneClick} />
+        </div>
+      ),
+      defaultHeight: 500,
+      minHeight: 300,
+      maxHeight: 900,
+      collapsible: true,
+      resizable: true,
+    },
     {
       id: 'top-pick',
       title: 'Top Pick',
@@ -34,38 +50,8 @@ export function NeonCockpitLayout(props: LayoutProps) {
           />
         </div>
       ),
-      defaultHeight: 200,
-      minHeight: 150,
-      maxHeight: 400,
-      collapsible: true,
-      resizable: true,
-    },
-    {
-      id: 'map',
-      title: 'Seattle Map',
-      icon: <Map className="w-4 h-4 text-theme-primary" />,
-      content: (
-        <div className="w-full h-full">
-          <SeattleMap zones={props.zones} onZoneClick={handleZoneClick} />
-        </div>
-      ),
-      defaultHeight: 400,
-      minHeight: 250,
-      maxHeight: 800,
-      collapsible: true,
-      resizable: true,
-    },
-    {
-      id: 'forecast',
-      title: '4-Hour Forecast',
-      icon: <TrendingUp className="w-4 h-4 text-theme-primary" />,
-      content: (
-        <div className="p-4">
-          <ForecastTimeline />
-        </div>
-      ),
-      defaultHeight: 200,
-      minHeight: 150,
+      defaultHeight: 280,
+      minHeight: 200,
       maxHeight: 500,
       collapsible: true,
       resizable: true,
@@ -79,9 +65,24 @@ export function NeonCockpitLayout(props: LayoutProps) {
           <LiveConditions />
         </div>
       ),
-      defaultHeight: 250,
-      minHeight: 150,
+      defaultHeight: 320,
+      minHeight: 200,
       maxHeight: 600,
+      collapsible: true,
+      resizable: true,
+    },
+    {
+      id: 'forecast',
+      title: '4-Hour Forecast',
+      icon: <TrendingUp className="w-4 h-4 text-theme-primary" />,
+      content: (
+        <div className="p-4">
+          <ForecastTimeline />
+        </div>
+      ),
+      defaultHeight: 280,
+      minHeight: 180,
+      maxHeight: 500,
       collapsible: true,
       resizable: true,
     },
@@ -94,9 +95,9 @@ export function NeonCockpitLayout(props: LayoutProps) {
           <EventsPanel />
         </div>
       ),
-      defaultHeight: 300,
-      minHeight: 150,
-      maxHeight: 600,
+      defaultHeight: 380,
+      minHeight: 200,
+      maxHeight: 700,
       collapsible: true,
       resizable: true,
     },
@@ -109,9 +110,9 @@ export function NeonCockpitLayout(props: LayoutProps) {
           <Leaderboard zones={props.zones} driverLocation={props.driverLocation} />
         </div>
       ),
-      defaultHeight: 350,
-      minHeight: 200,
-      maxHeight: 700,
+      defaultHeight: 450,
+      minHeight: 250,
+      maxHeight: 800,
       collapsible: true,
       resizable: true,
     },
