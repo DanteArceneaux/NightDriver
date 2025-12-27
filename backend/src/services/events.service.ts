@@ -61,7 +61,17 @@ export class EventsService {
 
       const events = response.data._embedded?.events || [];
 
-      const mappedEvents = events.map((event: any) => {
+      // Filter out suspicious/non-public events
+      const validEvents = events.filter((event: any) => {
+        const name = event.name?.toLowerCase() || '';
+        // Exclude suite passes, guest passes, and other non-public events
+        if (name.includes('suite') && name.includes('pass')) return false;
+        if (name.includes('guest pass')) return false;
+        if (name.includes('vip pass')) return false;
+        return true;
+      });
+
+      return validEvents.map((event: any) => {
         const venue = event._embedded?.venues?.[0];
         const venueName = venue?.name?.toLowerCase() || '';
         const zoneId = this.mapVenueToZone(venueName);
@@ -102,14 +112,7 @@ export class EventsService {
           imageUrl,
           url: event.url,
         };
-      });
-
-      // Filter out events that have already ended and unknown zones
-      const currentTime = new Date();
-      return mappedEvents.filter((e: Event) => {
-        const eventEndTime = new Date(e.endTime);
-        return e.zoneId !== 'unknown' && eventEndTime > currentTime;
-      });
+      }).filter((e: Event) => e.zoneId !== 'unknown');
     } catch (error) {
       console.error('Error fetching events:', error);
       return this.getMockEvents();
