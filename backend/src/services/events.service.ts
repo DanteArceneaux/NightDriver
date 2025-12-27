@@ -61,7 +61,7 @@ export class EventsService {
 
       const events = response.data._embedded?.events || [];
 
-      return events.map((event: any) => {
+      const mappedEvents = events.map((event: any) => {
         const venue = event._embedded?.venues?.[0];
         const venueName = venue?.name?.toLowerCase() || '';
         const zoneId = this.mapVenueToZone(venueName);
@@ -88,18 +88,28 @@ export class EventsService {
           imageUrl = sortedImages[0]?.url;
         }
 
+        const startTime = event.dates.start.dateTime || event.dates.start.localDate;
+        const endTime = this.estimateEndTime(startTime, eventType);
+
         return {
           name: event.name,
           venue: venue?.name || 'Unknown Venue',
-          startTime: event.dates.start.dateTime || event.dates.start.localDate,
-          endTime: this.estimateEndTime(event.dates.start.dateTime || event.dates.start.localDate, eventType),
+          startTime,
+          endTime,
           zoneId,
           type: eventType,
           attendees: event.sales?.public?.startDateTime ? 1000 : undefined,
           imageUrl,
           url: event.url,
         };
-      }).filter((e: Event) => e.zoneId !== 'unknown');
+      });
+
+      // Filter out events that have already ended and unknown zones
+      const currentTime = new Date();
+      return mappedEvents.filter((e: Event) => {
+        const eventEndTime = new Date(e.endTime);
+        return e.zoneId !== 'unknown' && eventEndTime > currentTime;
+      });
     } catch (error) {
       console.error('Error fetching events:', error);
       return this.getMockEvents();
