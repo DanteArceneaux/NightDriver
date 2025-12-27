@@ -90,8 +90,8 @@ export function GameHudLayout(props: LayoutProps) {
           </motion.div>
         </div>
 
-        {/* Bottom-Right: Conditions Widget (always visible, mini) */}
-        <div className="absolute bottom-4 right-4 pointer-events-auto max-w-xs">
+        {/* Bottom-Right: Conditions Widget (always visible, expanded) */}
+        <div className="absolute bottom-4 right-4 pointer-events-auto w-[420px] max-w-[calc(100vw-2rem)]">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <LiveConditions />
           </motion.div>

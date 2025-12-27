@@ -59,7 +59,7 @@ export function LiveConditions() {
       icon: Music,
       label: 'Events',
       value: conditions.events.length.toString(),
-      subtitle: conditions.events[0].name.slice(0, 20),
+      subtitle: conditions.events[0].name.slice(0, 30) + (conditions.events[0].name.length > 30 ? '...' : ''),
       color: 'text-neon-orange',
       bg: 'bg-neon-orange/20'
     });
@@ -85,25 +85,25 @@ export function LiveConditions() {
         </h3>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {pills.map((pill, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.1 }}
-            className={`flex-shrink-0 glass rounded-xl p-4 border border-white/10 min-w-[140px] ${pill.bg}`}
+            className={`glass rounded-xl p-4 border border-white/10 ${pill.bg}`}
           >
             <div className="flex items-start gap-3">
-              <pill.icon className={`w-5 h-5 ${pill.color} flex-shrink-0`} />
+              <pill.icon className={`w-6 h-6 ${pill.color} flex-shrink-0`} />
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-gray-400 font-medium mb-1">
+                <div className="text-xs text-gray-400 font-medium mb-1 uppercase tracking-wider">
                   {pill.label}
                 </div>
                 <div className={`text-2xl font-black ${pill.color} mb-1`}>
                   {pill.value}
                 </div>
-                <div className="text-xs text-gray-400 truncate">
+                <div className="text-xs text-gray-400 line-clamp-2">
                   {pill.subtitle}
                 </div>
               </div>
