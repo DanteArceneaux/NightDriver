@@ -436,6 +436,7 @@ export function createApiRouter(
       const { WeatherSurgeService } = await import('../services/weatherSurge.service.js');
       const { FerriesService } = await import('../services/ferries.service.js');
       const { HotelCheckoutService } = await import('../services/hotelCheckout.service.js');
+      const { HospitalShiftsService } = await import('../services/hospitalShifts.service.js');
       const { getBarCloseAlerts, getRecommendedBarZone } = await import('../data/barCloseTimes.js');
       const { getCurrentDeadZones } = await import('../data/deadZones.js');
 
@@ -445,6 +446,7 @@ export function createApiRouter(
       const weatherSurgeService = new WeatherSurgeService();
       const ferriesService = new FerriesService();
       const hotelCheckoutService = new HotelCheckoutService();
+      const hospitalShiftsService = new HospitalShiftsService();
 
       const currentTime = new Date();
       const [weather, flights] = await Promise.all([
@@ -465,6 +467,7 @@ export function createApiRouter(
       const deadZones = getCurrentDeadZones(currentTime);
       const ferries = ferriesService.getFerryIntelligence(currentTime);
       const hotelCheckout = hotelCheckoutService.getHotelCheckoutIntelligence(currentTime);
+      const hospitalShifts = hospitalShiftsService.getHospitalShiftIntelligence(currentTime);
 
       res.json({
         timestamp: currentTime.toISOString(),
@@ -474,6 +477,7 @@ export function createApiRouter(
         },
         ferries,
         hotelCheckout,
+        hospitalShifts,
         airportQueue: queueEstimate,
         conventions: {
           active: conventions,
