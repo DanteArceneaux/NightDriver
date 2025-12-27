@@ -1,11 +1,13 @@
 import axios from 'axios';
 import { Event } from '../types/index.js';
 import { EventBlacklistService } from './eventBlacklist.service.js';
+import { SeatGeekService } from './seatgeek.service.js';
 
 export class EventsService {
   private apiKey: string;
   private baseUrl = 'https://app.ticketmaster.com/discovery/v2';
   private blacklistService: EventBlacklistService;
+  private seatGeekService: SeatGeekService;
 
   getBlacklistService(): EventBlacklistService {
     return this.blacklistService;
@@ -72,9 +74,67 @@ export class EventsService {
   constructor(apiKey: string, blacklistService?: EventBlacklistService) {
     this.apiKey = apiKey;
     this.blacklistService = blacklistService || new EventBlacklistService();
+    this.seatGeekService = new SeatGeekService();
   }
 
   async getUpcomingEvents(): Promise<Event[]> {
+    // Fetch from multiple sources in parallel
+    const [ticketmasterEvents, seatGeekEvents] = await Promise.all([
+      this.getTicketmasterEvents(),
+      this.seatGeekService.getUpcomingEvents(),
+    ]);
+
+    console.log(`🎫 Ticketmaster: ${ticketmasterEvents.length} events`);
+    console.log(`🎟️ SeatGeek: ${seatGeekEvents.length} events`);
+
+    // Merge and deduplicate
+    const mergedEvents = this.mergeAndDeduplicateEvents(ticketmasterEvents, seatGeekEvents);
+    console.log(`📊 Total unique events: ${mergedEvents.length}`);
+
+    return mergedEvents;
+  }
+
+  /**
+   * Merge events from multiple sources and remove duplicates
+   */
+  private mergeAndDeduplicateEvents(ticketmaster: Event[], seatGeek: Event[]): Event[] {
+    const uniqueEvents = new Map<string, Event>();
+
+    // Add Ticketmaster events first (higher priority)
+    for (const event of ticketmaster) {
+      const key = this.getEventKey(event);
+      uniqueEvents.set(key, event);
+    }
+
+    // Add SeatGeek events (skip if duplicate)
+    for (const event of seatGeek) {
+      const key = this.getEventKey(event);
+      if (!uniqueEvents.has(key)) {
+        uniqueEvents.set(key, event);
+      }
+    }
+
+    // Sort by start time
+    return Array.from(uniqueEvents.values())
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  }
+
+  /**
+   * Create a unique key for event deduplication
+   * Based on venue + approximate start time (same hour)
+   */
+  private getEventKey(event: Event): string {
+    const venueLower = event.venue.toLowerCase().replace(/[^a-z]/g, '');
+    const startDate = new Date(event.startTime);
+    const dateHour = `${startDate.toISOString().slice(0, 13)}`; // YYYY-MM-DDTHH
+    
+    // Also include first word of event name for better matching
+    const nameStart = event.name.toLowerCase().split(/\s+/)[0].replace(/[^a-z]/g, '');
+    
+    return `${venueLower}-${dateHour}-${nameStart}`;
+  }
+
+  private async getTicketmasterEvents(): Promise<Event[]> {
     const hasValidKey = this.apiKey && this.apiKey.length > 10 && this.apiKey !== 'your_key_here';
     
     if (!hasValidKey) {
@@ -147,7 +207,7 @@ export class EventsService {
         return !this.blacklistService.isBlacklisted(event.id, event.name);
       });
 
-      return nonBlacklistedEvents.map((event: any) => {
+      const mappedEvents: Event[] = nonBlacklistedEvents.map((event: any) => {
         const venue = event._embedded?.venues?.[0];
         const venueName = venue?.name?.toLowerCase() || '';
         const zoneId = this.mapVenueToZone(venueName);
@@ -188,9 +248,11 @@ export class EventsService {
           imageUrl,
           url: event.url,
         };
-      }).filter((e: Event) => e.zoneId !== 'unknown');
+      });
+      
+      return mappedEvents.filter((e: Event) => e.zoneId !== 'unknown');
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error('Error fetching Ticketmaster events:', error);
       return this.getMockEvents();
     }
   }

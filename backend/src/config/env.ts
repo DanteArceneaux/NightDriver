@@ -13,6 +13,7 @@ export interface AppConfig {
   apis: {
     weather: ApiConfig;
     ticketmaster: ApiConfig;
+    seatgeek: ApiConfig;
     flights: ApiConfig;
     traffic: ApiConfig;
   };
@@ -39,6 +40,10 @@ export const config: AppConfig = {
       key: process.env.TICKETMASTER_API_KEY || '',
       enabled: isValidApiKey(process.env.TICKETMASTER_API_KEY),
     },
+    seatgeek: {
+      key: process.env.SEATGEEK_CLIENT_ID || '',
+      enabled: isValidApiKey(process.env.SEATGEEK_CLIENT_ID),
+    },
     flights: {
       key: getFlightsApiKey(),
       enabled: isValidApiKey(getFlightsApiKey()),
@@ -53,7 +58,20 @@ export const config: AppConfig = {
 export function logApiStatus(): void {
   console.log('\n🔑 API Key Status:');
   console.log(`  Weather: ${config.apis.weather.enabled ? '✓ Active' : '✗ (using mock data)'}`);
-  console.log(`  Events: ${config.apis.ticketmaster.enabled ? '✓ Active' : '✗ (using mock data)'}`);
+  
+  // Events sources
+  const hasTicketmaster = config.apis.ticketmaster.enabled;
+  const hasSeatGeek = config.apis.seatgeek.enabled;
+  if (hasTicketmaster && hasSeatGeek) {
+    console.log('  Events: ✓ Active (Ticketmaster + SeatGeek)');
+  } else if (hasTicketmaster) {
+    console.log('  Events: ✓ Active (Ticketmaster)');
+  } else if (hasSeatGeek) {
+    console.log('  Events: ✓ Active (SeatGeek)');
+  } else {
+    console.log('  Events: ✗ (using mock data)');
+  }
+  
   console.log(`  Flights: ${config.apis.flights.enabled ? '✓ Active' : '✗ (using mock data)'}`);
   console.log(`  Traffic: ${config.apis.traffic.enabled ? '✓ Active' : '✗ (using mock data)'}`);
 }

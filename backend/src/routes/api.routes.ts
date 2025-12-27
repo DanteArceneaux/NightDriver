@@ -46,7 +46,14 @@ export function createApiRouter(
           events: {
             enabled: !!eventsService,
             source: process.env.TICKETMASTER_API_KEY ? 'real' : 'mock',
-            provider: process.env.TICKETMASTER_API_KEY ? 'Ticketmaster' : 'Mock',
+            provider: (() => {
+              const tm = process.env.TICKETMASTER_API_KEY;
+              const sg = process.env.SEATGEEK_CLIENT_ID;
+              if (tm && sg) return 'Ticketmaster + SeatGeek';
+              if (tm) return 'Ticketmaster';
+              if (sg) return 'SeatGeek';
+              return 'Mock';
+            })(),
             cached: !!getCached(eventsCache, 'events'),
           },
           flights: {
