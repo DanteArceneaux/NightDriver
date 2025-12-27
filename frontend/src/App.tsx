@@ -16,7 +16,7 @@ import { calculateDistance, estimateDriveTime, calculateEfficiency } from './lib
 import { fetchConditions } from './lib/api';
 
 function App() {
-  const { data, loading, error, connected, refresh } = useZoneScores(true); // Use WebSocket
+  const { data, loading, error, connected, refresh } = useZoneScores();
   const { location: driverLocation } = useDriverLocation();
   const { countdown } = useAutoRefresh(30000); // 30 seconds for WebSocket
   const [surges] = useState<any[]>([]);

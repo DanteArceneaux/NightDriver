@@ -1,15 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { ZonesResponse } from '../types';
 import { fetchZones } from '../lib/api';
-import { showSurgeNotification } from '../lib/notifications';
 
-export function useZoneScores(useWebSocket: boolean = false) {
+export function useZoneScores() {
   const [data, setData] = useState<ZonesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [connected, setConnected] = useState(false);
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [connected] = useState(true); // Always "connected" for serverless
 
   const loadData = useCallback(async () => {
     try {
@@ -27,54 +24,10 @@ export function useZoneScores(useWebSocket: boolean = false) {
     // Initial load
     loadData();
 
-    if (!useWebSocket) {
-      // Fallback to polling if WebSocket disabled
-      const interval = setInterval(loadData, 300000); // 5 minutes
-      return () => clearInterval(interval);
-    }
-
-    // Connect to WebSocket - use env variable in production
-    const wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:3001';
-    const newSocket = io(wsUrl, {
-      transports: ['websocket', 'polling'],
-    });
-
-    newSocket.on('connect', () => {
-      console.log('✅ WebSocket connected');
-      setConnected(true);
-      setError(null);
-    });
-
-    newSocket.on('disconnect', () => {
-      console.log('❌ WebSocket disconnected');
-      setConnected(false);
-    });
-
-    newSocket.on('connect_error', (err) => {
-      console.error('WebSocket error:', err);
-      setError('Real-time connection failed. Using cached data.');
-      setConnected(false);
-    });
-
-    // Listen for score updates
-    newSocket.on('scores:update', (newData: ZonesResponse) => {
-      setData(newData);
-      setLoading(false);
-    });
-
-    // Listen for surge alerts
-    newSocket.on('surge:alert', (surges: any[]) => {
-      surges.forEach((surge) => {
-        showSurgeNotification(surge);
-      });
-    });
-
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.disconnect();
-    };
-  }, [useWebSocket, loadData]);
+    // Poll every 5 minutes for updates
+    const interval = setInterval(loadData, 300000);
+    return () => clearInterval(interval);
+  }, [loadData]);
 
   return { 
     data, 
@@ -82,7 +35,7 @@ export function useZoneScores(useWebSocket: boolean = false) {
     error, 
     connected,
     refresh: loadData,
-    socket,
+    socket: null,
   };
 }
 
