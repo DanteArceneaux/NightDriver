@@ -1,0 +1,49 @@
+name: Verify Frontend Deployment (Vercel)
+
+on:
+  push:
+    branches:
+      - main # Or your frontend branch, if different
+
+jobs:
+  verify-deployment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_API_TOKEN }} --project=${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./frontend # Assuming your frontend is in a 'frontend' directory
+
+      - name: Build Project Locally (optional, but good for early failure detection)
+        run: vercel build --token=${{ secrets.VERCEL_API_TOKEN }} --project=${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./frontend # Assuming your frontend is in a 'frontend' directory
+
+      - name: Get Vercel Deployment URL
+        id: get_url
+        run: |
+          # This assumes a successful deployment on Vercel's side is already triggered by the push
+          # We'll try to find the latest deployment URL for the project
+          DEPLOYMENT_URL=$(vercel ls --project=${{ secrets.VERCEL_PROJECT_ID }} --token=${{ secrets.VERCEL_API_TOKEN }} | grep "https://" | head -n 1)
+          echo "DEPLOYMENT_URL=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+
+      - name: Wait for Vercel Deployment to be Ready
+        uses: nev7n/wait_for_deploy-action@v1.2.0
+        with:
+          url: ${{ steps.get_url.outputs.DEPLOYMENT_URL }}
+          timeout: 300 # Wait for up to 5 minutes
+          interval: 10 # Check every 10 seconds
+
+      - name: Verify Frontend Accessibility
+        run: |
+          # Basic curl to ensure the page responds
+          curl -f -s -o /dev/null ${{ steps.get_url.outputs.DEPLOYMENT_URL }}
+        
+      - name: Report Success
+        run: echo "Vercel Frontend deployment verified successfully!"
+
