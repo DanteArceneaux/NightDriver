@@ -23,6 +23,18 @@ export interface Convention {
 export class ConventionsService {
   private wsccService: WSCCConventionsService;
 
+  private readonly CONVENTION_PEAK_IMPACT = 25;
+  private readonly CONVENTION_OFF_PEAK_IMPACT = 12;
+  private readonly CAPITOL_HILL_PEAK_IMPACT = 10;
+  private readonly CAPITOL_HILL_OFF_PEAK_IMPACT = 5;
+  private readonly SEATAC_MORNING_IMPACT = 15;
+  private readonly SEATAC_EVENING_IMPACT = 15;
+  private readonly HOTEL_OVERFLOW_IMPACT = 8;
+
+  private readonly WSCC_VENUE_KEYWORD = 'WSCC';
+  private readonly CONVENTION_VENUE_KEYWORD = 'Convention';
+  private readonly DEFAULT_EXPECTED_ATTENDEES = 5000;
+
   constructor() {
     this.wsccService = new WSCCConventionsService();
   }
@@ -97,7 +109,7 @@ export class ConventionsService {
           venue: c.venue.includes('WSCC') || c.venue.includes('Convention') ? 'WSCC' as const : 'Other' as const,
           startDate: c.startDate,
           endDate: c.endDate,
-          expectedAttendees: c.expectedAttendance || 5000,
+          expectedAttendees: c.expectedAttendance || this.DEFAULT_EXPECTED_ATTENDEES,
           type: (c.category?.toLowerCase() === 'gaming' ? 'tech' : 
                  c.category?.toLowerCase() === 'entertainment' ? 'other' :
                  c.category?.toLowerCase() === 'auto' ? 'trade' : 'other') as any,
@@ -166,20 +178,20 @@ export class ConventionsService {
           zoneId === 'retail_core' ||
           zoneId === 'downtown_hotel_row_union'
         ) {
-          impact += this.isConventionPeakTime(currentTime) ? 25 : 12;
+          impact += this.isConventionPeakTime(currentTime) ? this.CONVENTION_PEAK_IMPACT : this.CONVENTION_OFF_PEAK_IMPACT;
         } else if (zoneId === 'capitol_hill_madison') {
           // Nearby overflow (people going to dinner/drinks after sessions)
-          impact += this.isConventionPeakTime(currentTime) ? 10 : 5;
+          impact += this.isConventionPeakTime(currentTime) ? this.CAPITOL_HILL_PEAK_IMPACT : this.CAPITOL_HILL_OFF_PEAK_IMPACT;
         }
         // Airport benefits during arrival/departure
         else if (zoneId === 'seatac') {
           const hour = currentTime.getHours();
-          if (hour >= 7 && hour <= 9) impact += 15; // Morning arrivals
-          if (hour >= 16 && hour <= 19) impact += 15; // Evening departures
+          if (hour >= 7 && hour <= 9) impact += this.SEATAC_MORNING_IMPACT; // Morning arrivals
+          if (hour >= 16 && hour <= 19) impact += this.SEATAC_EVENING_IMPACT; // Evening departures
         }
         // Hotels benefit
         else if (zoneId === 'belltown_hotels' || zoneId === 'pier66_cruise_terminal' || zoneId === 'waterfront_piers') {
-          impact += 8;
+          impact += this.HOTEL_OVERFLOW_IMPACT;
         }
       }
     }

@@ -29,22 +29,32 @@ export interface CruiseSurgeAlert {
 }
 
 export class CruiseShipsService {
-  // Seattle cruise terminals (for future expansion)
-  // @ts-ignore - unused but kept for reference
-  private readonly TERMINALS = {
-    pier91: {
-      name: 'Pier 91 (Smith Cove Terminal)',
-      coordinates: { lat: 47.6344, lng: -122.3988 },
-      zoneId: 'pier91_cruise_terminal',
-      capacity: 4000,
-    },
-    pier66: {
-      name: 'Pier 66 (Bell Street Cruise Terminal)',
-      coordinates: { lat: 47.6116, lng: -122.3515 },
-      zoneId: 'pier66_cruise_terminal',
-      capacity: 2500,
-    },
-  };
+  private getTerminalZoneId(terminalName: string): string {
+    switch (terminalName) {
+      case 'Pier 91': return 'pier91_cruise_terminal';
+      case 'Pier 66': return 'pier66_cruise_terminal';
+      default: return ''; // Or throw an error, depending on desired behavior
+    }
+  }
+
+  private getMinutesDifference(date1: Date, date2: Date): number {
+    return (date1.getTime() - date2.getTime()) / (1000 * 60);
+  }
+
+  // Constants for cruise surge impact calculation
+  private readonly ARRIVAL_SURGE_START_MIN = -30;  // 30 minutes before arrival
+  private readonly ARRIVAL_SURGE_END_MIN = 120;    // 2 hours after arrival
+  private readonly DEPARTURE_SURGE_START_MIN = -120; // 2 hours before departure
+  private readonly DEPARTURE_SURGE_END_MIN = 30;   // 30 minutes after departure
+
+  private readonly TERMINAL_IMPACT_ARRIVAL = 30;
+  private readonly WATERFRONT_IMPACT_ARRIVAL = 18;
+  private readonly SEATAC_IMPACT_ARRIVAL = 20;
+  private readonly HOTELS_IMPACT_ARRIVAL = 15;
+
+  private readonly TERMINAL_IMPACT_DEPARTURE = 25;
+  private readonly HOTELS_IMPACT_DEPARTURE = 15;
+  private readonly SEATAC_IMPACT_DEPARTURE = 10;
 
   // Typical cruise schedule for Seattle (April-October peak season)
   private getMockCruiseSchedule(): CruiseShip[] {
@@ -151,9 +161,9 @@ export class CruiseShipsService {
       const departure = new Date(ship.departureTime);
 
       // Check arrival surge (30 min before to 2 hours after)
-      const minutesUntilArrival = (arrival.getTime() - now.getTime()) / (1000 * 60);
-      if (minutesUntilArrival >= -120 && minutesUntilArrival <= 30) {
-        const zone = ship.terminal === 'Pier 91' ? 'pier91_cruise_terminal' : 'pier66_cruise_terminal';
+      const minutesUntilArrival = this.getMinutesDifference(arrival, now);
+      if (minutesUntilArrival >= this.ARRIVAL_SURGE_START_MIN && minutesUntilArrival <= this.DEPARTURE_SURGE_END_MIN) {
+        const zone = this.getTerminalZoneId(ship.terminal);
         alerts.push({
           ship,
           type: 'arrival',
@@ -164,9 +174,9 @@ export class CruiseShipsService {
       }
 
       // Check departure surge (2 hours before to 30 min after)
-      const minutesUntilDeparture = (departure.getTime() - now.getTime()) / (1000 * 60);
-      if (minutesUntilDeparture >= -30 && minutesUntilDeparture <= 120) {
-        const zone = ship.terminal === 'Pier 91' ? 'pier91_cruise_terminal' : 'pier66_cruise_terminal';
+      const minutesUntilDeparture = this.getMinutesDifference(departure, now);
+      if (minutesUntilDeparture >= this.DEPARTURE_SURGE_START_MIN && minutesUntilDeparture <= this.ARRIVAL_SURGE_END_MIN) {
+        const zone = this.getTerminalZoneId(ship.terminal);
         alerts.push({
           ship,
           type: 'departure',
@@ -192,29 +202,29 @@ export class CruiseShipsService {
       const departure = new Date(ship.departureTime);
 
       // Arrival surge window: 30 min before to 2 hours after
-      const minutesSinceArrival = (currentTime.getTime() - arrival.getTime()) / (1000 * 60);
-      if (minutesSinceArrival >= -30 && minutesSinceArrival <= 120) {
+      const minutesSinceArrival = this.getMinutesDifference(currentTime, arrival);
+      if (minutesSinceArrival >= this.ARRIVAL_SURGE_START_MIN && minutesSinceArrival <= this.ARRIVAL_SURGE_END_MIN) {
         // High impact on terminal zone and airport
-        if (zoneId === 'pier91_cruise_terminal' || zoneId === 'pier66_cruise_terminal') {
-          impact += 30; // Major impact at terminal
+        if (zoneId === this.getTerminalZoneId('Pier 91') || zoneId === this.getTerminalZoneId('Pier 66')) {
+          impact += this.TERMINAL_IMPACT_ARRIVAL; // Major impact at terminal
         } else if (zoneId === 'waterfront_piers' || zoneId === 'colman_dock_ferry') {
-          impact += 18; // Overflow around waterfront
+          impact += this.WATERFRONT_IMPACT_ARRIVAL; // Overflow around waterfront
         } else if (zoneId === 'seatac') {
-          impact += 20; // Passengers heading to airport
+          impact += this.SEATAC_IMPACT_ARRIVAL; // Passengers heading to airport
         } else if (zoneId === 'belltown_hotels' || zoneId === 'downtown_hotel_row_union') {
-          impact += 15; // Passengers heading to hotels
+          impact += this.HOTELS_IMPACT_ARRIVAL; // Passengers heading to hotels
         }
       }
 
       // Departure surge window: 2 hours before to 30 min after
-      const minutesUntilDeparture = (departure.getTime() - currentTime.getTime()) / (1000 * 60);
-      if (minutesUntilDeparture >= -30 && minutesUntilDeparture <= 120) {
-        if (zoneId === 'pier91_cruise_terminal' || zoneId === 'pier66_cruise_terminal') {
-          impact += 25; // Terminal pickup surge
+      const minutesUntilDeparture = this.getMinutesDifference(departure, currentTime);
+      if (minutesUntilDeparture >= this.DEPARTURE_SURGE_START_MIN && minutesUntilDeparture <= this.DEPARTURE_SURGE_END_MIN) {
+        if (zoneId === this.getTerminalZoneId('Pier 91') || zoneId === this.getTerminalZoneId('Pier 66')) {
+          impact += this.TERMINAL_IMPACT_DEPARTURE; // Terminal pickup surge
         } else if (zoneId === 'belltown_hotels' || zoneId === 'downtown_hotel_row_union') {
-          impact += 15; // Hotel pickups heading to terminal
+          impact += this.HOTELS_IMPACT_DEPARTURE; // Hotel pickups heading to terminal
         } else if (zoneId === 'seatac') {
-          impact += 10; // Some passengers from airport
+          impact += this.SEATAC_IMPACT_DEPARTURE; // Some passengers from airport
         }
       }
     }

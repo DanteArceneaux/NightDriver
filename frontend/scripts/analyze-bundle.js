@@ -124,3 +124,4 @@ if (!scripts.analyze) {
 }
 
 console.log('\n✅ Analysis complete!');
+

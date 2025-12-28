@@ -96,3 +96,4 @@ export interface OpenWeatherMapForecastResponse {
     sunset: number;
   };
 }
+

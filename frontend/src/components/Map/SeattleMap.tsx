@@ -139,42 +139,6 @@ function MapResizeHandler() {
   const map = useMap();
   
   useEffect(() => {
-    // Inject pulsing animation CSS
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @keyframes pulse-marker {
-        0%, 100% { 
-          r: attr(data-base-radius); 
-          opacity: 0.8; 
-        }
-        50% { 
-          opacity: 1; 
-        }
-      }
-      .pulse-marker {
-        animation: pulse-marker 2s ease-in-out infinite;
-      }
-      .leaflet-tooltip {
-        background: rgba(10, 14, 39, 0.95) !important;
-        border: 1px solid rgba(0, 255, 238, 0.3) !important;
-        border-radius: 8px !important;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      }
-      .leaflet-tooltip-top:before {
-        border-top-color: rgba(10, 14, 39, 0.95) !important;
-      }
-      .custom-event-marker {
-        background: transparent;
-        border: none;
-      }
-      .current-position-marker {
-        background: transparent;
-        border: none;
-      }
-    `;
-    document.head.appendChild(style);
-    
     // Set up ResizeObserver to handle container size changes
     const container = map.getContainer();
     let resizeTimeout: NodeJS.Timeout | null = null;
@@ -203,7 +167,6 @@ function MapResizeHandler() {
       if (resizeTimeout) clearTimeout(resizeTimeout);
       clearTimeout(initialTimeout);
       resizeObserver.disconnect();
-      document.head.removeChild(style);
     };
   }, [map]);
   

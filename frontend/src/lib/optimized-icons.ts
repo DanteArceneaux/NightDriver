@@ -197,3 +197,4 @@ export function preloadHeavyDependencies() {
     // Silently fail - confetti is not critical
   });
 }
+

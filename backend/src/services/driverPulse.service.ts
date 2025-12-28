@@ -13,9 +13,18 @@ export interface PulseReport {
 export class DriverPulseService {
   private pulses: NodeCache; // Stores active pulse reports
 
+  private readonly PULSE_TTL_SECONDS = 1800; // 30 minutes
+  private readonly PULSE_CHECK_PERIOD_SECONDS = 120; // 2 minutes
+  private readonly PULSE_EXPIRATION_MINUTES = 30; // For recency multiplier
+
+  private readonly HIGH_DEMAND_MODIFIER = 10;
+  private readonly AIRPORT_TRAFFIC_BAD_MODIFIER = -15;
+  private readonly SURGE_FAKE_MODIFIER = -20;
+  private readonly QUIET_MODIFIER = -5;
+
   constructor() {
     // Pulse reports expire after 30 minutes (1800 seconds)
-    this.pulses = new NodeCache({ stdTTL: 1800, checkperiod: 120 });
+    this.pulses = new NodeCache({ stdTTL: this.PULSE_TTL_SECONDS, checkperiod: this.PULSE_CHECK_PERIOD_SECONDS });
   }
 
   /**
@@ -24,7 +33,7 @@ export class DriverPulseService {
   reportPulse(zoneId: string, type: PulseType): PulseReport {
     const id = `pulse-${Date.now()}-${zoneId}`;
     const timestamp = new Date().toISOString();
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + this.PULSE_EXPIRATION_MINUTES * 60 * 1000).toISOString();
 
     const report: PulseReport = {
       id,
@@ -84,21 +93,21 @@ export class DriverPulseService {
 
     for (const pulse of pulses) {
       const ageMinutes = (Date.now() - new Date(pulse.timestamp).getTime()) / (1000 * 60);
-      const recencyMultiplier = Math.max(0, 1 - (ageMinutes / 30)); // Fade over 30 min
+      const recencyMultiplier = Math.max(0, 1 - (ageMinutes / this.PULSE_EXPIRATION_MINUTES)); // Fade over 30 min
 
       switch (pulse.type) {
         case 'high_demand':
-          modifier += 10 * recencyMultiplier;
+          modifier += this.HIGH_DEMAND_MODIFIER * recencyMultiplier;
           break;
         case 'airport_full':
         case 'traffic_bad':
-          modifier -= 15 * recencyMultiplier;
+          modifier += this.AIRPORT_TRAFFIC_BAD_MODIFIER * recencyMultiplier;
           break;
         case 'surge_fake':
-          modifier -= 20 * recencyMultiplier;
+          modifier += this.SURGE_FAKE_MODIFIER * recencyMultiplier;
           break;
         case 'quiet':
-          modifier -= 5 * recencyMultiplier;
+          modifier += this.QUIET_MODIFIER * recencyMultiplier;
           break;
       }
     }

@@ -65,61 +65,94 @@ const SEATTLE_TEAMS = [
   'cougars', 'washington state', 'wsu',
 ];
 
+const ESPN_CACHE_TTL_MS = 60000; // 1 minute cache
+const ESPN_REQUEST_TIMEOUT_MS = 5000;
+const NEARING_END_PERIOD_MINUTES_THRESHOLD = 5;
+const GAME_REAL_REMAINING_MINUTES_MULTIPLIER = 1.5;
+
+// Surge Alert Constants
+const SURGE_ALERT_FINAL_TIMEFRAME = '15-20 minutes';
+const SURGE_ALERT_IN_PROGRESS_TIMEFRAME = '30-45 minutes';
+
+const VENUE_SODO_LUMEN = 'lumen';
+const VENUE_SODO_T_MOBILE = 't-mobile';
+const VENUE_SEATTLE_CENTER = 'climate pledge';
+const VENUE_U_DISTRICT_HUSKY = 'husky';
+const DEFAULT_VENUE_ZONE = 'the area';
+const SODO_ZONE = 'SoDo district';
+const SEATTLE_CENTER_ZONE = 'Seattle Center';
+const U_DISTRICT_ZONE = 'U-District';
+
 // League configurations
 const LEAGUES = {
   nfl: {
     url: 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard',
     periodName: 'Quarter',
     totalPeriods: 4,
-    periodMinutes: 15,
-    halfTime: true,
-    avgGameMinutes: 195, // ~3h 15m
+    periodEstimates: {
+      quarterMinutes: 15,
+      halftimeMinutes: 15,
+      overtimeMinutes: 10,
+      avgGameMinutes: 195, // ~3h 15m
+    },
   },
   mlb: {
     url: 'https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard',
     periodName: 'Inning',
     totalPeriods: 9,
-    periodMinutes: 20,
-    halfTime: false,
-    avgGameMinutes: 180, // ~3h
+    periodEstimates: {
+      inningMinutes: 20,
+      avgGameMinutes: 180, // ~3h
+    },
   },
   nhl: {
     url: 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard',
     periodName: 'Period',
     totalPeriods: 3,
-    periodMinutes: 20,
-    halfTime: false,
-    avgGameMinutes: 165, // ~2h 45m
+    periodEstimates: {
+      periodMinutes: 20,
+      intermissionMinutes: 15,
+      overtimeMinutes: 5,
+      avgGameMinutes: 165, // ~2h 45m
+    },
   },
   mls: {
     url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/scoreboard',
     periodName: 'Half',
     totalPeriods: 2,
-    periodMinutes: 45,
-    halfTime: true,
-    avgGameMinutes: 135, // ~2h 15m
+    periodEstimates: {
+      halfMinutes: 45,
+      halftimeMinutes: 15,
+      avgGameMinutes: 135, // ~2h 15m
+    },
   },
   wnba: {
     url: 'https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard',
     periodName: 'Quarter',
     totalPeriods: 4,
-    periodMinutes: 10,
-    halfTime: true,
-    avgGameMinutes: 120, // ~2h
+    periodEstimates: {
+      quarterMinutes: 10,
+      halftimeMinutes: 15,
+      overtimeMinutes: 5,
+      avgGameMinutes: 120, // ~2h
+    },
   },
   ncaaf: {
     url: 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard',
     periodName: 'Quarter',
     totalPeriods: 4,
-    periodMinutes: 15,
-    halfTime: true,
-    avgGameMinutes: 210, // ~3h 30m
+    periodEstimates: {
+      quarterMinutes: 15,
+      halftimeMinutes: 20,
+      overtimeMinutes: 10,
+      avgGameMinutes: 210, // ~3h 30m
+    },
   },
 };
 
 export class ESPNService {
   private cache: Map<string, { data: LiveGame[]; timestamp: number }> = new Map();
-  private cacheTTL = 60000; // 1 minute cache
+  private cacheTTL = ESPN_CACHE_TTL_MS;
 
   /**
    * Get all live/upcoming Seattle-area games
@@ -176,7 +209,7 @@ export class ESPNService {
     }
 
     try {
-      const response = await axios.get(config.url, { timeout: 5000 });
+      const response = await axios.get(config.url, { timeout: ESPN_REQUEST_TIMEOUT_MS });
       const events = response.data.events || [];
       
       const games = events
@@ -300,7 +333,7 @@ export class ESPNService {
     // In second-to-last period with less than 5 minutes
     if (period === config.totalPeriods - 1) {
       const minutes = this.parseClockMinutes(clock);
-      if (minutes !== null && minutes < 5) {
+      if (minutes !== null && minutes < NEARING_END_PERIOD_MINUTES_THRESHOLD) {
         return true;
       }
     }
@@ -333,18 +366,29 @@ export class ESPNService {
 
     if (status === 'scheduled') {
       // Use average game duration
-      return new Date(start.getTime() + config.avgGameMinutes * 60 * 1000).toISOString();
+      return new Date(start.getTime() + config.periodEstimates.avgGameMinutes * 60 * 1000).toISOString();
     }
 
     // For in-progress games, estimate remaining time
     const periodsRemaining = Math.max(0, config.totalPeriods - period);
-    const clockMinutes = this.parseClockMinutes(clock) || config.periodMinutes;
+    let estimatedPeriodMinutes = 0;
+    if (config.periodName === 'Quarter') {
+      estimatedPeriodMinutes = config.periodEstimates.quarterMinutes || 0;
+    } else if (config.periodName === 'Inning') {
+      estimatedPeriodMinutes = config.periodEstimates.inningMinutes || 0;
+    } else if (config.periodName === 'Period') {
+      estimatedPeriodMinutes = config.periodEstimates.periodMinutes || 0;
+    } else if (config.periodName === 'Half') {
+      estimatedPeriodMinutes = config.periodEstimates.halfMinutes || 0;
+    }
+
+    const clockMinutes = this.parseClockMinutes(clock) || estimatedPeriodMinutes;
     
     // Remaining time = current period remaining + full periods remaining
-    const remainingMinutes = clockMinutes + (periodsRemaining * config.periodMinutes);
+    const remainingMinutes = clockMinutes + (periodsRemaining * estimatedPeriodMinutes);
     
-    // Add buffer for stoppages, timeouts, etc. (~50% more time for real games)
-    const realRemainingMinutes = remainingMinutes * 1.5;
+    // Add buffer for stoppages, timeouts, etc.
+    const realRemainingMinutes = remainingMinutes * GAME_REAL_REMAINING_MINUTES_MULTIPLIER;
     
     return new Date(Date.now() + realRemainingMinutes * 60 * 1000).toISOString();
   }
@@ -358,14 +402,14 @@ export class ESPNService {
     totalPeriods: number
   ): string {
     const isFinal = period >= totalPeriods;
-    const timeframe = isFinal ? '15-20 minutes' : '30-45 minutes';
+    const timeframe = isFinal ? SURGE_ALERT_FINAL_TIMEFRAME : SURGE_ALERT_IN_PROGRESS_TIMEFRAME;
     
     // Determine zone based on venue
-    let zone = 'the area';
-    if (venue.toLowerCase().includes('lumen')) zone = 'SoDo district';
-    else if (venue.toLowerCase().includes('t-mobile')) zone = 'SoDo district';
-    else if (venue.toLowerCase().includes('climate pledge')) zone = 'Seattle Center';
-    else if (venue.toLowerCase().includes('husky')) zone = 'U-District';
+    let zone = DEFAULT_VENUE_ZONE;
+    if (venue.toLowerCase().includes(VENUE_SODO_LUMEN)) zone = SODO_ZONE;
+    else if (venue.toLowerCase().includes(VENUE_SODO_T_MOBILE)) zone = SODO_ZONE;
+    else if (venue.toLowerCase().includes(VENUE_SEATTLE_CENTER)) zone = SEATTLE_CENTER_ZONE;
+    else if (venue.toLowerCase().includes(VENUE_U_DISTRICT_HUSKY)) zone = U_DISTRICT_ZONE;
 
     return `🏟️ ${homeTeam} vs ${awayTeam} in ${this.ordinal(period)} ${periodName}! ` +
            `Head to ${zone} - surge expected in ${timeframe}`;

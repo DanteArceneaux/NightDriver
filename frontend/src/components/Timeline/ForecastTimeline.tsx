@@ -111,8 +111,7 @@ export function ForecastTimeline({ hideWrapper = false, vertical = false }: Fore
       <div className={vertical ? 'space-y-3' : 'flex gap-4 overflow-x-auto pb-2 scrollbar-thin'}>
         {forecast.points.map((point, index) => {
           const topZone = point.topZones[0];
-          const colorClass = getScoreColor(topZone.score);
-          const bgClass = getScoreBgColor(topZone.score);
+          const { textColor, bgColor } = getScoreStyles(topZone.score);
 
           return (
             <motion.div
@@ -141,7 +140,7 @@ export function ForecastTimeline({ hideWrapper = false, vertical = false }: Fore
                 </div>
 
                 {/* Score Badge */}
-                <div className={`inline-flex items-center justify-center px-3 py-1 rounded-full border text-xs font-black ${bgClass} ${colorClass}`}>
+                <div className={`inline-flex items-center justify-center px-3 py-1 rounded-full border text-xs font-black ${bgColor} ${textColor}`}>
                   {topZone.score}
                 </div>
               </div>

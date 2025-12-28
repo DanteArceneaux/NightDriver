@@ -78,3 +78,4 @@ export default defineConfig({
     exclude: ['canvas-confetti'],
   },
 });
+

@@ -38,6 +38,28 @@ interface CardState {
 // Layout version - increment to reset user layouts when defaults change
 const LAYOUT_VERSION = 2;
 
+function getSavedStateWithVersionCheck<T>(storageKey: string, defaultValue: T, currentVersion: string): T {
+  const savedVersion = SafeStorage.getItem(`${storageKey}-version`);
+  
+  if (savedVersion !== currentVersion) {
+    SafeStorage.removeItem(`${storageKey}-order`);
+    SafeStorage.removeItem(`${storageKey}-states`);
+    SafeStorage.setItem(`${storageKey}-version`, currentVersion);
+    return defaultValue;
+  }
+  
+  const saved = SafeStorage.getItem(storageKey);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch {
+      // Fallback to default if parsing fails
+      return defaultValue;
+    }
+  }
+  return defaultValue;
+}
+
 export function DraggableCardGrid({
   cards,
   storageKey = 'card-grid-layout',
@@ -57,50 +79,18 @@ export function DraggableCardGrid({
   
   // Use external lock state if provided, otherwise use internal
   const isLocked = externalLocked !== undefined ? externalLocked : internalLocked;
+  
+  const currentVersion = LAYOUT_VERSION.toString();
+
   // Initialize order from localStorage or default (with version check)
-  const [order, setOrder] = useState<string[]>(() => {
-    const savedVersion = SafeStorage.getItem(`${storageKey}-version`);
-    const currentVersion = LAYOUT_VERSION.toString();
-    
-    // Reset if version changed
-    if (savedVersion !== currentVersion) {
-      SafeStorage.removeItem(`${storageKey}-order`);
-      SafeStorage.removeItem(`${storageKey}-states`);
-      SafeStorage.setItem(`${storageKey}-version`, currentVersion);
-      return cards.map(c => c.id);
-    }
-    
-    const saved = SafeStorage.getItem(`${storageKey}-order`);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return cards.map(c => c.id);
-      }
-    }
-    return cards.map(c => c.id);
-  });
+  const [order, setOrder] = useState<string[]>(() => 
+    getSavedStateWithVersionCheck(`${storageKey}-order`, cards.map(c => c.id), currentVersion)
+  );
 
   // Initialize card states from localStorage
-  const [cardStates, setCardStates] = useState<Record<string, CardState>>(() => {
-    const savedVersion = SafeStorage.getItem(`${storageKey}-version`);
-    const currentVersion = LAYOUT_VERSION.toString();
-    
-    // Skip if version mismatch (already handled above)
-    if (savedVersion !== currentVersion) {
-      return {};
-    }
-    
-    const saved = SafeStorage.getItem(`${storageKey}-states`);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return {};
-      }
-    }
-    return {};
-  });
+  const [cardStates, setCardStates] = useState<Record<string, CardState>>(() =>
+    getSavedStateWithVersionCheck(`${storageKey}-states`, {}, currentVersion)
+  );
 
   // Sync order with cards if new cards are added
   useEffect(() => {

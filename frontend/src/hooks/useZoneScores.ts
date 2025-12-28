@@ -14,6 +14,11 @@ export function useZoneScores() {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
 
+  const POLLING_INTERVAL_MS = 30000; // 30 seconds
+  const WS_RECONNECTION_ATTEMPTS = 10;
+  const WS_RECONNECTION_DELAY_MS = 1000;
+  const WS_RECONNECTION_DELAY_MAX_MS = 5000;
+
   // Load data via HTTP (fallback or initial load)
   const loadData = useCallback(async () => {
     if (!isMountedRef.current) return;
@@ -40,8 +45,8 @@ export function useZoneScores() {
   const startFallbackPolling = useCallback(() => {
     if (pollIntervalRef.current || !isMountedRef.current) return;
     
-    console.log('🔄 Starting fallback polling (30s interval)');
-    pollIntervalRef.current = setInterval(loadData, 30000);
+    console.log(`🔄 Starting fallback polling (${POLLING_INTERVAL_MS / 1000}s interval)`);
+    pollIntervalRef.current = setInterval(loadData, POLLING_INTERVAL_MS);
   }, [loadData]);
 
   // Stop fallback polling (when WebSocket connects)
@@ -74,9 +79,9 @@ export function useZoneScores() {
     const socket = io(BACKEND_URL, {
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
+      reconnectionAttempts: WS_RECONNECTION_ATTEMPTS,
+      reconnectionDelay: WS_RECONNECTION_DELAY_MS,
+      reconnectionDelayMax: WS_RECONNECTION_DELAY_MAX_MS,
     });
 
     socketRef.current = socket;

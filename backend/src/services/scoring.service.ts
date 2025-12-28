@@ -127,12 +127,26 @@ export class ScoringService {
       // 🎯 Micro-zone modifiers: value, competition, rider quality
       const microZoneMetaBoost = microMeta ? this.getMicroZoneMetaBoost(microMeta) : 0;
 
-      // Total score (apply multiplier, then cap at 100)
-      let totalScore = baseline + eventBoost + weatherBoost + flightBoost + trafficBoost + 
-                       cruiseBoost + conventionBoost + barCloseBoost + deadZonePenalty + ferryBoost + hotelCheckoutBoost + hospitalShiftBoost + uwClassBoost +
-                       microZoneMetaBoost;
+      const factors = {
+        baseline: baseline,
+        events: eventBoost,
+        weather: weatherBoost,
+        flights: flightBoost,
+        traffic: trafficBoost,
+        cruise: cruiseBoost,
+        conventions: conventionBoost,
+        barClose: barCloseBoost,
+        deadZone: deadZonePenalty,
+        microMeta: microZoneMetaBoost,
+        ferries: ferryBoost,
+        hotelCheckout: hotelCheckoutBoost,
+        hospitalShifts: hospitalShiftBoost,
+        uwClasses: uwClassBoost,
+      };
+
+      let totalScore = Object.values(factors).reduce((sum, value) => sum + value, 0);
       
-      // Apply weather multiplier
+      // Apply weather multiplier to total score, not individual weather factor
       totalScore = totalScore * weatherMultiplier;
       
       // Cap at 100
@@ -148,20 +162,21 @@ export class ScoringService {
         trend: 'stable' as const, // TODO: Calculate based on historical data
         estimatedHourlyRate: estimatedEarnings,
         factors: {
-          baseline: Math.round(baseline),
-          events: Math.round(eventBoost),
-          weather: Math.round(weatherBoost * weatherMultiplier),
-          flights: Math.round(flightBoost),
-          traffic: Math.round(trafficBoost),
-          cruise: Math.round(cruiseBoost),
-          conventions: Math.round(conventionBoost),
-          barClose: Math.round(barCloseBoost),
-          deadZone: Math.round(deadZonePenalty),
-          microMeta: Math.round(microZoneMetaBoost),
-          ferries: Math.round(ferryBoost),
-          hotelCheckout: Math.round(hotelCheckoutBoost),
-          hospitalShifts: Math.round(hospitalShiftBoost),
-          uwClasses: Math.round(uwClassBoost),
+          baseline: Math.round(factors.baseline),
+          events: Math.round(factors.events),
+          // Weather factor already includes multiplier
+          weather: Math.round(factors.weather * weatherMultiplier),
+          flights: Math.round(factors.flights),
+          traffic: Math.round(factors.traffic),
+          cruise: Math.round(factors.cruise),
+          conventions: Math.round(factors.conventions),
+          barClose: Math.round(factors.barClose),
+          deadZone: Math.round(factors.deadZone),
+          microMeta: Math.round(factors.microMeta),
+          ferries: Math.round(factors.ferries),
+          hotelCheckout: Math.round(factors.hotelCheckout),
+          hospitalShifts: Math.round(factors.hospitalShifts),
+          uwClasses: Math.round(factors.uwClasses),
         },
         coordinates: zone.coordinates,
       };
@@ -279,35 +294,46 @@ export class ScoringService {
       // Type-specific scoring
       const eventType = event.type || 'other';
 
+      const EVENT_BOOST_DURING_SPORTS = 10;
+      const EVENT_BOOST_DURING_OTHER = 15;
+      const EVENT_BOOST_END_SPORTS = 40;
+      const EVENT_BOOST_END_CONCERT = 30;
+      const EVENT_BOOST_END_CONFERENCE = 10;
+      const EVENT_BOOST_END_OTHER = 25;
+      const EVENT_BOOST_START_CONFERENCE = 30;
+      const EVENT_BOOST_START_SPORTS_CONCERT = 20;
+      const EVENT_BOOST_START_OTHER = 15;
+      const EVENT_BOOST_NEXT_TWO_HOURS = 10;
+
       // Event is happening now
       if (hoursUntilStart <= 0 && hoursUntilEnd > 0) {
-        boost += eventType === 'sports' ? 10 : 15; // Lower during event for sports (people already there)
+        boost += eventType === 'sports' ? EVENT_BOOST_DURING_SPORTS : EVENT_BOOST_DURING_OTHER;
       }
       // Event ending soon (surge for rides home)
       else if (hoursUntilEnd > 0 && hoursUntilEnd <= 1) {
         if (eventType === 'sports') {
-          boost += 40; // HUGE surge after sports games
+          boost += EVENT_BOOST_END_SPORTS;
         } else if (eventType === 'concert') {
-          boost += 30; // Big surge after concerts
+          boost += EVENT_BOOST_END_CONCERT;
         } else if (eventType === 'conference') {
-          boost += 10; // Small surge (people have cars)
+          boost += EVENT_BOOST_END_CONFERENCE;
         } else {
-          boost += 25;
+          boost += EVENT_BOOST_END_OTHER;
         }
       }
       // Event starting soon (people arriving)
       else if (hoursUntilStart > 0 && hoursUntilStart <= 1) {
         if (eventType === 'conference') {
-          boost += 30; // High dropoff for conferences
+          boost += EVENT_BOOST_START_CONFERENCE;
         } else if (eventType === 'sports' || eventType === 'concert') {
-          boost += 20; // Moderate for entertainment
+          boost += EVENT_BOOST_START_SPORTS_CONCERT;
         } else {
-          boost += 15;
+          boost += EVENT_BOOST_START_OTHER;
         }
       }
       // Event in next 2 hours
       else if (hoursUntilStart > 1 && hoursUntilStart <= 2) {
-        boost += 10;
+        boost += EVENT_BOOST_NEXT_TWO_HOURS;
       }
     }
 

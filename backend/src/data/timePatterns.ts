@@ -5,10 +5,11 @@ import { TimePattern } from '../types/index.js';
 // 0 = Sunday, 1 = Monday, ... 6 = Saturday
 
 interface ZonePatterns {
-  [zoneId: string]: TimePattern[];
+  [zoneId: string]: Map<number, Map<number, number>>; // zoneId -> dayOfWeek -> hour -> score
 }
 
-export const timePatterns: ZonePatterns = {
+// Temporary structure to build the maps
+const rawTimePatterns: { [zoneId: string]: TimePattern[] } = {
   seatac: [
     // Early morning flights (4am-8am) - all days high
     ...Array.from({ length: 7 }, (_, day) => 
@@ -269,29 +270,40 @@ function createSuburbanPattern(): TimePattern[] {
 }
 
 // Add patterns for new zones
-timePatterns.marysville = createSuburbanPattern();
-timePatterns.everett = createSuburbanPattern();
-timePatterns.lynnwood = createSuburbanPattern();
-timePatterns.shoreline = createSuburbanPattern();
-timePatterns.bellevue = createSuburbanPattern();
-timePatterns.redmond = createSuburbanPattern();
-timePatterns.sammamish = createSuburbanPattern();
-timePatterns.kirkland = createSuburbanPattern();
-timePatterns.issaquah = createSuburbanPattern();
-timePatterns.renton = createSuburbanPattern();
-timePatterns.tukwila = createSuburbanPattern();
-timePatterns.burien = createSuburbanPattern();
-timePatterns.federal_way = createSuburbanPattern();
-timePatterns.kent = createSuburbanPattern();
-timePatterns.tacoma = createSuburbanPattern();
-timePatterns.lakewood = createSuburbanPattern();
-timePatterns.spanaway = createSuburbanPattern();
+rawTimePatterns.marysville = createSuburbanPattern();
+rawTimePatterns.everett = createSuburbanPattern();
+rawTimePatterns.lynnwood = createSuburbanPattern();
+rawTimePatterns.shoreline = createSuburbanPattern();
+rawTimePatterns.bellevue = createSuburbanPattern();
+rawTimePatterns.redmond = createSuburbanPattern();
+rawTimePatterns.sammamish = createSuburbanPattern();
+rawTimePatterns.kirkland = createSuburbanPattern();
+rawTimePatterns.issaquah = createSuburbanPattern();
+rawTimePatterns.renton = createSuburbanPattern();
+rawTimePatterns.tukwila = createSuburbanPattern();
+rawTimePatterns.burien = createSuburbanPattern();
+rawTimePatterns.federal_way = createSuburbanPattern();
+rawTimePatterns.kent = createSuburbanPattern();
+rawTimePatterns.tacoma = createSuburbanPattern();
+rawTimePatterns.lakewood = createSuburbanPattern();
+rawTimePatterns.spanaway = createSuburbanPattern();
+
+export const timePatterns: ZonePatterns = Object.entries(rawTimePatterns).reduce((acc, [zoneId, patterns]) => {
+  const dayMap = new Map<number, Map<number, number>>();
+  for (const p of patterns) {
+    if (!dayMap.has(p.dayOfWeek)) {
+      dayMap.set(p.dayOfWeek, new Map<number, number>());
+    }
+    dayMap.get(p.dayOfWeek)!.set(p.hour, p.score);
+  }
+  acc[zoneId] = dayMap;
+  return acc;
+}, {} as ZonePatterns);
 
 export function getBaselineScore(zoneId: string, dayOfWeek: number, hour: number): number {
-  const patterns = timePatterns[zoneId];
-  if (!patterns) return 10; // Default low baseline
+  const dayMap = timePatterns[zoneId];
+  if (!dayMap) return 10; // Default low baseline
   
-  const match = patterns.find(p => p.dayOfWeek === dayOfWeek && p.hour === hour);
-  return match ? match.score : 10;
+  return dayMap.get(dayOfWeek)?.get(hour) ?? 10;
 }
 

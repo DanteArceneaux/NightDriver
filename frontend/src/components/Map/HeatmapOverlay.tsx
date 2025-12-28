@@ -10,6 +10,7 @@ interface HeatmapOverlayProps {
 
 export function HeatmapOverlay({ enabled, zones }: HeatmapOverlayProps) {
   const heatmapData = usePersonalHeatmap();
+  const zoneByIdMap = new Map(zones.map(zone => [zone.id, zone]));
 
   if (!enabled || heatmapData.length === 0) {
     return null;
@@ -33,7 +34,7 @@ export function HeatmapOverlay({ enabled, zones }: HeatmapOverlayProps) {
   return (
     <>
       {heatmapData.map((data) => {
-        const zone = zones.find(z => z.id === data.zoneId);
+        const zone = zoneByIdMap.get(data.zoneId);
         if (!zone) return null;
 
         const color = getHeatmapColor(data.intensity);

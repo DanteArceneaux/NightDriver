@@ -204,7 +204,9 @@ export const zones: Zone[] = [
   },
 ];
 
+const zoneMap = new Map<string, Zone>(zones.map(zone => [zone.id, zone]));
+
 export function getZoneById(zoneId: string): Zone | undefined {
-  return zones.find(z => z.id === zoneId);
+  return zoneMap.get(zoneId);
 }
 
