@@ -435,14 +435,19 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           
           if (error.code === 1) {
             console.log('💡 Tip: Click the 🔒 icon in address bar → Site Settings → Location → Allow');
+            setGeoStatus('denied');
+          } else if (error.code === 3) {
+            console.log('⏱️ GPS timeout - desktop PCs often can\'t get GPS. Opening manual location picker...');
+            setGeoStatus('denied');
+            setShowManualLocation(true); // Auto-open manual location for timeouts
+          } else {
+            setGeoStatus('denied');
           }
-          
-          setGeoStatus('denied');
         },
         {
-          enableHighAccuracy: true,
-          maximumAge: 0,
-          timeout: 10000,
+          enableHighAccuracy: false, // Desktop doesn't have GPS, don't require high accuracy
+          maximumAge: 60000, // Accept cached position up to 1 minute old
+          timeout: 5000, // Reduce timeout to 5 seconds for faster fallback
         }
       );
     };

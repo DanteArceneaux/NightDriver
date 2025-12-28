@@ -74,7 +74,7 @@ export function EventAlertBanner() {
           <div className="space-y-2">
             {visibleAlerts.map((alert, idx) => (
               <motion.div
-                key={`${alert.type}-${alert.event.id}`}
+                key={`${alert.type}-${alert.event.id || `idx-${idx}`}`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20, height: 0 }}
