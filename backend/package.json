@@ -1,6 +1,6 @@
 {
   "name": "seattle-driver-optimizer-backend",
-  "version": "6.0.0",
+  "version": "7.1.0",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
