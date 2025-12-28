@@ -31,22 +31,17 @@ jobs:
           # For now, we'll simulate a wait.
           sleep 60 # Wait for 60 seconds as a placeholder. Adjust as needed.
 
-      - name: Get Backend Service URL (if not fixed)
+      - name: Get Backend Service URL
         id: get_url
         run: |
-          # This step assumes you have a way to get the live URL of your Render backend.
-          # If it's a fixed URL, you can put it directly in subsequent steps.
-          # Otherwise, you might need to query Render's API to get it.
-          # For now, we'll assume a fixed URL for verification.
-          # Replace with your actual Render backend URL
-          BACKEND_URL="https://your-backend-service.onrender.com"
+          BACKEND_URL="https://nightdriver.onrender.com"
           echo "BACKEND_URL=$BACKEND_URL" >> $GITHUB_OUTPUT
 
       - name: Verify Backend Health Check
         run: |
-          # Basic curl to hit a health check endpoint on your backend
-          # Adjust the endpoint as per your backend implementation (e.g., /health, /status)
-          curl -f -s -o /dev/null ${{ steps.get_url.outputs.BACKEND_URL }}/health # <--- ADJUST HEALTH CHECK ENDPOINT
+          echo "Checking backend health at ${{ steps.get_url.outputs.BACKEND_URL }}/api/health"
+          curl -f -s ${{ steps.get_url.outputs.BACKEND_URL }}/api/health
+          echo "✅ Backend is healthy!"
 
       - name: Report Success
         run: echo "Render Backend deployment verified successfully!"

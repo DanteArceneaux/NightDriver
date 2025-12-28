@@ -5,7 +5,7 @@
 
 FRONTEND_URL="https://night-driver.vercel.app"
 # We'll try to find the real backend URL. For now, we'll check the common Render ones.
-BACKEND_URLS=("https://night-driver-api.onrender.com" "https://night-driver-backend.onrender.com")
+BACKEND_URLS=("https://nightdriver.onrender.com")
 
 echo "🔍 Starting Deployment Verification..."
 

@@ -17,9 +17,7 @@ const possibleUrls = {
     'https://night-driver-dantearceaneaux.vercel.app'
   ],
   render: [
-    'https://night-driver-api.onrender.com',
-    'https://nightdriver-api.onrender.com',
-    'https://seattle-driver-optimizer.onrender.com'
+    'https://nightdriver.onrender.com'
   ]
 };
 
