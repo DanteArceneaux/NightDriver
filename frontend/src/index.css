@@ -123,8 +123,24 @@
 }
 
 /* Mobile-specific optimizations */
+@media (min-width: 430px) and (max-width: 460px) {
+  /* iPhone 16 Pro Max optimization (440px wide) */
+  html {
+    font-size: 17px;
+  }
+  
+  .glass-strong {
+    @apply rounded-[2.5rem];
+  }
+
+  .touch-target {
+    min-height: 50px;
+    min-width: 50px;
+  }
+}
+
 @media (max-width: 430px) {
-  /* iPhone 16 Pro Max and smaller */
+  /* Standard iPhone */
   html {
     font-size: 14px;
   }
