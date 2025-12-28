@@ -9,6 +9,8 @@ import { LiveConditions } from '../../components/Conditions/LiveConditions';
 import { EventsPanel } from '../../components/Events/EventsPanel';
 import { Leaderboard } from '../../components/ZoneList/Leaderboard';
 import { ZoneDetailSheet } from '../../components/ZoneDetail/ZoneDetailSheet';
+import { EarningsCard } from '../../components/Consolidated/EarningsCard';
+import { VehicleCard } from '../../components/Consolidated/VehicleCard';
 
 export function ProDashboardLayout(props: LayoutProps) {
   const [selectedZone, setSelectedZone] = useState<typeof props.zones[0] | null>(null);
@@ -19,7 +21,7 @@ export function ProDashboardLayout(props: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen text-white">
+    <div className="min-h-screen text-white pb-24">
       {/* Header */}
       <Header
         connected={props.connected}
@@ -46,11 +48,30 @@ export function ProDashboardLayout(props: LayoutProps) {
 
           {/* Right Column: Info Panels */}
           <div className="space-y-4">
-            {/* Hero */}
+            {/* Earnings */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-strong rounded-[2.5rem] overflow-hidden"
+            >
+              <EarningsCard />
+            </motion.div>
+
+            {/* Vehicle */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
+              className="glass-strong rounded-[2.5rem] overflow-hidden"
+            >
+              <VehicleCard />
+            </motion.div>
+
+            {/* Hero */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
             >
               <TopPickCard
                 topPick={props.topPick}
@@ -63,7 +84,7 @@ export function ProDashboardLayout(props: LayoutProps) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.3 }}
             >
               <ForecastTimeline />
             </motion.div>
@@ -72,7 +93,7 @@ export function ProDashboardLayout(props: LayoutProps) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.4 }}
             >
               <LiveConditions />
             </motion.div>
@@ -81,7 +102,7 @@ export function ProDashboardLayout(props: LayoutProps) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.5 }}
             >
               <EventsPanel />
             </motion.div>
@@ -90,7 +111,7 @@ export function ProDashboardLayout(props: LayoutProps) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 0.6 }}
             >
               <Leaderboard zones={props.zones} driverLocation={props.driverLocation} />
             </motion.div>
