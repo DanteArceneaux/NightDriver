@@ -256,7 +256,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   const zoom = 9; // Zoomed out to show from Marysville to Spanaway
   const [events, setEvents] = useState<Event[]>([]);
   const themeUtils = useThemeUtils();
-  const { themeId, getButtonClasses, getEventIconStyles } = themeUtils;
+  const { themeId, getButtonClasses } = themeUtils;
   const [mapLayer, setMapLayer] = useState<'dark' | 'satellite'>('dark');
   const [showHeatmap, setShowHeatmap] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);

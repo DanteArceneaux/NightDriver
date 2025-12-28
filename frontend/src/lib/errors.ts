@@ -231,8 +231,8 @@ import { useState, useCallback } from 'react';
 export function useErrorHandler() {
   const [error, setError] = useState<FrontendError | null>(null);
 
-  const handleError = useCallback((error: unknown) => {
-    const frontendError = handleError(error);
+  const handleErrorCallback = useCallback((err: unknown) => {
+    const frontendError = handleError(err);
     setError(frontendError);
     logError(frontendError);
     return frontendError;
@@ -244,7 +244,7 @@ export function useErrorHandler() {
 
   return {
     error,
-    handleError,
+    handleError: handleErrorCallback,
     clearError,
     getUserFriendlyMessage: error ? getUserFriendlyMessage(error) : null,
   };

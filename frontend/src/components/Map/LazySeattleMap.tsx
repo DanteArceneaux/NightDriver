@@ -5,7 +5,7 @@
 
 import { lazy, Suspense } from 'react';
 import { ZoneScore } from '../../types';
-import { MapSkeleton } from '../Skeleton/Skeleton';
+import { Skeleton } from '../Skeleton/Skeleton';
 
 // Lazy load the heavy map component
 const SeattleMap = lazy(() => 
@@ -21,7 +21,7 @@ interface LazySeattleMapProps {
 
 export function LazySeattleMap({ zones, onZoneClick }: LazySeattleMapProps) {
   return (
-    <Suspense fallback={<MapSkeleton />}>
+    <Suspense fallback={<Skeleton />}>
       <SeattleMap zones={zones} onZoneClick={onZoneClick} />
     </Suspense>
   );

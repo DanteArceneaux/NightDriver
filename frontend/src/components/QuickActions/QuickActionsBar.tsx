@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Zap, Coffee, Calendar, TrendingUp, Plus } from 'lucide-react';
+import { MapPin, Zap, Coffee, Calendar, Plus } from 'lucide-react';
 import { BathroomFinder } from '../Amenities/BathroomFinder';
 import { ChargingStationFinder } from '../Amenities/ChargingStationFinder';
 import { CoffeeFinder } from '../Amenities/CoffeeFinder';
@@ -121,43 +121,6 @@ export function QuickActionsBar({ currentLocation, zones = [] }: QuickActionsBar
           isOpen={showTripLogger}
           onClose={() => setShowTripLogger(false)}
           zones={zones}
-        />
-      )}
-    </>
-  );
-}
-
-      {/* Modals */}
-      {showBathrooms && currentLocation && (
-        <BathroomFinder
-          currentLocation={currentLocation}
-          onClose={() => setShowBathrooms(false)}
-        />
-      )}
-
-      {showCharging && currentLocation && (
-        <ChargingStationFinder
-          currentLocation={currentLocation}
-          onClose={() => setShowCharging(false)}
-        />
-      )}
-
-      {showCoffee && (
-        <CoffeeFinder
-          onClose={() => setShowCoffee(false)}
-        />
-      )}
-
-      {showShiftPlanner && currentLocation && (
-        <ShiftPlannerModal
-          currentLocation={currentLocation}
-          onClose={() => setShowShiftPlanner(false)}
-        />
-      )}
-
-      {showPace && (
-        <PaceTracker
-          onClose={() => setShowPace(false)}
         />
       )}
     </>

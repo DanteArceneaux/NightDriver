@@ -39,7 +39,9 @@ export function calculateDistance(from: Coordinates, to: Coordinates): number {
   // Limit cache size to prevent memory leaks (LRU-like behavior)
   if (distanceCache.size > 1000) {
     const firstKey = distanceCache.keys().next().value;
-    distanceCache.delete(firstKey);
+    if (firstKey) {
+      distanceCache.delete(firstKey);
+    }
   }
   
   return distance;
@@ -70,7 +72,9 @@ export function estimateDriveTime(distanceKm: number): number {
   // Limit cache size
   if (driveTimeCache.size > 1000) {
     const firstKey = driveTimeCache.keys().next().value;
-    driveTimeCache.delete(firstKey);
+    if (firstKey) {
+      driveTimeCache.delete(firstKey);
+    }
   }
   
   return driveTime;
@@ -98,7 +102,9 @@ export function calculateEfficiency(score: number, driveTimeMin: number): number
   // Limit cache size
   if (efficiencyCache.size > 1000) {
     const firstKey = efficiencyCache.keys().next().value;
-    efficiencyCache.delete(firstKey);
+    if (firstKey) {
+      efficiencyCache.delete(firstKey);
+    }
   }
   
   return efficiency;

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, TrendingUp, Clock, Zap, PartyPopper, Plus, DollarSign, Settings2 } from 'lucide-react';
+import { Target, TrendingUp, Clock, PartyPopper, Plus, DollarSign, Settings2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useEarningsStore } from '../../features/earnings';
 import confetti from 'canvas-confetti';

@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { ZonesResponse, SurgeAlert } from '../types';
 import { fetchZones, BACKEND_URL, isStaticHost } from '../lib/api';
-import { FrontendErrorFactory, handleError, logError } from '../lib/errors';
+import { handleError, logError } from '../lib/errors';
 
 export function useZoneScores() {
   const [data, setData] = useState<ZonesResponse | null>(null);

@@ -140,7 +140,7 @@ export function getScoreColor(score: number, themeId: ThemeId): string {
 /**
  * Get score background color based on theme
  */
-export function getScoreBackground(score: number, themeId: ThemeId): string {
+export function getScoreBackground(score: number): string {
   if (score >= 80) return 'bg-red-500/20 border-red-500/50';
   if (score >= 60) return 'bg-orange-500/20 border-orange-500/50';
   if (score >= 40) return 'bg-blue-500/20 border-blue-500/50';
@@ -194,7 +194,7 @@ export function useThemeUtils() {
     getTextClasses: (variant: 'primary' | 'secondary' | 'muted' = 'primary') => getTextClasses(themeId, variant),
     getAccentClasses: (type: 'surge' | 'hot' | 'warm' | 'cool' = 'surge') => getAccentClasses(themeId, type),
     getScoreColor: (score: number) => getScoreColor(score, themeId),
-    getScoreBackground: (score: number) => getScoreBackground(score, themeId),
+    getScoreBackground: (score: number) => getScoreBackground(score),
     getEventIconStyles: (isUrgent: boolean) => getEventIconStyles(themeId, isUrgent),
     getThemeClasses: () => getThemeClasses(themeId),
   };

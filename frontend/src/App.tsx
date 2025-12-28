@@ -14,13 +14,13 @@ import { requestNotificationPermission } from './lib/notifications';
 import { calculateDistance, estimateDriveTime, calculateEfficiency } from './lib/distance';
 import { fetchConditions } from './lib/api';
 import { SafeStorage } from './lib/safeStorage';
-import type { SurgeAlert as SurgeAlertType } from './types';
+import type { SurgeAlertData } from './components/SurgeAlert';
 
 function App() {
   const { data, loading, error, connected, refresh } = useZoneScores();
   const { location: driverLocation } = useDriverLocation();
   const { countdown } = useAutoRefresh(30000); // 30 seconds for WebSocket (used for visual countdown ring)
-  const [surges] = useState<SurgeAlertType[]>([]);
+  const [surges] = useState<SurgeAlertData[]>([]);
   const [weather, setWeather] = useState<{ temp: number; description: string } | undefined>();
   const [shiftStartTime] = useState<Date>(() => {
     // Try to load from localStorage or start new shift
