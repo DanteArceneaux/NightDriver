@@ -9,7 +9,6 @@ export function ColorSchemeProvider({ children }: { children: React.ReactNode })
   const {
     neonColorScheme,
     proColorScheme,
-    hudColorScheme,
     carColorScheme,
   } = useSettingsStore();
 
@@ -25,9 +24,6 @@ export function ColorSchemeProvider({ children }: { children: React.ReactNode })
       case 'pro':
         colorScheme = proColorScheme;
         break;
-      case 'hud':
-        colorScheme = hudColorScheme;
-        break;
       case 'car':
         colorScheme = carColorScheme;
         break;
@@ -35,13 +31,13 @@ export function ColorSchemeProvider({ children }: { children: React.ReactNode })
         colorScheme = 'default';
     }
 
-    const colorVars = getColorVars(themeId as 'neon' | 'pro' | 'hud' | 'car' | 'dream', colorScheme);
+    const colorVars = getColorVars(themeId as 'neon' | 'pro' | 'car' | 'dream', colorScheme);
     const root = document.documentElement;
 
     Object.entries(colorVars).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });
-  }, [themeId, neonColorScheme, proColorScheme, hudColorScheme, carColorScheme]);
+  }, [themeId, neonColorScheme, proColorScheme, carColorScheme]);
 
   return <>{children}</>;
 }

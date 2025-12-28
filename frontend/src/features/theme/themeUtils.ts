@@ -160,11 +160,7 @@ export function getEventIconStyles(themeId: ThemeId, isUrgent: boolean): {
         ringColor: isUrgent ? 'rgba(239, 68, 68, 0.8)' : 'rgba(59, 130, 246, 0.8)',
         glowColor: isUrgent ? 'rgba(239, 68, 68, 0.5)' : 'rgba(59, 130, 246, 0.5)',
       };
-    case 'hud':
-      return {
-        ringColor: isUrgent ? 'rgba(34, 197, 94, 0.8)' : 'rgba(168, 85, 247, 0.9)',
-        glowColor: isUrgent ? 'rgba(34, 197, 94, 0.6)' : 'rgba(236, 72, 153, 0.6)',
-      };
+    // 'hud' case removed - Game HUD eliminated
     case 'car':
       return {
         ringColor: isUrgent ? 'rgba(239, 68, 68, 0.8)' : 'rgba(34, 197, 94, 0.8)',

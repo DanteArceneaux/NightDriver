@@ -19,14 +19,7 @@ export const proColorSchemes: Record<ColorScheme, { primary: string; secondary: 
   red: { primary: '#f43f5e', secondary: '#fb7185', accent: '#e11d48' },
 };
 
-export const hudColorSchemes: Record<ColorScheme, { primary: string; secondary: string; accent: string }> = {
-  default: { primary: '#a855f7', secondary: '#ec4899', accent: '#f97316' },
-  blue: { primary: '#3b82f6', secondary: '#06b6d4', accent: '#0ea5e9' },
-  purple: { primary: '#9333ea', secondary: '#c026d3', accent: '#7c3aed' },
-  green: { primary: '#10b981', secondary: '#14b8a6', accent: '#06b6d4' },
-  orange: { primary: '#f97316', secondary: '#fb923c', accent: '#fdba74' },
-  red: { primary: '#ef4444', secondary: '#f87171', accent: '#fca5a5' },
-};
+// hudColorSchemes removed - Game HUD eliminated per user request
 
 export const carColorSchemes: Record<ColorScheme, { primary: string; secondary: string; accent: string }> = {
   default: { primary: '#22c55e', secondary: '#16a34a', accent: '#15803d' },
@@ -42,7 +35,7 @@ export const dreamColorSchemes = neonColorSchemes;
 
 // Helper to get CSS variables for a color scheme
 export function getColorVars(
-  theme: 'dream' | 'neon' | 'pro' | 'hud' | 'car',
+  theme: 'dream' | 'neon' | 'pro' | 'car',
   scheme: ColorScheme
 ): Record<string, string> {
   let colors;
@@ -56,9 +49,7 @@ export function getColorVars(
     case 'pro':
       colors = proColorSchemes[scheme];
       break;
-    case 'hud':
-      colors = hudColorSchemes[scheme];
-      break;
+    // 'hud' case removed - Game HUD eliminated
     case 'car':
       colors = carColorSchemes[scheme];
       break;

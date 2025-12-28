@@ -98,54 +98,7 @@ const proTokens: ThemeTokens = {
   borderRadius: 'rounded-xl',
 };
 
-// Game HUD Theme (playful, gamified, stronger borders)
-const hudTokens: ThemeTokens = {
-  // Background
-  bgPrimary: 'bg-gradient-to-br from-gray-950 via-indigo-950/40 to-gray-950',
-  bgSecondary: 'bg-indigo-900/20 backdrop-blur-lg',
-  bgTertiary: 'bg-indigo-800/30 backdrop-blur-lg',
-  bgGradient: 'bg-gradient-to-br from-purple-500/20 via-pink-500/10 to-transparent',
-  
-  // Cards
-  cardBg: 'bg-gradient-to-br from-indigo-950/80 to-gray-900/80 backdrop-blur-lg',
-  cardBorder: 'border-2 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.4)]',
-  cardHover: 'hover:border-pink-500/80 hover:shadow-[0_0_20px_rgba(236,72,153,0.5)]',
-  
-  // Glass effects
-  glassBg: 'bg-indigo-900/40 backdrop-blur-lg',
-  glassBorder: 'border-2 border-purple-500/40',
-  
-  // Text
-  textPrimary: 'text-white',
-  textSecondary: 'text-purple-200',
-  textMuted: 'text-purple-400/60',
-  primaryText: 'text-white',
-  
-  // Accent colors
-  accentSurge: 'text-pink-400',
-  accentHot: 'text-orange-400',
-  accentWarm: 'text-purple-400',
-  accentCool: 'text-indigo-400',
-  
-  // Effects
-  glow: 'shadow-[0_0_20px_rgba(168,85,247,0.6)]',
-  shadow: 'shadow-2xl shadow-purple-900/50',
-  backdrop: 'backdrop-blur-lg',
-  
-  // Buttons
-  btnPrimary: 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 border-2 border-purple-400/60',
-  btnPrimaryHover: 'hover:shadow-[0_0_20px_rgba(168,85,247,0.6)]',
-  btnSecondary: 'bg-purple-900/50 border-2 border-purple-600/50 hover:bg-purple-800/60',
-  btnSecondaryHover: 'hover:border-purple-500',
-  
-  // Typography
-  fontDisplay: 'font-extrabold tracking-wider uppercase',
-  fontBody: 'font-semibold',
-  
-  // Spacing
-  spacing: 'space-y-5',
-  borderRadius: 'rounded-lg',
-};
+// Game HUD Theme removed per user request
 
 // Car Mode Theme (ultra-minimal, high-contrast for driving)
 const carTokens: ThemeTokens = {
@@ -264,12 +217,7 @@ export const themes: Record<string, Theme> = {
     layoutId: 'dashboard',
     tokens: proTokens,
   },
-  hud: {
-    id: 'hud',
-    name: 'Game HUD',
-    layoutId: 'hud',
-    tokens: hudTokens,
-  },
+  // Game HUD removed per user request
   car: {
     id: 'car',
     name: 'Car Mode',

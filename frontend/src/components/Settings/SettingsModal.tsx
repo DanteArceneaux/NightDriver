@@ -33,8 +33,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         return settings.neonColorScheme;
       case 'pro':
         return settings.proColorScheme;
-      case 'hud':
-        return settings.hudColorScheme;
+      // 'hud' case removed - Game HUD eliminated
       case 'car':
         return settings.carColorScheme;
       default:

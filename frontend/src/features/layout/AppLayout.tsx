@@ -2,7 +2,7 @@ import { useTheme } from '../theme';
 import { DreamLayout } from './DreamLayout';
 import { NeonCockpitLayout } from './NeonCockpitLayout';
 import { ProDashboardLayout } from './ProDashboardLayout';
-import { GameHudLayout } from './GameHudLayout';
+// GameHudLayout removed per user request
 import { CarModeLayout } from './CarModeLayout';
 import type { LayoutProps } from './types';
 
@@ -16,8 +16,7 @@ export function AppLayout(props: LayoutProps) {
       return <NeonCockpitLayout {...props} />;
     case 'dashboard':
       return <ProDashboardLayout {...props} />;
-    case 'hud':
-      return <GameHudLayout {...props} />;
+    // 'hud' case removed - Game HUD eliminated per user request
     case 'car':
       return <CarModeLayout {...props} />;
     default:

@@ -3,6 +3,6 @@ export * from './AppLayout';
 export * from './DreamLayout';
 export * from './NeonCockpitLayout';
 export * from './ProDashboardLayout';
-export * from './GameHudLayout';
+// GameHudLayout removed per user request
 export * from './CarModeLayout';
 

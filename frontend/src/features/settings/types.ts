@@ -4,7 +4,7 @@ export interface AppSettings {
   // Color schemes per theme
   neonColorScheme: ColorScheme;
   proColorScheme: ColorScheme;
-  hudColorScheme: ColorScheme;
+  // hudColorScheme removed - Game HUD eliminated
   carColorScheme: ColorScheme;
   
   // Feature toggles
@@ -25,7 +25,7 @@ export interface AppSettings {
 export const defaultSettings: AppSettings = {
   neonColorScheme: 'default',
   proColorScheme: 'default',
-  hudColorScheme: 'default',
+  // hudColorScheme removed - Game HUD eliminated
   carColorScheme: 'default',
   offlineMode: true,
   voiceAlerts: false,

@@ -647,7 +647,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
             aria-pressed={mapLayer === 'dark'}
           >
             <MapIcon className="w-4 h-4" />
-            <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>Dark</span>
+            <span>Dark</span>
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -660,7 +660,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
             aria-pressed={mapLayer === 'satellite'}
           >
             <Satellite className="w-4 h-4" />
-            <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>Satellite</span>
+            <span>Satellite</span>
           </motion.button>
         </div>
         
@@ -676,7 +676,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           aria-pressed={showHeatmap}
         >
           <TrendingUp className="w-4 h-4" />
-          <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>My History</span>
+          <span>My History</span>
         </motion.button>
       </div>
 

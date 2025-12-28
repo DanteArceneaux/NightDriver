@@ -1,5 +1,5 @@
-export type ThemeId = 'dream' | 'neon' | 'pro' | 'hud' | 'car';
-export type LayoutId = 'dream' | 'cockpit' | 'dashboard' | 'hud' | 'car';
+export type ThemeId = 'dream' | 'neon' | 'pro' | 'car';
+export type LayoutId = 'dream' | 'cockpit' | 'dashboard' | 'car'; // 'hud' removed - Game HUD eliminated
 
 export interface ThemeTokens {
   // Background
