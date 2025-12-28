@@ -39,7 +39,7 @@ jobs:
           # Otherwise, you might need to query Render's API to get it.
           # For now, we'll assume a fixed URL for verification.
           # Replace with your actual Render backend URL
-          BACKEND_URL="https://your-backend-service.onrender.com" # <--- REPLACE WITH YOUR ACTUAL BACKEND URL
+          BACKEND_URL="https://your-backend-service.onrender.com"
           echo "BACKEND_URL=$BACKEND_URL" >> $GITHUB_OUTPUT
 
       - name: Verify Backend Health Check
