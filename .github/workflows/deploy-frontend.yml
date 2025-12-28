@@ -28,9 +28,10 @@ jobs:
         id: get_url
         run: |
           # This assumes a successful deployment on Vercel's side is already triggered by the push
-          # We'll try to find the latest deployment URL for the project
-          DEPLOYMENT_URL=$(vercel ls --project=${{ secrets.VERCEL_PROJECT_ID }} --token=${{ secrets.VERCEL_API_TOKEN }} | grep "https://" | head -n 1)
-          echo "DEPLOYMENT_URL=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          # We'll try to find the latest deployment URL for the project 'night-driver'
+          # We use 'vercel ls night-driver' instead of --project flag which is not supported by ls
+          DEPLOYMENT_URL=$(vercel ls night-driver --token=${{ secrets.VERCEL_API_TOKEN }} | grep "https://" | head -n 1 | awk '{print $2}')
+          echo "DEPLOYMENT_URL=https://$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
 
       - name: Wait for Vercel Deployment to be Ready
         run: |
