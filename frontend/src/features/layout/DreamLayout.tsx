@@ -3,7 +3,8 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { 
   Radio, MapPin, TrendingUp, Calendar, Activity, Trophy, 
   DollarSign, Car, Eye, EyeOff, Lock, Unlock,
-  ChevronUp, ChevronDown, Grip
+  ChevronUp, ChevronDown, Grip, Palette, Settings as SettingsIcon,
+  ChevronRight
 } from 'lucide-react';
 import type { LayoutProps } from './types';
 import { SeattleMap } from '../../components/Map/SeattleMap';
@@ -17,14 +18,20 @@ import { DraggableCardGrid, CardConfig } from '../../components/UI/DraggableCard
 import { EarningsCard } from '../../components/Consolidated/EarningsCard';
 import { VehicleCard } from '../../components/Consolidated/VehicleCard';
 import { useEarningsStore } from '../earnings';
+import { useTheme } from '../theme';
+import { themes } from '../theme/themes';
+import { SettingsModal } from '../../components/Settings/SettingsModal';
 
 export function DreamLayout(props: LayoutProps) {
   const [selectedZone, setSelectedZone] = useState<typeof props.zones[0] | null>(null);
   const [focusMode, setFocusMode] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mapLocked, setMapLocked] = useState(true); // DEFAULT: Map is LOCKED for easy scrolling
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const { getProgress } = useEarningsStore();
+  const { id: currentThemeId, setThemeId } = useTheme();
   const progress = getProgress();
 
   const handleZoneClick = (zone: typeof props.zones[0]) => {
@@ -166,69 +173,139 @@ export function DreamLayout(props: LayoutProps) {
             exit={{ y: -100, opacity: 0 }}
             className="fixed left-0 right-0 z-40 pointer-events-none"
             style={{
-              // Safe area for Dynamic Island + extra padding to avoid overlap
-              top: 'max(env(safe-area-inset-top, 16px), 16px)',
+              // Extra top padding for iPhone Dynamic Island / Notch
+              top: 'env(safe-area-inset-top, 16px)',
               paddingLeft: '16px',
               paddingRight: '16px',
+              paddingTop: '12px'
             }}
           >
             {/* Single row HUD - clean, no overlap */}
-            <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
-              {/* Left: Status Pills */}
-              <div className="flex items-center gap-2 pointer-events-auto">
+            <div className="flex items-center justify-between gap-3 max-w-7xl mx-auto">
+              {/* Left: Status Pills (Auto-collapsing on small mobile) */}
+              <div className="flex items-center gap-2 pointer-events-auto flex-shrink-0">
                 {/* Connection Status */}
                 <div
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold backdrop-blur-xl shadow-lg ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] sm:text-xs font-bold backdrop-blur-xl shadow-lg border ${
                     props.connected
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
-                      : 'bg-red-500/20 text-red-400 border border-red-500/50'
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
+                      : 'bg-red-500/20 text-red-400 border-red-500/50'
                   }`}
                   style={{ minHeight: '40px' }}
                 >
                   <Radio className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{props.connected ? 'LIVE' : 'OFFLINE'}</span>
+                  <span className="hidden xs:inline">{props.connected ? 'LIVE' : 'OFFLINE'}</span>
                 </div>
 
                 {/* GPS Status */}
                 {props.driverLocation && (
                   <div 
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500/20 backdrop-blur-xl border border-cyan-500/50 text-cyan-400 text-xs font-bold shadow-lg"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500/20 backdrop-blur-xl border border-cyan-500/50 text-cyan-400 text-[10px] sm:text-xs font-bold shadow-lg"
                     style={{ minHeight: '40px' }}
                   >
                     <MapPin className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">GPS</span>
+                    <span className="hidden xs:inline">GPS</span>
                   </div>
                 )}
               </div>
 
-              {/* Right: Earnings + Focus + Lock */}
-              <div className="flex items-center gap-2 pointer-events-auto">
-                {/* Map Lock Toggle - Integrated here */}
+              {/* Center: Earnings (Most important info) */}
+              <div className="flex items-center pointer-events-auto flex-shrink-0">
+                {progress && (
+                  <div 
+                    className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/20 shadow-xl"
+                    style={{ minHeight: '44px' }}
+                  >
+                    <DollarSign className="w-4 h-4 text-emerald-400" />
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-base font-black text-white">
+                        ${progress.currentEarnings.toFixed(0)}
+                      </span>
+                      <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">
+                        Goal: ${progress.dailyGoal}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right: Actions (Lock, Theme, Settings, Eye) */}
+              <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto flex-shrink-0">
+                {/* Map Lock Toggle */}
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setMapLocked(!mapLocked)}
-                  className={`p-3 rounded-xl backdrop-blur-xl transition-all shadow-lg ${
+                  className={`p-2.5 rounded-xl backdrop-blur-xl transition-all shadow-lg border ${
                     mapLocked
-                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50'
-                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                      ? 'bg-amber-500/20 text-amber-400 border-amber-500/50'
+                      : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
                   }`}
                   style={{ minHeight: '40px', minWidth: '40px' }}
+                  title={mapLocked ? "Unlock Map" : "Lock Map"}
                 >
                   {mapLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
                 </motion.button>
 
-                {/* Earnings Pill */}
-                {progress && (
-                  <div 
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/70 backdrop-blur-xl border border-white/20 shadow-lg"
-                    style={{ minHeight: '40px' }}
+                {/* Theme Selector Toggle */}
+                <div className="relative">
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowThemeMenu(!showThemeMenu)}
+                    className={`p-2.5 rounded-xl backdrop-blur-xl transition-all shadow-lg border ${
+                      showThemeMenu ? 'bg-theme-primary text-black' : 'bg-black/60 text-white border-white/10'
+                    }`}
+                    style={{ minHeight: '40px', minWidth: '40px' }}
+                    title="Switch Layout"
                   >
-                    <DollarSign className="w-4 h-4 text-emerald-400" />
-                    <span className="text-base font-black text-white">
-                      ${progress.currentEarnings.toFixed(0)}
-                    </span>
-                  </div>
-                )}
+                    <Palette className="w-4 h-4" />
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {showThemeMenu && (
+                      <>
+                        <div className="fixed inset-0 z-[-1]" onClick={() => setShowThemeMenu(false)} />
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          className="absolute right-0 top-full mt-2 w-48 glass-strong rounded-2xl border border-white/20 shadow-2xl overflow-hidden py-2"
+                        >
+                          <div className="px-4 py-2 border-b border-white/5 mb-1">
+                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Select Layout</span>
+                          </div>
+                          {Object.values(themes).map((theme) => (
+                            <button
+                              key={theme.id}
+                              onClick={() => {
+                                setThemeId(theme.id);
+                                setShowThemeMenu(false);
+                              }}
+                              className={`w-full px-4 py-3 text-left text-xs font-bold transition-all flex items-center justify-between ${
+                                currentThemeId === theme.id
+                                  ? 'bg-theme-primary/20 text-theme-primary'
+                                  : 'text-gray-300 hover:bg-white/5'
+                              }`}
+                            >
+                              {theme.name}
+                              {currentThemeId === theme.id && <ChevronRight className="w-3 h-3" />}
+                            </button>
+                          ))}
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Settings Toggle */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowSettings(true)}
+                  className="p-2.5 rounded-xl backdrop-blur-xl bg-black/60 text-white border border-white/10 shadow-lg"
+                  style={{ minHeight: '40px', minWidth: '40px' }}
+                  title="Settings"
+                >
+                  <SettingsIcon className="w-4 h-4" />
+                </motion.button>
 
                 {/* Focus Mode Toggle */}
                 <motion.button
@@ -237,12 +314,13 @@ export function DreamLayout(props: LayoutProps) {
                     setFocusMode(!focusMode);
                     if (!focusMode) setIsDrawerOpen(false);
                   }}
-                  className={`p-3 rounded-xl backdrop-blur-xl transition-all shadow-lg ${
+                  className={`p-2.5 rounded-xl backdrop-blur-xl transition-all shadow-lg border ${
                     focusMode
-                      ? 'bg-cyan-500 text-black border-2 border-cyan-400'
-                      : 'bg-black/70 text-white border border-white/20'
+                      ? 'bg-cyan-500 text-black border-cyan-400'
+                      : 'bg-black/60 text-white border-white/10'
                   }`}
                   style={{ minHeight: '40px', minWidth: '40px' }}
+                  title="Toggle Focus Mode"
                 >
                   {focusMode ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </motion.button>
@@ -433,6 +511,12 @@ export function DreamLayout(props: LayoutProps) {
         zone={selectedZone}
         onClose={() => setSelectedZone(null)}
         driverLocation={props.driverLocation}
+      />
+
+      {/* ==================== LAYER 6: SETTINGS MODAL ==================== */}
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
       />
     </div>
   );
