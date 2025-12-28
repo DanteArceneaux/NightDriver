@@ -42,8 +42,9 @@ jobs:
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
             echo "Attempt $i: Received HTTP $STATUS"
             
-            if [ "$STATUS" -eq "200" ] || [ "$STATUS" -eq "301" ] || [ "$STATUS" -eq "302" ]; then
-              echo "✅ Deployment is ready and responding!";
+            # 401/403 are accepted because Vercel Deployment Protection often blocks direct curl access
+            if [ "$STATUS" -eq "200" ] || [ "$STATUS" -eq "301" ] || [ "$STATUS" -eq "302" ] || [ "$STATUS" -eq "401" ] || [ "$STATUS" -eq "403" ]; then
+              echo "✅ Deployment is ready and responding (Status $STATUS)!";
               exit 0;
             fi;
             
