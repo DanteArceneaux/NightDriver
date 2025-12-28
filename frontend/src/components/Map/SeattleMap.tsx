@@ -266,6 +266,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   const [shouldCenterOnPosition, setShouldCenterOnPosition] = useState(false);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('loading');
   const [locationSource, setLocationSource] = useState<LocationSource | null>(null);
+  const [dismissedGeoWarning, setDismissedGeoWarning] = useState(false);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -569,28 +570,42 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         </motion.div>
       )}
 
-      {geoStatus === 'denied' && !livePosition && (
+      {geoStatus === 'denied' && !livePosition && !dismissedGeoWarning && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="absolute top-4 left-4 z-[1000] bg-red-600/95 backdrop-blur-lg border-2 border-red-400 rounded-xl px-4 py-3 shadow-2xl max-w-xs"
+          className="absolute bottom-48 left-4 right-4 z-[1000] bg-red-600/95 backdrop-blur-lg border-2 border-red-400 rounded-2xl px-4 py-3 shadow-2xl max-w-sm mx-auto"
         >
           <div className="text-white text-sm">
-            <div className="font-bold mb-2">❌ Location permission blocked</div>
-            <div className="text-xs opacity-90 mb-3">
-              1) Click <span className="font-bold">🔒 lock icon</span> → <span className="font-bold">Site settings</span><br/>
-              2) Set <span className="font-bold">Location</span> to <span className="font-bold">Allow</span><br/>
-              3) Refresh the page
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-bold">📍 Location needed</span>
+              <button 
+                onClick={() => setDismissedGeoWarning(true)}
+                className="text-white/70 hover:text-white text-lg leading-none"
+                aria-label="Dismiss"
+              >
+                ×
+              </button>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.location.reload()}
-              className="w-full bg-white text-red-700 font-bold py-2 px-3 rounded-lg text-xs"
-              aria-label="Refresh page"
-            >
-              Refresh
-            </motion.button>
+            <div className="text-xs opacity-90 mb-3">
+              Enable location to see your position on the map.
+            </div>
+            <div className="flex gap-2">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setDismissedGeoWarning(true)}
+                className="flex-1 bg-white/20 text-white font-bold py-2 px-3 rounded-xl text-xs"
+              >
+                Dismiss
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => window.location.reload()}
+                className="flex-1 bg-white text-red-700 font-bold py-2 px-3 rounded-xl text-xs"
+              >
+                Retry
+              </motion.button>
+            </div>
           </div>
         </motion.div>
       )}

@@ -4,6 +4,7 @@ import { useZoneScores } from './hooks/useZoneScores';
 import { useDriverLocation } from './hooks/useDriverLocation';
 import { useAutoRefresh } from './hooks/useAutoRefresh';
 import { AppLayout } from './features/layout';
+import { useTheme } from './features/theme';
 import { Header } from './components/Header/Header';
 import { SurgeAlert } from './components/SurgeAlert';
 import { EventAlertBanner } from './components/Alerts/EventAlertBanner';
@@ -20,6 +21,7 @@ function App() {
   const { data, loading, error, connected, refresh } = useZoneScores();
   const { location: driverLocation } = useDriverLocation();
   const { countdown } = useAutoRefresh(30000); // 30 seconds for WebSocket (used for visual countdown ring)
+  const { layoutId } = useTheme(); // Get current layout
   const [surges] = useState<SurgeAlertData[]>([]);
   const [weather, setWeather] = useState<{ temp: number; description: string } | undefined>();
   const [shiftStartTime] = useState<Date>(() => {
@@ -132,11 +134,13 @@ function App() {
       {/* Break Reminder (every 4 hours) */}
       <BreakReminder shiftStartTime={shiftStartTime} />
 
-      {/* Quick Actions Bar (Bathroom, Charging, Shift Planner, Log Trip) */}
-      <QuickActionsBar 
-        currentLocation={driverLocation || { lat: 47.6062, lng: -122.3321 }} 
-        zones={sortedZones}
-      />
+      {/* Quick Actions Bar - Hidden for Dream Layout (has its own) */}
+      {layoutId !== 'dream' && (
+        <QuickActionsBar 
+          currentLocation={driverLocation || { lat: 47.6062, lng: -122.3321 }} 
+          zones={sortedZones}
+        />
+      )}
 
       {/* Theme-aware Layout */}
       <AppLayout

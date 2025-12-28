@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { 
   Radio, MapPin, TrendingUp, Calendar, Activity, Trophy, 
-  DollarSign, Car, Eye, EyeOff,
-  ChevronUp, ChevronDown
+  DollarSign, Car, Eye, EyeOff, Lock, Unlock,
+  ChevronUp, ChevronDown, Grip
 } from 'lucide-react';
 import type { LayoutProps } from './types';
 import { SeattleMap } from '../../components/Map/SeattleMap';
@@ -22,10 +22,13 @@ export function DreamLayout(props: LayoutProps) {
   const [selectedZone, setSelectedZone] = useState<typeof props.zones[0] | null>(null);
   const [focusMode, setFocusMode] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [mapLocked, setMapLocked] = useState(true); // DEFAULT: Map is LOCKED for easy scrolling
+  const drawerRef = useRef<HTMLDivElement>(null);
   const { getProgress } = useEarningsStore();
   const progress = getProgress();
 
   const handleZoneClick = (zone: typeof props.zones[0]) => {
+    if (mapLocked) return; // Don't handle clicks when map is locked
     setSelectedZone(zone);
     props.onZoneClick?.(zone);
   };
@@ -124,166 +127,294 @@ export function DreamLayout(props: LayoutProps) {
 
   // Handle drawer drag
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const threshold = -100;
+    const threshold = -80;
     if (info.offset.y < threshold) {
       setIsDrawerOpen(true);
-    } else if (info.offset.y > -threshold) {
+    } else if (info.offset.y > Math.abs(threshold)) {
       setIsDrawerOpen(false);
     }
   };
 
   return (
-    <div className="min-h-screen text-white overflow-hidden relative">
-      {/* Background Map (Always Visible) */}
-      <div className="fixed inset-0 z-0">
-        <SeattleMap zones={props.zones} onZoneClick={handleZoneClick} />
+    <div className="fixed inset-0 text-white overflow-hidden">
+      {/* ==================== LAYER 0: MAP ==================== */}
+      {/* Map with touch blocking when locked */}
+      <div 
+        className={`absolute inset-0 z-0 ${mapLocked ? 'pointer-events-none' : ''}`}
+        style={{ 
+          // Safe area padding for iOS
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+        }}
+      >
+        <SeattleMap 
+          zones={props.zones} 
+          onZoneClick={handleZoneClick}
+        />
+        
+        {/* Map Lock Overlay - Visual indicator when locked */}
+        {mapLocked && !focusMode && (
+          <div className="absolute inset-0 bg-transparent" />
+        )}
       </div>
 
-      {/* Micro HUD Header */}
-      <AnimatePresence>
-        {!focusMode && (
-          <motion.header
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
-          >
-            <div className="flex items-center gap-3 pointer-events-auto">
-              {/* Connectivity Status */}
-              <motion.div
-                animate={props.connected ? { scale: [1, 1.1, 1] } : {}}
-                transition={{ repeat: Infinity, duration: 2 }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium backdrop-blur-xl ${
-                  props.connected
-                    ? 'bg-neon-green/20 text-neon-green border border-neon-green/50'
-                    : 'bg-red-500/20 text-red-400 border border-red-500/50'
-                }`}
-              >
-                <Radio className="w-3 h-3" />
-                {props.connected ? 'LIVE' : 'OFFLINE'}
-              </motion.div>
-
-              {/* Current Earnings Pill */}
-              {progress && (
-                <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-black/60 backdrop-blur-xl border border-white/10">
-                  <div className="flex flex-col">
-                    <span className="text-xl font-black text-theme-primary leading-none">
-                      ${progress.currentEarnings.toFixed(0)}
-                    </span>
-                    <span className="text-[9px] text-gray-500 uppercase font-bold tracking-wider">
-                      of ${progress.dailyGoal}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* GPS Indicator */}
-              {props.driverLocation && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-theme-primary/20 backdrop-blur-xl border border-theme-primary/50 text-theme-primary text-xs font-medium">
-                  <MapPin className="w-3 h-3" />
-                  GPS
-                </div>
-              )}
-            </div>
-          </motion.header>
-        )}
-      </AnimatePresence>
-
-      {/* Focus Mode Toggle (Always Visible) */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => {
-          setFocusMode(!focusMode);
-          if (!focusMode) setIsDrawerOpen(false); // Close drawer when entering focus mode
+      {/* ==================== LAYER 1: MAP CONTROLS ==================== */}
+      {/* Map Lock Toggle - Always visible, bottom-left */}
+      <div 
+        className="fixed z-50 pointer-events-auto"
+        style={{
+          bottom: isDrawerOpen ? 'calc(70vh + 16px)' : '200px',
+          left: '16px',
+          transition: 'bottom 0.3s ease-out',
         }}
-        className={`fixed top-4 right-4 z-50 p-3 rounded-full backdrop-blur-xl transition-all ${
-          focusMode
-            ? 'bg-theme-primary text-black border-2 border-theme-primary'
-            : 'bg-black/60 text-white border border-white/20'
-        }`}
-        title={focusMode ? 'Exit Focus Mode' : 'Enter Focus Mode'}
       >
-        {focusMode ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-      </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setMapLocked(!mapLocked)}
+          className={`flex items-center gap-2 px-4 py-3 rounded-2xl backdrop-blur-xl shadow-lg transition-all ${
+            mapLocked
+              ? 'bg-amber-500/90 text-black border-2 border-amber-400'
+              : 'bg-emerald-500/90 text-white border-2 border-emerald-400'
+          }`}
+          style={{ minHeight: '48px', minWidth: '48px' }} // Apple HIG minimum
+        >
+          {mapLocked ? (
+            <>
+              <Lock className="w-5 h-5" />
+              <span className="font-bold text-sm">TAP TO UNLOCK MAP</span>
+            </>
+          ) : (
+            <>
+              <Unlock className="w-5 h-5" />
+              <span className="font-bold text-sm">MAP UNLOCKED</span>
+            </>
+          )}
+        </motion.button>
+      </div>
 
-      {/* Bottom Sheet Drawer */}
+      {/* ==================== LAYER 2: MICRO HUD ==================== */}
       <AnimatePresence>
         {!focusMode && (
           <motion.div
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            className="fixed left-0 right-0 z-40 pointer-events-none"
+            style={{
+              // Safe area for Dynamic Island
+              top: 'max(env(safe-area-inset-top, 16px), 16px)',
+              paddingLeft: '16px',
+              paddingRight: '16px',
+            }}
+          >
+            {/* Single row HUD - clean, no overlap */}
+            <div className="flex items-center justify-between gap-2">
+              {/* Left: Status Pills */}
+              <div className="flex items-center gap-2 pointer-events-auto">
+                {/* Connection Status */}
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold backdrop-blur-xl ${
+                    props.connected
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                      : 'bg-red-500/20 text-red-400 border border-red-500/50'
+                  }`}
+                  style={{ minHeight: '40px' }}
+                >
+                  <Radio className="w-3.5 h-3.5" />
+                  <span>{props.connected ? 'LIVE' : 'OFFLINE'}</span>
+                </div>
+
+                {/* GPS Status */}
+                {props.driverLocation && (
+                  <div 
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500/20 backdrop-blur-xl border border-cyan-500/50 text-cyan-400 text-xs font-bold"
+                    style={{ minHeight: '40px' }}
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>GPS</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Right: Earnings + Focus */}
+              <div className="flex items-center gap-2 pointer-events-auto">
+                {/* Earnings Pill */}
+                {progress && (
+                  <div 
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/70 backdrop-blur-xl border border-white/20"
+                    style={{ minHeight: '40px' }}
+                  >
+                    <DollarSign className="w-4 h-4 text-emerald-400" />
+                    <span className="text-base font-black text-white">
+                      ${progress.currentEarnings.toFixed(0)}
+                    </span>
+                    <span className="text-[10px] text-gray-400 font-medium">
+                      /{progress.dailyGoal}
+                    </span>
+                  </div>
+                )}
+
+                {/* Focus Mode Toggle */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => {
+                    setFocusMode(!focusMode);
+                    if (!focusMode) setIsDrawerOpen(false);
+                  }}
+                  className={`p-3 rounded-xl backdrop-blur-xl transition-all ${
+                    focusMode
+                      ? 'bg-cyan-500 text-black border-2 border-cyan-400'
+                      : 'bg-black/70 text-white border border-white/20'
+                  }`}
+                  style={{ minHeight: '44px', minWidth: '44px' }}
+                >
+                  {focusMode ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ==================== LAYER 3: BOTTOM SHEET ==================== */}
+      <AnimatePresence>
+        {!focusMode && (
+          <motion.div
+            ref={drawerRef}
             initial={{ y: '100%' }}
-            animate={{ y: isDrawerOpen ? '0%' : 'calc(100% - 180px)' }}
+            animate={{ 
+              y: isDrawerOpen ? '0%' : 'calc(100% - 200px)',
+            }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={0.1}
+            dragElastic={0.05}
             onDragEnd={handleDragEnd}
-            className="fixed bottom-0 left-0 right-0 z-40 pointer-events-auto"
-            style={{ height: 'calc(100vh - 100px)' }}
+            className="fixed left-0 right-0 z-30"
+            style={{ 
+              bottom: 0,
+              height: '85vh',
+              // Safe area for home indicator
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+            }}
           >
-            {/* Drawer Container */}
-            <div className="h-full bg-black/80 backdrop-blur-xl rounded-t-3xl border-t border-white/10 shadow-2xl flex flex-col">
-              {/* Drag Handle */}
-              <div className="flex items-center justify-center py-3 cursor-grab active:cursor-grabbing">
-                <div className="w-12 h-1.5 bg-white/20 rounded-full" />
+            {/* Sheet Container */}
+            <div className="h-full bg-gradient-to-b from-gray-900/98 via-black/98 to-black backdrop-blur-2xl rounded-t-[28px] border-t border-white/10 shadow-2xl flex flex-col overflow-hidden">
+              
+              {/* Drag Handle - Large touch target */}
+              <div 
+                className="flex flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+                style={{ minHeight: '44px' }}
+              >
+                <div className="flex items-center gap-2 text-gray-500 mb-1">
+                  <Grip className="w-4 h-4" />
+                  <span className="text-[10px] font-medium uppercase tracking-wider">
+                    {isDrawerOpen ? 'Drag down to close' : 'Drag up for more'}
+                  </span>
+                  <Grip className="w-4 h-4" />
+                </div>
+                <div className="w-10 h-1 bg-white/30 rounded-full" />
               </div>
 
-              {/* Drawer Content */}
+              {/* Sheet Content */}
               <div className="flex-1 overflow-hidden">
                 <AnimatePresence mode="wait">
                   {!isDrawerOpen ? (
-                    // Collapsed State: Show Top Pick
+                    /* ===== COLLAPSED STATE ===== */
                     <motion.div
                       key="collapsed"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="p-6 h-full"
+                      className="h-full px-4 pb-4"
                     >
-                      <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-black uppercase tracking-wider text-theme-primary">
-                          Top Recommendation
+                      {/* Header with expand button */}
+                      <div className="flex items-center justify-between mb-3">
+                        <h2 className="text-sm font-black uppercase tracking-widest text-cyan-400 flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4" />
+                          Top Pick
                         </h2>
-                        <button
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
                           onClick={() => setIsDrawerOpen(true)}
-                          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                          className="flex items-center gap-1 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                          style={{ minHeight: '40px' }}
                         >
-                          <ChevronUp className="w-5 h-5 text-gray-400" />
-                        </button>
+                          <span className="text-xs font-medium text-gray-300">More</span>
+                          <ChevronUp className="w-4 h-4 text-gray-400" />
+                        </motion.button>
                       </div>
-                      <TopPickCard
-                        topPick={props.topPick}
-                        zone={props.topZone}
-                        driverLocation={props.driverLocation}
-                      />
+
+                      {/* Top Pick Card - Full width, no scroll conflicts */}
+                      <div className="touch-pan-y">
+                        <TopPickCard
+                          topPick={props.topPick}
+                          zone={props.topZone}
+                          driverLocation={props.driverLocation}
+                        />
+                      </div>
                     </motion.div>
                   ) : (
-                    // Expanded State: Show Full Grid
+                    /* ===== EXPANDED STATE ===== */
                     <motion.div
                       key="expanded"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="h-full overflow-y-auto px-6 pb-6"
+                      className="h-full flex flex-col"
                     >
-                      <div className="flex items-center justify-between mb-4 sticky top-0 bg-black/80 backdrop-blur-xl py-3 z-10">
-                        <h2 className="text-lg font-black uppercase tracking-wider text-theme-primary">
+                      {/* Sticky Header */}
+                      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-black/90 backdrop-blur-xl border-b border-white/5">
+                        <h2 className="text-sm font-black uppercase tracking-widest text-cyan-400 flex items-center gap-2">
+                          <Activity className="w-4 h-4" />
                           Dashboard
                         </h2>
-                        <button
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
                           onClick={() => setIsDrawerOpen(false)}
-                          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                          className="flex items-center gap-1 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                          style={{ minHeight: '40px' }}
                         >
-                          <ChevronDown className="w-5 h-5 text-gray-400" />
-                        </button>
+                          <span className="text-xs font-medium text-gray-300">Close</span>
+                          <ChevronDown className="w-4 h-4 text-gray-400" />
+                        </motion.button>
                       </div>
-                      <DraggableCardGrid
-                        cards={drawerCards}
-                        storageKey="dream-layout-drawer"
-                        showLayoutControls={false}
-                        variant="minimal"
-                      />
+
+                      {/* Scrollable Content - This is the main scroll area */}
+                      <div 
+                        className="flex-1 overflow-y-auto overscroll-contain px-4 pb-8"
+                        style={{
+                          // Smooth iOS scrolling
+                          WebkitOverflowScrolling: 'touch',
+                        }}
+                      >
+                        {/* Top Pick Section */}
+                        <div className="py-4 border-b border-white/5">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
+                            Recommended Zone
+                          </h3>
+                          <TopPickCard
+                            topPick={props.topPick}
+                            zone={props.topZone}
+                            driverLocation={props.driverLocation}
+                          />
+                        </div>
+
+                        {/* Dashboard Cards */}
+                        <div className="py-4">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
+                            Your Dashboard
+                          </h3>
+                          <DraggableCardGrid
+                            cards={drawerCards}
+                            storageKey="dream-layout-drawer"
+                            showLayoutControls={false}
+                            variant="minimal"
+                            externalLocked={true}
+                            hideLockButton={true}
+                          />
+                        </div>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -293,7 +424,34 @@ export function DreamLayout(props: LayoutProps) {
         )}
       </AnimatePresence>
 
-      {/* Zone Detail Sheet */}
+      {/* ==================== LAYER 4: FOCUS MODE EXIT ==================== */}
+      <AnimatePresence>
+        {focusMode && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed z-50 pointer-events-auto"
+            style={{
+              bottom: 'max(env(safe-area-inset-bottom, 24px), 24px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+            }}
+          >
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setFocusMode(false)}
+              className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-cyan-500/90 text-black font-bold backdrop-blur-xl border-2 border-cyan-400 shadow-lg shadow-cyan-500/30"
+              style={{ minHeight: '56px' }}
+            >
+              <Eye className="w-6 h-6" />
+              <span className="text-base">Exit Focus Mode</span>
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ==================== LAYER 5: ZONE DETAIL MODAL ==================== */}
       <ZoneDetailSheet
         zone={selectedZone}
         onClose={() => setSelectedZone(null)}
@@ -302,4 +460,3 @@ export function DreamLayout(props: LayoutProps) {
     </div>
   );
 }
-
