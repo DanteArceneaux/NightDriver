@@ -336,55 +336,117 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
       return;
     }
 
-    console.log('✅ Geolocation API available, requesting position...');
-    setGeoStatus('loading');
-
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const newPos: LivePosition = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          speed: position.coords.speed, // m/s, null if unavailable
-          heading: position.coords.heading, // degrees, null if unavailable
-          timestamp: position.timestamp,
-        };
-
-        console.log('📍 Position update SUCCESS:', {
-          lat: newPos.lat.toFixed(6),
-          lng: newPos.lng.toFixed(6),
-          accuracy: `${newPos.accuracy.toFixed(0)}m`,
-          speed: newPos.speed ? `${(newPos.speed * 2.237).toFixed(1)} mph` : 'N/A',
-          heading: newPos.heading ? `${newPos.heading.toFixed(0)}°` : 'N/A',
-        });
-
-        setGeoStatus('active');
-        setLivePosition(newPos);
-
-        // Add to history trail (keep last 50 points)
-        setPositionHistory(prev => {
-          const updated = [...prev, [newPos.lat, newPos.lng] as [number, number]];
-          return updated.slice(-50);
-        });
-      },
-      (error) => {
-        console.error('❌ Geolocation error:', {
-          code: error.code,
-          message: error.message,
-          PERMISSION_DENIED: error.code === 1,
-          POSITION_UNAVAILABLE: error.code === 2,
-          TIMEOUT: error.code === 3,
-        });
-        setGeoStatus('denied');
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 1000,
-        timeout: 10000, // Increased timeout to 10 seconds
+    console.log('✅ Geolocation API available');
+    
+    // First, check permission state if available
+    const checkPermission = async () => {
+      if ('permissions' in navigator) {
+        try {
+          const result = await navigator.permissions.query({ name: 'geolocation' });
+          console.log('🔐 Permission state:', result.state);
+          
+          if (result.state === 'denied') {
+            console.error('❌ Permission already denied');
+            setGeoStatus('denied');
+            return false;
+          }
+        } catch (error) {
+          console.log('⚠️ Could not query permission state, proceeding anyway');
+        }
       }
-    );
+      return true;
+    };
 
-    watchIdRef.current = watchId;
+    const startTracking = async () => {
+      const canProceed = await checkPermission();
+      if (!canProceed) return;
+
+      setGeoStatus('loading');
+      console.log('📍 Requesting position...');
+
+      // Try getCurrentPosition first to trigger permission prompt
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('✅ Initial position received!');
+          const newPos: LivePosition = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            speed: position.coords.speed,
+            heading: position.coords.heading,
+            timestamp: position.timestamp,
+          };
+
+          console.log('📍 Initial position:', {
+            lat: newPos.lat.toFixed(6),
+            lng: newPos.lng.toFixed(6),
+            accuracy: `${newPos.accuracy.toFixed(0)}m`,
+          });
+
+          setGeoStatus('active');
+          setLivePosition(newPos);
+          setPositionHistory([[newPos.lat, newPos.lng]]);
+
+          // Now start continuous tracking
+          console.log('🔄 Starting continuous tracking...');
+          const watchId = navigator.geolocation.watchPosition(
+            (position) => {
+              const newPos: LivePosition = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                speed: position.coords.speed,
+                heading: position.coords.heading,
+                timestamp: position.timestamp,
+              };
+
+              setGeoStatus('active');
+              setLivePosition(newPos);
+
+              setPositionHistory(prev => {
+                const updated = [...prev, [newPos.lat, newPos.lng] as [number, number]];
+                return updated.slice(-50);
+              });
+            },
+            (error) => {
+              console.error('❌ Watch position error:', {
+                code: error.code,
+                message: error.message,
+              });
+            },
+            {
+              enableHighAccuracy: true,
+              maximumAge: 5000,
+              timeout: 10000,
+            }
+          );
+
+          watchIdRef.current = watchId;
+        },
+        (error) => {
+          console.error('❌ Geolocation error:', {
+            code: error.code,
+            message: error.message,
+            PERMISSION_DENIED: error.code === 1,
+            POSITION_UNAVAILABLE: error.code === 2,
+            TIMEOUT: error.code === 3,
+          });
+          
+          if (error.code === 1) {
+            console.log('💡 Tip: Click the 🔒 icon in address bar → Site Settings → Location → Allow');
+          }
+          
+          setGeoStatus('denied');
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 10000,
+        }
+      );
+    };
+
+    startTracking();
 
     return () => {
       if (watchIdRef.current !== null) {
@@ -441,10 +503,21 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           className="absolute top-4 left-4 z-[1000] bg-red-600/95 backdrop-blur-lg border-2 border-red-400 rounded-xl px-4 py-3 shadow-2xl max-w-xs"
         >
           <div className="text-white text-sm">
-            <div className="font-bold mb-1">❌ Location Access Denied</div>
-            <div className="text-xs opacity-90">
-              Click the <span className="font-bold">🔒 lock icon</span> in address bar → Location → Allow
+            <div className="font-bold mb-2">❌ Location Access Denied</div>
+            <div className="text-xs opacity-90 mb-3">
+              1. Click <span className="font-bold">🔒 lock icon</span> in address bar<br/>
+              2. Select <span className="font-bold">"Site Settings"</span><br/>
+              3. Change <span className="font-bold">Location</span> to <span className="font-bold">"Allow"</span><br/>
+              4. Refresh page (F5)
             </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => window.location.reload()}
+              className="w-full bg-white text-red-600 font-bold py-2 px-3 rounded-lg text-xs"
+            >
+              Refresh Page
+            </motion.button>
           </div>
         </motion.div>
       )}
