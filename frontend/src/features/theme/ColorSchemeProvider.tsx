@@ -16,6 +16,9 @@ export function ColorSchemeProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     let colorScheme: ColorScheme;
     switch (themeId) {
+      case 'dream':
+        colorScheme = neonColorScheme; // Use neon color scheme for Dream theme
+        break;
       case 'neon':
         colorScheme = neonColorScheme;
         break;
@@ -32,7 +35,7 @@ export function ColorSchemeProvider({ children }: { children: React.ReactNode })
         colorScheme = 'default';
     }
 
-    const colorVars = getColorVars(themeId as 'neon' | 'pro' | 'hud' | 'car', colorScheme);
+    const colorVars = getColorVars(themeId as 'neon' | 'pro' | 'hud' | 'car' | 'dream', colorScheme);
     const root = document.documentElement;
 
     Object.entries(colorVars).forEach(([key, value]) => {

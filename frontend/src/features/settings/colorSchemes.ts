@@ -37,13 +37,19 @@ export const carColorSchemes: Record<ColorScheme, { primary: string; secondary: 
   red: { primary: '#ef4444', secondary: '#dc2626', accent: '#b91c1c' },
 };
 
+// Dream color schemes (same as neon for now)
+export const dreamColorSchemes = neonColorSchemes;
+
 // Helper to get CSS variables for a color scheme
 export function getColorVars(
-  theme: 'neon' | 'pro' | 'hud' | 'car',
+  theme: 'dream' | 'neon' | 'pro' | 'hud' | 'car',
   scheme: ColorScheme
 ): Record<string, string> {
   let colors;
   switch (theme) {
+    case 'dream':
+      colors = dreamColorSchemes[scheme];
+      break;
     case 'neon':
       colors = neonColorSchemes[scheme];
       break;

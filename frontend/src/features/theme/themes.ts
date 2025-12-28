@@ -196,7 +196,62 @@ const carTokens: ThemeTokens = {
   borderRadius: 'rounded-3xl',
 };
 
+// Dream Theme (minimal, glassmorphism, map-first)
+const dreamTokens: ThemeTokens = {
+  // Background
+  bgPrimary: 'bg-gradient-to-b from-[#0a0e1a] via-[#0f1419] to-[#050810]',
+  bgSecondary: 'bg-black/40 backdrop-blur-md',
+  bgTertiary: 'bg-black/60 backdrop-blur-lg',
+  bgGradient: 'bg-gradient-to-br from-cyan-500/10 via-purple-500/5 to-transparent',
+  
+  // Cards - ultra minimal
+  cardBg: 'bg-black/40 backdrop-blur-md',
+  cardBorder: 'border border-white/5',
+  cardHover: 'hover:border-white/10 hover:bg-black/50',
+  
+  // Glass effects - maximum transparency
+  glassBg: 'bg-black/30 backdrop-blur-lg',
+  glassBorder: 'border border-white/5',
+  
+  // Text
+  textPrimary: 'text-white',
+  textSecondary: 'text-gray-300',
+  textMuted: 'text-gray-500',
+  primaryText: 'text-white',
+  
+  // Accent colors
+  accentSurge: 'text-cyan-400',
+  accentHot: 'text-orange-400',
+  accentWarm: 'text-purple-400',
+  accentCool: 'text-blue-400',
+  
+  // Effects - subtle
+  glow: 'shadow-lg shadow-cyan-500/10',
+  shadow: 'shadow-2xl shadow-black/60',
+  backdrop: 'backdrop-blur-xl',
+  
+  // Buttons - minimal
+  btnPrimary: 'bg-cyan-500/20 border border-cyan-500/50 hover:bg-cyan-500/30',
+  btnPrimaryHover: 'hover:shadow-lg hover:shadow-cyan-500/20',
+  btnSecondary: 'bg-white/5 border border-white/10 hover:bg-white/10',
+  btnSecondaryHover: 'hover:border-white/20',
+  
+  // Typography - clean
+  fontDisplay: 'font-black tracking-tight',
+  fontBody: 'font-medium',
+  
+  // Spacing
+  spacing: 'space-y-4',
+  borderRadius: 'rounded-2xl',
+};
+
 export const themes: Record<string, Theme> = {
+  dream: {
+    id: 'dream',
+    name: 'Dream',
+    layoutId: 'dream',
+    tokens: dreamTokens,
+  },
   neon: {
     id: 'neon',
     name: 'Neon Cockpit',
@@ -224,6 +279,6 @@ export const themes: Record<string, Theme> = {
 };
 
 export function getTheme(id: string): Theme {
-  return themes[id] || themes.neon;
+  return themes[id] || themes.dream; // Default to Dream theme
 }
 
