@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Marker, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Marker, Tooltip, useMap, Polyline, Circle } from 'react-leaflet';
 import { motion } from 'framer-motion';
-import { Map as MapIcon, Satellite, TrendingUp } from 'lucide-react';
+import { Map as MapIcon, Satellite, TrendingUp, Navigation2, Gauge } from 'lucide-react';
 import L from 'leaflet';
 import { ZoneScore, Event } from '../../types';
 import { fetchConditions } from '../../lib/api';
@@ -12,6 +12,15 @@ import 'leaflet/dist/leaflet.css';
 interface SeattleMapProps {
   zones: ZoneScore[];
   onZoneClick?: (zone: ZoneScore) => void;
+}
+
+interface LivePosition {
+  lat: number;
+  lng: number;
+  accuracy: number;
+  speed: number | null; // m/s
+  heading: number | null; // degrees
+  timestamp: number;
 }
 
 // Venue coordinates for major Seattle venues
@@ -155,6 +164,10 @@ function MapResizeHandler() {
         background: transparent;
         border: none;
       }
+      .current-position-marker {
+        background: transparent;
+        border: none;
+      }
     `;
     document.head.appendChild(style);
     
@@ -193,6 +206,55 @@ function MapResizeHandler() {
   return null;
 }
 
+// Create custom current position icon (blue dot with pulse)
+function createCurrentPositionIcon(heading: number | null) {
+  const arrow = heading !== null ? `
+    <div style="
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 20px solid #0ea5e9;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%) ${heading !== null ? `rotate(${heading}deg)` : ''};
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+    "></div>
+  ` : '';
+  
+  return L.divIcon({
+    className: 'current-position-marker',
+    html: `
+      <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+        <!-- Accuracy circle pulse -->
+        <div class="animate-pulse" style="
+          position: absolute;
+          width: 36px;
+          height: 36px;
+          border: 2px solid #0ea5e9;
+          border-radius: 50%;
+          background: rgba(14, 165, 233, 0.1);
+        "></div>
+        <!-- Main blue dot -->
+        <div style="
+          width: 16px;
+          height: 16px;
+          background: #0ea5e9;
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 0 10px rgba(14, 165, 233, 0.8), 0 2px 6px rgba(0, 0, 0, 0.5);
+          position: relative;
+          z-index: 10;
+        "></div>
+        ${arrow}
+      </div>
+    `,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+  });
+}
+
 export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   // Center map between Marysville (north) and Spanaway (south), Seattle (west) and Sammamish (east)
   const center: [number, number] = [47.5500, -122.2000]; // Adjusted to show full metro area
@@ -202,6 +264,9 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   const [mapLayer, setMapLayer] = useState<'dark' | 'satellite'>('dark');
   const [showHeatmap, setShowHeatmap] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [livePosition, setLivePosition] = useState<LivePosition | null>(null);
+  const [positionHistory, setPositionHistory] = useState<Array<[number, number]>>([]);
+  const watchIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -213,6 +278,58 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
       }
     };
     loadEvents();
+  }, []);
+
+  // Track live position
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      console.warn('Geolocation is not supported by this browser');
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const newPos: LivePosition = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          speed: position.coords.speed, // m/s, null if unavailable
+          heading: position.coords.heading, // degrees, null if unavailable
+          timestamp: position.timestamp,
+        };
+
+        console.log('📍 Position update:', {
+          lat: newPos.lat.toFixed(6),
+          lng: newPos.lng.toFixed(6),
+          speed: newPos.speed ? `${(newPos.speed * 2.237).toFixed(1)} mph` : 'N/A',
+          heading: newPos.heading ? `${newPos.heading.toFixed(0)}°` : 'N/A',
+        });
+
+        setLivePosition(newPos);
+
+        // Add to history trail (keep last 50 points)
+        setPositionHistory(prev => {
+          const updated = [...prev, [newPos.lat, newPos.lng] as [number, number]];
+          return updated.slice(-50);
+        });
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 5000,
+      }
+    );
+
+    watchIdRef.current = watchId;
+
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
   }, []);
 
   // Theme-aware button styles
@@ -236,8 +353,41 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
     return 'bg-black/60 text-gray-400 border border-white/20 hover:bg-black/80';
   };
 
+  // Convert m/s to mph
+  const speedMph = livePosition?.speed ? livePosition.speed * 2.237 : 0;
+
   return (
     <div ref={mapContainerRef} className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative">
+      {/* Speed Widget */}
+      {livePosition && livePosition.speed !== null && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="absolute top-4 left-4 z-[1000] bg-gray-900/95 backdrop-blur-lg border-2 border-cyan-500/50 rounded-2xl p-4 shadow-2xl min-w-[120px]"
+        >
+          <div className="flex items-center gap-3">
+            <Gauge className="w-6 h-6 text-cyan-400" />
+            <div>
+              <div className="text-3xl font-black text-white tabular-nums">
+                {speedMph.toFixed(0)}
+              </div>
+              <div className="text-xs text-gray-400 font-medium uppercase tracking-wide">
+                mph
+              </div>
+            </div>
+          </div>
+          {livePosition.heading !== null && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
+              <Navigation2 
+                className="w-4 h-4 text-cyan-400" 
+                style={{ transform: `rotate(${livePosition.heading}deg)` }}
+              />
+              <span>{livePosition.heading.toFixed(0)}°</span>
+            </div>
+          )}
+        </motion.div>
+      )}
+
       {/* Map Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         {/* Map Layer Toggle */}
@@ -431,6 +581,58 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
             </Marker>
           );
         })}
+
+        {/* Current Position Trail */}
+        {positionHistory.length > 1 && (
+          <Polyline
+            positions={positionHistory}
+            pathOptions={{
+              color: '#0ea5e9',
+              weight: 4,
+              opacity: 0.7,
+              dashArray: '10, 10',
+            }}
+          />
+        )}
+
+        {/* Current Position Marker */}
+        {livePosition && (
+          <>
+            {/* Accuracy Circle */}
+            <Circle
+              center={[livePosition.lat, livePosition.lng]}
+              radius={livePosition.accuracy}
+              pathOptions={{
+                color: '#0ea5e9',
+                fillColor: '#0ea5e9',
+                fillOpacity: 0.1,
+                weight: 1,
+                opacity: 0.5,
+              }}
+            />
+            {/* Position Marker */}
+            <Marker
+              position={[livePosition.lat, livePosition.lng]}
+              icon={createCurrentPositionIcon(livePosition.heading)}
+            >
+              <Tooltip direction="top" offset={[0, -20]} opacity={1} permanent={false}>
+                <div className="text-sm">
+                  <div className="font-bold text-cyan-400 mb-1">Your Location</div>
+                  <div className="text-xs text-gray-300">
+                    {livePosition.speed !== null ? (
+                      <div>Speed: {speedMph.toFixed(1)} mph</div>
+                    ) : (
+                      <div>Speed: Unavailable</div>
+                    )}
+                    <div className="text-gray-400 mt-1">
+                      Accuracy: ±{livePosition.accuracy.toFixed(0)}m
+                    </div>
+                  </div>
+                </div>
+              </Tooltip>
+            </Marker>
+          </>
+        )}
       </MapContainer>
     </div>
   );
