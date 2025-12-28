@@ -3,6 +3,7 @@ import { DollarSign, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useEarningsStore } from '../../features/earnings';
 import { useTheme } from '../../features/theme';
+import { DraggableCard } from '../UI/DraggableCard';
 
 export function QuickEarningsButtons() {
   const { addEarnings, dailyGoal, setDailyGoal } = useEarningsStore();
@@ -38,37 +39,43 @@ export function QuickEarningsButtons() {
 
   if (showSetGoal) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 glass-strong rounded-2xl p-6 border-2 border-theme-primary/30 shadow-2xl max-w-sm"
+      <DraggableCard
+        title="Set Today's Goal"
+        icon={<Target className="w-5 h-5 text-theme-primary" />}
+        isOpen={true}
+        onClose={() => setShowSetGoal(false)}
+        collapsible={false}
+        resizable={false}
+        draggable={true}
+        defaultPosition={{ x: window.innerWidth / 2 - 160, y: window.innerHeight - 200 }}
+        defaultSize={{ width: 320, height: 'auto' as any }}
+        zIndex={50}
       >
-        <h3 className="text-xl font-black text-white mb-4 flex items-center gap-2">
-          <Target className="w-6 h-6 text-theme-primary" />
-          Set Today's Goal
-        </h3>
-        <div className="flex gap-3">
-          <div className="flex-1 relative">
-            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-theme-primary" />
-            <input
-              type="number"
-              value={goalInput}
-              onChange={(e) => setGoalInput(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-black/40 border border-white/20 rounded-xl text-white font-bold text-lg focus:border-theme-primary focus:outline-none focus:ring-2 focus:ring-theme-primary/30"
-              placeholder="200"
-              autoFocus
-            />
+        <div className="p-4">
+          <div className="flex gap-3">
+            <div className="flex-1 relative">
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-theme-primary" />
+              <input
+                type="number"
+                value={goalInput}
+                onChange={(e) => setGoalInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSetGoal()}
+                className="w-full pl-10 pr-4 py-3 bg-black/40 border border-white/20 rounded-xl text-white font-bold text-lg focus:border-theme-primary focus:outline-none focus:ring-2 focus:ring-theme-primary/30"
+                placeholder="200"
+                autoFocus
+              />
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSetGoal}
+              className="px-6 py-3 bg-gradient-to-r from-theme-primary to-theme-accent rounded-xl text-black font-black text-lg shadow-lg hover:shadow-theme-primary/50 transition-all"
+            >
+              Start
+            </motion.button>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleSetGoal}
-            className="px-6 py-3 bg-gradient-to-r from-theme-primary to-theme-accent rounded-xl text-black font-black text-lg shadow-lg hover:shadow-theme-primary/50 transition-all"
-          >
-            Start
-          </motion.button>
         </div>
-      </motion.div>
+      </DraggableCard>
     );
   }
 
