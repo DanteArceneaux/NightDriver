@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Night Driver icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="tgrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff4444"/>
+      <stop offset="1" stop-color="#cc0000"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer badge -->
+  <circle cx="128" cy="128" r="118" fill="url(#bg)" stroke="#e82127" stroke-width="12"/>
+
+  <!-- Stylized "T" (Tesla-inspired) -->
+  <path d="M72 78h112" stroke="#e82127" stroke-width="26" stroke-linecap="round"/>
+  <path d="M128 78v120" stroke="url(#tgrad)" stroke-width="18" stroke-linecap="round"/>
+
+  <!-- Subtle inner glow -->
+  <circle cx="128" cy="128" r="96" fill="none" stroke="#ff4444" stroke-opacity="0.18" stroke-width="10"/>
+</svg>
+
+

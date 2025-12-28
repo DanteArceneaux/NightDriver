@@ -26,7 +26,7 @@ export function CoffeeFinder({ onClose }: CoffeeFinderProps) {
             if ('Notification' in window && Notification.permission === 'granted') {
               new Notification('Break Complete!', {
                 body: '15 minutes are up. Time to get back on the road!',
-                icon: '/icon-192.png',
+                icon: '/icon.svg',
               });
             }
             return 0;

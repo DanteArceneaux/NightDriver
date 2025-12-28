@@ -38,8 +38,8 @@ export function showSurgeNotification(surge: SurgeAlert) {
 
   const notification = new Notification('🔥 SURGE ALERT!', {
     body: `${surge.zoneName} jumped to ${surge.newScore} (+${surge.scoreDiff})\n${surge.reason}`,
-    icon: '/icon-192.png',
-    badge: '/icon-badge.png',
+    icon: '/icon.svg',
+    badge: '/icon.svg',
     tag: 'surge-' + surge.zoneId,
     requireInteraction: true,
   });
