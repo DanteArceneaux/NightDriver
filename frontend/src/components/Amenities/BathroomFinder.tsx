@@ -40,19 +40,10 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
     const fetchBathrooms = async () => {
       setLoading(true);
       
-      // Use mock data on static hosts
-      if (isStaticHost) {
-        const filtered = filter === '24hr' 
-          ? MOCK_BATHROOMS.filter(b => b.is24Hours)
-          : MOCK_BATHROOMS;
-        setBathrooms(filtered);
-        setLoading(false);
-        return;
-      }
-      
       try {
         const backendUrl = getBackendUrl();
         if (!backendUrl) {
+          console.warn('No backend URL available, using mock data');
           setBathrooms(MOCK_BATHROOMS);
           setLoading(false);
           return;
@@ -64,6 +55,9 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
           : `/api/amenities?type=bathroom&lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=5`;
         
         const response = await fetch(`${backendUrl}${endpoint}`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
         const data = await response.json();
         setBathrooms(filter === '24hr' ? data.bathrooms : data.amenities || []);
       } catch (error) {
@@ -76,7 +70,7 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
 
     fetchBathrooms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]); // Only re-fetch when filter changes, not on location updates
+  }, [filter, currentLocation]); // Re-fetch when filter OR location changes
 
   const openNavigation = (bathroom: Amenity) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${bathroom.coordinates.lat},${bathroom.coordinates.lng}`;

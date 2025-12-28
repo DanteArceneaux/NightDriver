@@ -43,19 +43,10 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
     const fetchStations = async () => {
       setLoading(true);
       
-      // Use mock data on static hosts
-      if (isStaticHost) {
-        const filtered = filter === 'tesla'
-          ? MOCK_STATIONS.filter(s => s.chargerType?.toLowerCase().includes('tesla'))
-          : MOCK_STATIONS;
-        setStations(filtered);
-        setLoading(false);
-        return;
-      }
-      
       try {
         const backendUrl = getBackendUrl();
         if (!backendUrl) {
+          console.warn('No backend URL available, using mock data');
           setStations(MOCK_STATIONS);
           setLoading(false);
           return;
@@ -65,6 +56,9 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
         const response = await fetch(
           `${backendUrl}/api/amenities/charging?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=10${teslaParam}`
         );
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
         const data = await response.json();
         setStations(data.chargers || []);
       } catch (error) {
@@ -77,7 +71,7 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
 
     fetchStations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]); // Only re-fetch when filter changes, not on location updates
+  }, [filter, currentLocation]); // Re-fetch when filter OR location changes
 
   const openNavigation = (station: ChargingStation) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${station.coordinates.lat},${station.coordinates.lng}`;
