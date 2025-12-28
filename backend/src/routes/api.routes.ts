@@ -20,8 +20,6 @@ import {
   setCache,
 } from '../middleware/cache.middleware.js';
 import { rateLimitMiddleware } from '../middleware/rateLimit.middleware.js';
-
-import { TripChainService } from '../services/tripChain.service.js';
 import { TeslaService } from '../services/tesla.service.js';
 
 export function createApiRouter(
