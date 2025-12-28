@@ -13,7 +13,7 @@ import { RoutingService } from './services/routing.service.js';
 import { SurgeService } from './services/surge.service.js';
 import { EventAlertsService } from './services/eventAlerts.service.js';
 import { DriverPulseService } from './services/driverPulse.service.js';
-import type { WeatherConditions, Event, FlightArrival, ZoneScoreFactors } from './types/index.js';
+import type { WeatherConditions, Event, FlightArrival } from './types/index.js';
 import {
   weatherCache,
   eventsCache,
@@ -21,8 +21,7 @@ import {
   trafficCache,
   getCached,
 } from './middleware/cache.middleware.js';
-import { errorHandler, ErrorFactory, asyncHandler } from './lib/errors.js';
-import { rateLimitMiddleware } from './middleware/rateLimit.middleware.js';
+import { errorHandler } from './lib/errors.js';
 
 const app = express();
 const httpServer = createServer(app);

@@ -1,0 +1,10 @@
+
+> seattle-driver-optimizer-backend@5.0.1 build
+> tsc && echo 'Build completed successfully'
+
+'Build completed successfully'
+
+> seattle-driver-optimizer-backend@5.0.1 postbuild
+> echo 'Backend build artifacts created in dist/'
+
+'Backend build artifacts created in dist/'

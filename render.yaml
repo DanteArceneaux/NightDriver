@@ -6,8 +6,10 @@ services:
     plan: free
     rootDir: backend
     buildCommand: npm ci && npm run build
-    startCommand: npm start
+    startCommand: node dist/index.js
     healthCheckPath: /api/health
+    env: node
+    region: oregon
     envVars:
       - key: NODE_ENV
         value: production

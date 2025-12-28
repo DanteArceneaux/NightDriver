@@ -266,11 +266,6 @@ export class ScoringService {
     return boosts[intensity];
   }
 
-  private calculateEventBoost(zoneId: string, events: Event[], currentTime: Date): number {
-    // Legacy method kept for backward compatibility
-    const zoneEvents = events.filter(event => event.zoneId === zoneId);
-    return this.calculateEventBoostOptimized(zoneEvents, currentTime);
-  }
 
   private calculateEventBoostOptimized(zoneEvents: Event[], currentTime: Date): number {
     let boost = 0;

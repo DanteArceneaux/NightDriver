@@ -1,29 +1,33 @@
 [build]
-  command = "npm install && npm run build"
+  command = "npm ci && npm run build"
   publish = "dist"
   functions = "netlify/functions"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
 
 [functions]
   node_bundler = "esbuild"
+  included_files = ["netlify/functions/**"]
 
 # API routes to serverless functions
 [[redirects]]
   from = "/api/zones"
   to = "/.netlify/functions/zones"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/api/conditions"
   to = "/.netlify/functions/conditions"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/api/forecast"
   to = "/.netlify/functions/forecast"
   status = 200
+  force = true
 
 # SPA fallback
 [[redirects]]

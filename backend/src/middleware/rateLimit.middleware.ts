@@ -110,17 +110,18 @@ class RateLimiter {
         return next();
       }
 
-      res.send = function(body: any) {
+      const config = this.config;
+      res.send = function(this: Response, body: any): Response {
         const shouldSkip = 
-          (this.config.skipSuccessfulRequests && res.statusCode < 400) ||
-          (this.config.skipFailedRequests && res.statusCode >= 400);
+          (config.skipSuccessfulRequests && res.statusCode < 400) ||
+          (config.skipFailedRequests && res.statusCode >= 400);
 
         if (shouldSkip && window.count > 0) {
           window.count--;
         }
 
         return originalSend.call(this, body);
-      }.bind({ config: this.config });
+      };
 
       next();
     };
