@@ -128,8 +128,8 @@ function App() {
       {/* Surge Alert */}
       <SurgeAlert surges={surges} />
 
-      {/* Event Alerts */}
-      <EventAlertBanner />
+      {/* Event Alerts - Removed per user request (hard to close on iPhone) */}
+      {/* <EventAlertBanner /> */}
 
       {/* Break Reminder (every 4 hours) */}
       <BreakReminder shiftStartTime={shiftStartTime} />

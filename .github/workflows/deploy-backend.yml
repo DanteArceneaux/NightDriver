@@ -14,22 +14,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Wait for Render Deployment
-        # This action waits for a Render service to be deployed successfully.
-        # It requires RENDER_API_KEY and RENDER_SERVICE_ID secrets.
-        uses: anmol098/waka-readme-stats@master # Using a generic wait action, you might need a more specific one for Render
-        env:
-          API_KEY: ${{ secrets.RENDER_API_KEY }}
-          SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
-          # You would typically use Render's API to check deployment status
-          # For simplicity, this is a placeholder. A real implementation would query Render API.
-          # Example: curl -H "Authorization: Bearer $API_KEY" https://api.render.com/v1/services/$SERVICE_ID/deploys
-          # And then parse the JSON to check status. A custom action or script would be ideal.
         run: |
-          echo "Waiting for Render service ${{ secrets.RENDER_SERVICE_ID }} to deploy."
-          # Placeholder for Render API call to check deployment status
-          # You would need to implement actual Render API calls here or use a dedicated Render GitHub Action if available.
-          # For now, we'll simulate a wait.
-          sleep 60 # Wait for 60 seconds as a placeholder. Adjust as needed.
+          echo "Waiting for Render service to deploy..."
+          # Render auto-deploys on push to main, so we wait a bit for it to start
+          sleep 30
 
       - name: Get Backend Service URL
         id: get_url
@@ -40,8 +28,17 @@ jobs:
       - name: Verify Backend Health Check
         run: |
           echo "Checking backend health at ${{ steps.get_url.outputs.BACKEND_URL }}/api/health"
-          curl -f -s ${{ steps.get_url.outputs.BACKEND_URL }}/api/health
-          echo "✅ Backend is healthy!"
+          # Retry logic for Render cold starts
+          for i in $(seq 1 10); do
+            if curl -f -s ${{ steps.get_url.outputs.BACKEND_URL }}/api/health > /dev/null 2>&1; then
+              echo "✅ Backend is healthy!"
+              exit 0
+            fi
+            echo "Attempt $i failed, waiting 15s..."
+            sleep 15
+          done
+          echo "❌ Backend health check failed after 10 attempts"
+          exit 1
 
       - name: Report Success
         run: echo "Render Backend deployment verified successfully!"
