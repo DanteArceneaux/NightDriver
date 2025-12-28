@@ -12,18 +12,16 @@ function formatHour(hour: number): string {
   return `${hour - 12}pm`;
 }
 
-function getScoreColor(score: number): string {
-  if (score >= 80) return 'text-neon-pink';
-  if (score >= 60) return 'text-neon-orange';
-  if (score >= 40) return 'text-theme-primary';
-  return 'text-blue-400';
+interface ScoreStyles {
+  textColor: string;
+  bgColor: string;
 }
 
-function getScoreBgColor(score: number): string {
-  if (score >= 80) return 'bg-neon-pink/20 border-neon-pink/50';
-  if (score >= 60) return 'bg-neon-orange/20 border-neon-orange/50';
-  if (score >= 40) return 'bg-theme-primary/20 border-theme-primary/50';
-  return 'bg-blue-500/20 border-blue-500/50';
+function getScoreStyles(score: number): ScoreStyles {
+  if (score >= 80) return { textColor: 'text-neon-pink', bgColor: 'bg-neon-pink/20 border-neon-pink/50' };
+  if (score >= 60) return { textColor: 'text-neon-orange', bgColor: 'bg-neon-orange/20 border-neon-orange/50' };
+  if (score >= 40) return { textColor: 'text-theme-primary', bgColor: 'bg-theme-primary/20 border-theme-primary/50' };
+  return { textColor: 'text-blue-400', bgColor: 'bg-blue-500/20 border-blue-500/20' };
 }
 
 interface ForecastTimelineProps {
