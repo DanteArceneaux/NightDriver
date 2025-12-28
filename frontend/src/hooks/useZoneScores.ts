@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { ZonesResponse, SurgeAlert } from '../types';
 import { fetchZones, BACKEND_URL, isStaticHost } from '../lib/api';
+import { FrontendErrorFactory, handleError, logError } from '../lib/errors';
 
 export function useZoneScores() {
   const [data, setData] = useState<ZonesResponse | null>(null);
@@ -11,24 +12,33 @@ export function useZoneScores() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
 
   // Load data via HTTP (fallback or initial load)
   const loadData = useCallback(async () => {
+    if (!isMountedRef.current) return;
+    
     try {
       setError(null);
       const result = await fetchZones();
-      setData(result);
-      setLastUpdate(new Date());
-      setLoading(false);
+      if (isMountedRef.current) {
+        setData(result);
+        setLastUpdate(new Date());
+        setLoading(false);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
-      setLoading(false);
+      if (isMountedRef.current) {
+        const error = handleError(err);
+        setError(error.message);
+        setLoading(false);
+        logError(error, 'useZoneScores.loadData');
+      }
     }
   }, []);
 
   // Start fallback polling (when WebSocket is down)
   const startFallbackPolling = useCallback(() => {
-    if (pollIntervalRef.current) return;
+    if (pollIntervalRef.current || !isMountedRef.current) return;
     
     console.log('🔄 Starting fallback polling (30s interval)');
     pollIntervalRef.current = setInterval(loadData, 30000);
@@ -44,6 +54,8 @@ export function useZoneScores() {
   }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
+    
     // Initial HTTP load
     loadData();
 
@@ -51,7 +63,10 @@ export function useZoneScores() {
     if (isStaticHost && !import.meta.env.VITE_BACKEND_URL) {
       console.log('📦 Static host detected - using mock data with polling');
       startFallbackPolling();
-      return () => stopFallbackPolling();
+      return () => {
+        isMountedRef.current = false;
+        stopFallbackPolling();
+      };
     }
 
     // Attempt WebSocket connection
@@ -67,34 +82,38 @@ export function useZoneScores() {
     socketRef.current = socket;
 
     // Connection events
-    socket.on('connect', () => {
+    const handleConnect = () => {
+      if (!isMountedRef.current) return;
       console.log('✅ WebSocket connected');
       setConnected(true);
       setError(null);
       stopFallbackPolling();
-    });
+    };
 
-    socket.on('disconnect', (reason) => {
+    const handleDisconnect = (reason: string) => {
+      if (!isMountedRef.current) return;
       console.log('❌ WebSocket disconnected:', reason);
       setConnected(false);
       startFallbackPolling();
-    });
+    };
 
-    socket.on('connect_error', (err) => {
+    const handleConnectError = (err: Error) => {
+      if (!isMountedRef.current) return;
       console.warn('⚠️ WebSocket connection error:', err.message);
       setConnected(false);
       startFallbackPolling();
-    });
+    };
 
-    // Data events
-    socket.on('scores:update', (payload: ZonesResponse) => {
+    const handleScoresUpdate = (payload: ZonesResponse) => {
+      if (!isMountedRef.current) return;
       console.log('📊 Received scores update via WebSocket');
       setData(payload);
       setLastUpdate(new Date());
       setError(null);
-    });
+    };
 
-    socket.on('surge:alert', (alert: SurgeAlert) => {
+    const handleSurgeAlert = (alert: SurgeAlert) => {
+      if (!isMountedRef.current) return;
       console.log('🚨 Surge alert:', alert);
       // Trigger browser notification if permitted
       if ('Notification' in window && Notification.permission === 'granted') {
@@ -106,15 +125,27 @@ export function useZoneScores() {
       
       // Also refresh data to get latest surge info
       loadData();
-    });
+    };
+
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('connect_error', handleConnectError);
+    socket.on('scores:update', handleScoresUpdate);
+    socket.on('surge:alert', handleSurgeAlert);
 
     // Cleanup
     return () => {
+      isMountedRef.current = false;
       console.log('🔌 Disconnecting WebSocket');
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('connect_error', handleConnectError);
+      socket.off('scores:update', handleScoresUpdate);
+      socket.off('surge:alert', handleSurgeAlert);
       socket.disconnect();
       stopFallbackPolling();
     };
-  }, [loadData, startFallbackPolling, stopFallbackPolling]);
+  }, []); // Empty dependency array - stable references
 
   return { 
     data, 

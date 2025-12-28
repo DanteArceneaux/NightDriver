@@ -13,7 +13,7 @@ import { RoutingService } from './services/routing.service.js';
 import { SurgeService } from './services/surge.service.js';
 import { EventAlertsService } from './services/eventAlerts.service.js';
 import { DriverPulseService } from './services/driverPulse.service.js';
-import type { WeatherConditions, Event, FlightArrival } from './types/index.js';
+import type { WeatherConditions, Event, FlightArrival, ZoneScoreFactors } from './types/index.js';
 import {
   weatherCache,
   eventsCache,
@@ -21,6 +21,8 @@ import {
   trafficCache,
   getCached,
 } from './middleware/cache.middleware.js';
+import { errorHandler, ErrorFactory, asyncHandler } from './lib/errors.js';
+import { rateLimitMiddleware } from './middleware/rateLimit.middleware.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -58,6 +60,9 @@ app.use('/api', createApiRouter(
   driverPulseService
 ));
 
+// Error handling middleware (must be after all routes)
+app.use(errorHandler);
+
 // Root endpoint
 app.get('/', (_req: express.Request, res: express.Response) => {
   res.json({
@@ -81,13 +86,54 @@ app.get('/', (_req: express.Request, res: express.Response) => {
   });
 });
 
-// WebSocket connection handling
+// WebSocket connection handling with rate limiting
 io.on('connection', (socket) => {
   console.log(`🔌 Client connected: ${socket.id}`);
 
+  // Rate limiting for WebSocket messages
+  const messageCounts = new Map<string, number>();
+  const resetTime = Date.now() + 60000; // 1 minute window
+
   socket.on('disconnect', () => {
     console.log(`🔌 Client disconnected: ${socket.id}`);
+    messageCounts.delete(socket.id);
   });
+
+  // Rate limit check for incoming messages
+  const checkRateLimit = (): boolean => {
+    const now = Date.now();
+    if (now > resetTime) {
+      // Reset window
+      messageCounts.clear();
+      return true;
+    }
+
+    const count = messageCounts.get(socket.id) || 0;
+    if (count >= 300) { // 300 messages per minute per connection
+      socket.emit('error', {
+        type: 'RATE_LIMITED',
+        message: 'Too many messages, please slow down.',
+        retryAfter: Math.ceil((resetTime - now) / 1000),
+      });
+      return false;
+    }
+
+    messageCounts.set(socket.id, count + 1);
+    return true;
+  };
+
+  // Apply rate limiting to all message handlers
+  const originalOn = socket.on;
+  socket.on = function(event: string, listener: (...args: any[]) => void) {
+    if (event !== 'disconnect' && event !== 'error') {
+      return originalOn.call(this, event, (...args: any[]) => {
+        if (checkRateLimit()) {
+          listener(...args);
+        }
+      });
+    }
+    return originalOn.call(this, event, listener);
+  };
 });
 
 // Real-time score broadcast (every 30 seconds)
@@ -118,7 +164,7 @@ async function broadcastScores() {
           ...z,
           score,
           factors: {
-            ...(z.factors || ({} as any)),
+            ...z.factors,
             pulse,
           },
         };
@@ -145,6 +191,8 @@ async function broadcastScores() {
     }
   } catch (error) {
     console.error('Error broadcasting scores:', error);
+    // Log the error but don't crash the server
+    // In production, you might want to send this to a monitoring service
   }
 }
 

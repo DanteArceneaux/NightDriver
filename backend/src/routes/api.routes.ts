@@ -19,6 +19,7 @@ import {
   getCached,
   setCache,
 } from '../middleware/cache.middleware.js';
+import { rateLimitMiddleware } from '../middleware/rateLimit.middleware.js';
 
 export function createApiRouter(
   weatherService: WeatherService,
@@ -31,6 +32,9 @@ export function createApiRouter(
   driverPulseService: DriverPulseService
 ): Router {
   const router = Router();
+
+  // Apply rate limiting to all API routes
+  router.use(rateLimitMiddleware.api);
 
   // GET /api/status - Get API status for each data source
   router.get('/status', async (_req: Request, res: Response) => {

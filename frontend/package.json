@@ -6,11 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:analyze": "tsc && vite build --config vite.config.optimized.ts",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "analyze": "node scripts/analyze-bundle.js",
+    "preload": "tsc && vite build --config vite.config.optimized.ts --mode production"
   },
   "dependencies": {
     "@netlify/functions": "^5.1.2",

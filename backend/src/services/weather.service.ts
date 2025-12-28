@@ -1,5 +1,11 @@
 import axios from 'axios';
 import { WeatherConditions } from '../types/index.js';
+import { ErrorFactory } from '../lib/errors.js';
+import type {
+  OpenWeatherMapCurrentResponse,
+  OpenWeatherMapForecastResponse,
+  OpenWeatherMapWeather,
+} from '../types/weather.types.js';
 
 export class WeatherService {
   private apiKey: string;
@@ -30,8 +36,8 @@ export class WeatherService {
         },
       });
 
-      const data = response.data;
-      const isRaining = data.weather.some((w: any) => 
+      const data = response.data as OpenWeatherMapCurrentResponse;
+      const isRaining = data.weather.some((w: OpenWeatherMapWeather) => 
         w.main === 'Rain' || w.main === 'Drizzle' || w.main === 'Thunderstorm'
       );
 
@@ -46,6 +52,10 @@ export class WeatherService {
       };
     } catch (error) {
       console.error('Error fetching weather:', error);
+      // Return mock data but log the error
+      if (error instanceof Error) {
+        console.error('Weather API error:', ErrorFactory.apiUnavailable('OpenWeatherMap', error));
+      }
       return this.getMockWeather();
     }
   }
@@ -68,11 +78,12 @@ export class WeatherService {
         },
       });
 
-      const forecasts = response.data.list;
+      const data = response.data as OpenWeatherMapForecastResponse;
+      const forecasts = data.list;
       
       for (let i = 0; i < forecasts.length; i++) {
         const forecast = forecasts[i];
-        const hasRain = forecast.weather.some((w: any) => 
+        const hasRain = forecast.weather.some((w: OpenWeatherMapWeather) => 
           w.main === 'Rain' || w.main === 'Drizzle' || w.main === 'Thunderstorm'
         );
 

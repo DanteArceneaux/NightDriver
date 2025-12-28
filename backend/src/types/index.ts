@@ -11,30 +11,32 @@ export interface Zone {
   stagingSpot?: Coordinates; // Recommended safe parking/waiting location
 }
 
+export interface ZoneScoreFactors {
+  baseline: number;
+  events: number;
+  weather: number;
+  flights: number;
+  traffic: number;
+  // v4.0+ (optional extra signal breakdowns)
+  cruise?: number;
+  conventions?: number;
+  barClose?: number;
+  deadZone?: number;
+  microMeta?: number;
+  ferries?: number;
+  hotelCheckout?: number;
+  hospitalShifts?: number;
+  uwClasses?: number;
+  pulse?: number;
+}
+
 export interface ZoneScore {
   id: string;
   name: string;
   score: number;
   trend: 'rising' | 'falling' | 'stable';
   estimatedHourlyRate?: number;
-  factors: {
-    baseline: number;
-    events: number;
-    weather: number;
-    flights: number;
-    traffic: number;
-    // v4.0+ (optional extra signal breakdowns)
-    cruise?: number;
-    conventions?: number;
-    barClose?: number;
-    deadZone?: number;
-    microMeta?: number;
-    ferries?: number;
-    hotelCheckout?: number;
-    hospitalShifts?: number;
-    uwClasses?: number;
-    pulse?: number;
-  };
+  factors: ZoneScoreFactors;
   coordinates: Coordinates;
 }
 
