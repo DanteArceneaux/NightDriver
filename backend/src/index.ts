@@ -159,7 +159,7 @@ process.on('SIGTERM', () => {
 
 // Start server
 httpServer.listen(config.port, () => {
-  console.log(`🚗 Seattle Driver Optimizer API v4.2.2`);
+  console.log(`🚗 Seattle Driver Optimizer API v4.2.3`);
   console.log(`📍 HTTP: http://localhost:${config.port}`);
   console.log(`⚡ WebSocket: ws://localhost:${config.port}`);
   console.log(`🏥 Health: http://localhost:${config.port}/api/health`);
