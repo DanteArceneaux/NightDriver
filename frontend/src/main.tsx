@@ -15,6 +15,8 @@ async function setupServiceWorker() {
 
   // DEV: hard-disable SW to avoid cache quota storms
   if (import.meta.env.DEV) {
+    const wasControlled = !!navigator.serviceWorker.controller;
+    const didCleanupFlag = '__night_driver_sw_cleanup_done__';
     try {
       const regs = await navigator.serviceWorker.getRegistrations();
       await Promise.all(regs.map((r) => r.unregister()));
@@ -29,6 +31,17 @@ async function setupServiceWorker() {
       await Promise.all(ours.map((k) => caches.delete(k)));
     } catch (e) {
       // Best-effort; ignore
+    }
+
+    // If a SW was controlling this page, we must reload once to fully detach from it.
+    try {
+      const alreadyReloaded = sessionStorage.getItem(didCleanupFlag) === '1';
+      if (wasControlled && !alreadyReloaded) {
+        sessionStorage.setItem(didCleanupFlag, '1');
+        window.location.reload();
+      }
+    } catch (e) {
+      // ignore
     }
 
     return;

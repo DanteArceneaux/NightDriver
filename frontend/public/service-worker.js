@@ -7,6 +7,13 @@ const CACHE_PREFIX = 'neon-cockpit-';
 const CACHE_VERSION = 'v4.2.2';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
+// If a SW from a previous version is still registered on localhost (dev),
+// force-disable it to avoid caching Vite module URLs and hitting CacheStorage quota.
+const IS_LOCALHOST =
+  self.location.hostname === 'localhost' ||
+  self.location.hostname === '127.0.0.1' ||
+  self.location.hostname === '[::1]';
+
 // Minimal shell assets. (Offline support is best-effort; the app prefers live data.)
 const CORE_ASSETS = [
   '/',
@@ -81,6 +88,38 @@ self.addEventListener('activate', (event) => {
         console.warn('⚠️ SW activate cleanup failed (non-fatal):', e);
       } finally {
         await self.clients.claim();
+
+        // DEV safety: unregister on localhost so the dev server is never controlled by SW.
+        if (IS_LOCALHOST) {
+          try {
+            const all = await caches.keys();
+            await Promise.all(all.map((name) => caches.delete(name)));
+          } catch (e) {
+            // ignore
+          }
+
+          try {
+            await self.registration.unregister();
+          } catch (e) {
+            // ignore
+          }
+
+          // Hard-refresh clients to detach from SW control
+          try {
+            const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+            await Promise.all(
+              clientList.map((client) => {
+                try {
+                  return client.navigate(client.url);
+                } catch {
+                  return null;
+                }
+              })
+            );
+          } catch (e) {
+            // ignore
+          }
+        }
       }
     })()
   );

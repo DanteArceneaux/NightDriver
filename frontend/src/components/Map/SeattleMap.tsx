@@ -5,6 +5,7 @@ import { Map as MapIcon, Satellite, TrendingUp, Navigation2, Gauge, Crosshair } 
 import L from 'leaflet';
 import { ZoneScore, Event } from '../../types';
 import { fetchConditions } from '../../lib/api';
+import { SafeStorage } from '../../lib/safeStorage';
 import { useTheme } from '../../features/theme';
 import { HeatmapOverlay } from './HeatmapOverlay';
 import 'leaflet/dist/leaflet.css';
@@ -22,6 +23,9 @@ interface LivePosition {
   heading: number | null; // degrees
   timestamp: number;
 }
+
+type GeoStatus = 'loading' | 'active' | 'denied' | 'unsupported' | 'timeout' | 'unavailable';
+type LocationSource = 'gps' | 'network' | 'cached';
 
 // Venue coordinates for major Seattle venues
 const VENUE_COORDINATES: Record<string, { lat: number; lng: number }> = {
@@ -312,8 +316,8 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   const [positionHistory, setPositionHistory] = useState<Array<[number, number]>>([]);
   const watchIdRef = useRef<number | null>(null);
   const [shouldCenterOnPosition, setShouldCenterOnPosition] = useState(false);
-  const [geoStatus, setGeoStatus] = useState<'loading' | 'active' | 'denied' | 'unsupported'>('loading');
-  const [showManualLocation, setShowManualLocation] = useState(false);
+  const [geoStatus, setGeoStatus] = useState<GeoStatus>('loading');
+  const [locationSource, setLocationSource] = useState<LocationSource | null>(null);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -329,47 +333,108 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
 
   // Track live position
   useEffect(() => {
-    console.log('🔍 Geolocation setup starting...');
-    
+    // Avoid starting multiple watches if something causes rerenders
+    if (watchIdRef.current !== null) return;
+
+    const isMobile = /iPhone|iPad|iPod|Android|Mobi/i.test(navigator.userAgent);
+    console.log('🔍 Geolocation setup starting...', { isMobile });
+
     if (!navigator.geolocation) {
       console.error('❌ Geolocation is not supported by this browser');
       setGeoStatus('unsupported');
       return;
     }
 
-    console.log('✅ Geolocation API available');
-    
+    // Try to hydrate from last known location (automatic, no user action)
+    try {
+      const raw = SafeStorage.getItem('lastKnownPosition');
+      if (raw) {
+        const cached = JSON.parse(raw) as Partial<LivePosition>;
+        if (typeof cached.lat === 'number' && typeof cached.lng === 'number') {
+          setLivePosition({
+            lat: cached.lat,
+            lng: cached.lng,
+            accuracy: typeof cached.accuracy === 'number' ? cached.accuracy : 10000,
+            speed: null,
+            heading: null,
+            timestamp: typeof cached.timestamp === 'number' ? cached.timestamp : Date.now(),
+          });
+          setLocationSource('cached');
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    const persistLastKnown = (pos: LivePosition) => {
+      SafeStorage.setItem(
+        'lastKnownPosition',
+        JSON.stringify({ lat: pos.lat, lng: pos.lng, accuracy: pos.accuracy, timestamp: pos.timestamp })
+      );
+    };
+
+    const applyPosition = (pos: LivePosition, source: LocationSource, resetTrail: boolean) => {
+      setGeoStatus('active');
+      setLocationSource(source);
+      setLivePosition(pos);
+      if (resetTrail) {
+        setPositionHistory([[pos.lat, pos.lng]]);
+      } else {
+        setPositionHistory((prev) => [...prev, [pos.lat, pos.lng] as [number, number]].slice(-50));
+      }
+      persistLastKnown(pos);
+    };
+
+    const fetchNetworkLocation = async (): Promise<LivePosition | null> => {
+      try {
+        // Free, no-key IP geolocation (approximate). CORS-friendly.
+        const res = await fetch('https://ipwho.is/?fields=success,latitude,longitude,message');
+        const data = await res.json();
+        if (!data?.success) {
+          console.warn('⚠️ Network location lookup failed:', data?.message);
+          return null;
+        }
+        const lat = Number(data.latitude);
+        const lng = Number(data.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        return {
+          lat,
+          lng,
+          // IP-based location is coarse; keep this modest so the circle isn't absurd.
+          accuracy: 10000,
+          speed: null,
+          heading: null,
+          timestamp: Date.now(),
+        };
+      } catch (e) {
+        console.warn('⚠️ Network location lookup error:', e);
+        return null;
+      }
+    };
+
     // First, check permission state if available
-    const checkPermission = async () => {
+    const checkPermission = async (): Promise<boolean> => {
+      // Safari iOS may not support Permissions API
       if ('permissions' in navigator) {
         try {
-          const result = await navigator.permissions.query({ name: 'geolocation' });
+          const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
           console.log('🔐 Permission state:', result.state);
-          
           if (result.state === 'denied') {
-            console.error('❌ Permission already denied');
             setGeoStatus('denied');
             return false;
           }
-        } catch (error) {
-          console.log('⚠️ Could not query permission state, proceeding anyway');
+        } catch {
+          // proceed
         }
       }
       return true;
     };
 
-    const startTracking = async () => {
-      const canProceed = await checkPermission();
-      if (!canProceed) return;
-
-      setGeoStatus('loading');
-      console.log('📍 Requesting position...');
-
-      // Try getCurrentPosition first to trigger permission prompt
-      navigator.geolocation.getCurrentPosition(
+    const startWatch = () => {
+      // Start continuous updates; if it succeeds later, it will overwrite network/cached location.
+      watchIdRef.current = navigator.geolocation.watchPosition(
         (position) => {
-          console.log('✅ Initial position received!');
-          const newPos: LivePosition = {
+          const pos: LivePosition = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
             accuracy: position.coords.accuracy,
@@ -377,77 +442,70 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
             heading: position.coords.heading,
             timestamp: position.timestamp,
           };
-
-          console.log('📍 Initial position:', {
-            lat: newPos.lat.toFixed(6),
-            lng: newPos.lng.toFixed(6),
-            accuracy: `${newPos.accuracy.toFixed(0)}m`,
-          });
-
-          setGeoStatus('active');
-          setLivePosition(newPos);
-          setPositionHistory([[newPos.lat, newPos.lng]]);
-
-          // Now start continuous tracking
-          console.log('🔄 Starting continuous tracking...');
-          const watchId = navigator.geolocation.watchPosition(
-            (position) => {
-              const newPos: LivePosition = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-                accuracy: position.coords.accuracy,
-                speed: position.coords.speed,
-                heading: position.coords.heading,
-                timestamp: position.timestamp,
-              };
-
-              setGeoStatus('active');
-              setLivePosition(newPos);
-
-              setPositionHistory(prev => {
-                const updated = [...prev, [newPos.lat, newPos.lng] as [number, number]];
-                return updated.slice(-50);
-              });
-            },
-            (error) => {
-              console.error('❌ Watch position error:', {
-                code: error.code,
-                message: error.message,
-              });
-            },
-            {
-              enableHighAccuracy: true,
-              maximumAge: 5000,
-              timeout: 10000,
-            }
-          );
-
-          watchIdRef.current = watchId;
+          applyPosition(pos, 'gps', false);
         },
         (error) => {
-          console.error('❌ Geolocation error:', {
-            code: error.code,
-            message: error.message,
-            PERMISSION_DENIED: error.code === 1,
-            POSITION_UNAVAILABLE: error.code === 2,
-            TIMEOUT: error.code === 3,
-          });
-          
+          console.warn('⚠️ watchPosition error:', { code: error.code, message: error.message });
+        },
+        {
+          enableHighAccuracy: isMobile,
+          maximumAge: 10000,
+          timeout: 20000,
+        }
+      );
+    };
+
+    const startTracking = async () => {
+      const canProceed = await checkPermission();
+      if (!canProceed) return;
+
+      setGeoStatus('loading');
+      console.log('📍 Requesting initial position...');
+
+      // Start watch immediately; in some environments watchPosition returns sooner than getCurrentPosition.
+      startWatch();
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const pos: LivePosition = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            speed: position.coords.speed,
+            heading: position.coords.heading,
+            timestamp: position.timestamp,
+          };
+          console.log('✅ Initial position received');
+          applyPosition(pos, 'gps', true);
+        },
+        async (error) => {
+          console.warn('⚠️ getCurrentPosition error:', { code: error.code, message: error.message });
+
           if (error.code === 1) {
-            console.log('💡 Tip: Click the 🔒 icon in address bar → Site Settings → Location → Allow');
+            // Permission denied
             setGeoStatus('denied');
-          } else if (error.code === 3) {
-            console.log('⏱️ GPS timeout - desktop PCs often can\'t get GPS. Opening manual location picker...');
-            setGeoStatus('denied');
-            setShowManualLocation(true); // Auto-open manual location for timeouts
+            return;
+          }
+
+          if (error.code === 3) {
+            setGeoStatus('timeout');
+          } else if (error.code === 2) {
+            setGeoStatus('unavailable');
           } else {
-            setGeoStatus('denied');
+            setGeoStatus('unavailable');
+          }
+
+          // Automatic fallback: approximate network (IP-based) location.
+          const networkPos = await fetchNetworkLocation();
+          if (networkPos) {
+            console.log('🌐 Using network (IP) location fallback');
+            applyPosition(networkPos, 'network', true);
           }
         },
         {
-          enableHighAccuracy: false, // Desktop doesn't have GPS, don't require high accuracy
-          maximumAge: 60000, // Accept cached position up to 1 minute old
-          timeout: 5000, // Reduce timeout to 5 seconds for faster fallback
+          enableHighAccuracy: isMobile,
+          maximumAge: isMobile ? 10000 : 60000,
+          timeout: isMobile ? 15000 : 20000,
         }
       );
     };
@@ -458,6 +516,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
       if (watchIdRef.current !== null) {
         console.log('🛑 Stopping geolocation watch');
         navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
       }
     };
   }, []);
@@ -488,7 +547,35 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
 
   return (
     <div ref={mapContainerRef} className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative">
-      {/* Geolocation Status Indicator */}
+      {/* Geolocation Status / Source Indicator */}
+      {livePosition && locationSource && livePosition.speed === null && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`absolute top-4 left-4 z-[1000] backdrop-blur-lg rounded-xl px-4 py-2 shadow-2xl border ${
+            locationSource === 'gps'
+              ? 'bg-green-600/90 border-green-400'
+              : locationSource === 'network'
+              ? 'bg-amber-600/90 border-amber-300'
+              : 'bg-slate-700/90 border-slate-400'
+          }`}
+          title={
+            locationSource === 'gps'
+              ? 'GPS-based location'
+              : locationSource === 'network'
+              ? 'Approximate network/IP location'
+              : 'Last known location'
+          }
+        >
+          <div className="text-white text-xs font-bold flex items-center gap-2">
+            <span className="uppercase tracking-wider">
+              {locationSource === 'gps' ? 'GPS' : locationSource === 'network' ? 'Network' : 'Last known'}
+            </span>
+            <span className="opacity-90">±{Math.round(livePosition.accuracy)}m</span>
+          </div>
+        </motion.div>
+      )}
+
       {geoStatus === 'loading' && !livePosition && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -496,25 +583,40 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           className="absolute top-4 left-4 z-[1000] bg-yellow-600/95 backdrop-blur-lg border-2 border-yellow-400 rounded-xl px-4 py-3 shadow-2xl max-w-xs"
         >
           <div className="text-white text-sm">
-            <div className="flex items-center gap-2 font-bold mb-2">
+            <div className="flex items-center gap-2 font-bold mb-1">
               <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-              <span>Getting GPS location...</span>
+              <span>Getting location…</span>
             </div>
-            <div className="text-xs opacity-90 mb-2">
-              Check console (F12) for details
+            <div className="text-xs opacity-90">
+              If GPS is slow, we’ll automatically fall back to a network-based location.
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {(geoStatus === 'timeout' || geoStatus === 'unavailable') && !livePosition && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute top-4 left-4 z-[1000] bg-amber-600/95 backdrop-blur-lg border-2 border-amber-300 rounded-xl px-4 py-3 shadow-2xl max-w-xs"
+        >
+          <div className="text-white text-sm">
+            <div className="font-bold mb-1">⏱️ Location taking too long</div>
+            <div className="text-xs opacity-90 mb-3">
+              We’re trying GPS and network fallback. On Windows, make sure <span className="font-bold">Location Services</span> are enabled.
             </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setShowManualLocation(true)}
-              className="w-full bg-white text-yellow-600 font-bold py-2 px-3 rounded-lg text-xs"
+              onClick={() => window.location.reload()}
+              className="w-full bg-white text-amber-700 font-bold py-2 px-3 rounded-lg text-xs"
             >
-              Set Location Manually
+              Retry
             </motion.button>
           </div>
         </motion.div>
       )}
-      
+
       {geoStatus === 'denied' && !livePosition && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -522,159 +624,24 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           className="absolute top-4 left-4 z-[1000] bg-red-600/95 backdrop-blur-lg border-2 border-red-400 rounded-xl px-4 py-3 shadow-2xl max-w-xs"
         >
           <div className="text-white text-sm">
-            <div className="font-bold mb-2">❌ Location Access Denied</div>
+            <div className="font-bold mb-2">❌ Location permission blocked</div>
             <div className="text-xs opacity-90 mb-3">
-              1. Click <span className="font-bold">🔒 lock icon</span> in address bar<br/>
-              2. Select <span className="font-bold">"Site Settings"</span><br/>
-              3. Change <span className="font-bold">Location</span> to <span className="font-bold">"Allow"</span><br/>
-              4. Refresh page (F5)
+              1) Click <span className="font-bold">🔒 lock icon</span> → <span className="font-bold">Site settings</span><br/>
+              2) Set <span className="font-bold">Location</span> to <span className="font-bold">Allow</span><br/>
+              3) Refresh the page
             </div>
-            <div className="flex gap-2">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => window.location.reload()}
-                className="flex-1 bg-white text-red-600 font-bold py-2 px-3 rounded-lg text-xs"
-              >
-                Refresh
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setShowManualLocation(true);
-                  setGeoStatus('loading');
-                }}
-                className="flex-1 bg-yellow-500 text-black font-bold py-2 px-3 rounded-lg text-xs"
-              >
-                Manual
-              </motion.button>
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => window.location.reload()}
+              className="w-full bg-white text-red-700 font-bold py-2 px-3 rounded-lg text-xs"
+            >
+              Refresh
+            </motion.button>
           </div>
         </motion.div>
       )}
 
-      {/* Manual Location Input */}
-      {showManualLocation && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-          onClick={() => setShowManualLocation(false)}
-        >
-          <motion.div
-            initial={{ y: 20 }}
-            animate={{ y: 0 }}
-            className="bg-gray-900 rounded-2xl border-2 border-cyan-500 shadow-2xl max-w-md w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-xl font-bold text-white mb-4">Set Your Location</h3>
-            <div className="space-y-4">
-              <div className="text-sm text-gray-300 mb-4">
-                Click anywhere on the map OR enter coordinates below:
-              </div>
-              
-              {/* Quick Presets */}
-              <div className="grid grid-cols-2 gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    const pos: LivePosition = {
-                      lat: 47.6062,
-                      lng: -122.3321,
-                      accuracy: 10,
-                      speed: null,
-                      heading: null,
-                      timestamp: Date.now()
-                    };
-                    setLivePosition(pos);
-                    setGeoStatus('active');
-                    setShowManualLocation(false);
-                    console.log('📍 Manual location set: Downtown Seattle');
-                  }}
-                  className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-xl text-sm"
-                >
-                  Downtown Seattle
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    const pos: LivePosition = {
-                      lat: 47.4502,
-                      lng: -122.3088,
-                      accuracy: 10,
-                      speed: null,
-                      heading: null,
-                      timestamp: Date.now()
-                    };
-                    setLivePosition(pos);
-                    setGeoStatus('active');
-                    setShowManualLocation(false);
-                    console.log('📍 Manual location set: SeaTac Airport');
-                  }}
-                  className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-xl text-sm"
-                >
-                  SeaTac Airport
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    const pos: LivePosition = {
-                      lat: 47.6205,
-                      lng: -122.3493,
-                      accuracy: 10,
-                      speed: null,
-                      heading: null,
-                      timestamp: Date.now()
-                    };
-                    setLivePosition(pos);
-                    setGeoStatus('active');
-                    setShowManualLocation(false);
-                    console.log('📍 Manual location set: Capitol Hill');
-                  }}
-                  className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-xl text-sm"
-                >
-                  Capitol Hill
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    const pos: LivePosition = {
-                      lat: 47.6544,
-                      lng: -122.3078,
-                      accuracy: 10,
-                      speed: null,
-                      heading: null,
-                      timestamp: Date.now()
-                    };
-                    setLivePosition(pos);
-                    setGeoStatus('active');
-                    setShowManualLocation(false);
-                    console.log('📍 Manual location set: UW District');
-                  }}
-                  className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 px-4 rounded-xl text-sm"
-                >
-                  UW District
-                </motion.button>
-              </div>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowManualLocation(false)}
-                className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-xl"
-              >
-                Cancel
-              </motion.button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-      
       {geoStatus === 'unsupported' && !livePosition && (
         <motion.div
           initial={{ opacity: 0 }}
