@@ -27,29 +27,31 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | '24hr'>('all');
 
+  // Fetch when filter changes (includes initial mount)
   useEffect(() => {
-    fetchBathrooms();
-  }, [currentLocation, filter]);
+    const fetchBathrooms = async () => {
+      setLoading(true);
+      try {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+        // Fix URL construction - use & for additional params when base already has ?
+        const endpoint = filter === '24hr' 
+          ? `/api/amenities/bathrooms?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=5`
+          : `/api/amenities?type=bathroom&lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=5`;
+        
+        const response = await fetch(`${backendUrl}${endpoint}`);
+        const data = await response.json();
+        setBathrooms(filter === '24hr' ? data.bathrooms : data.amenities || []);
+      } catch (error) {
+        console.error('Error fetching bathrooms:', error);
+        setBathrooms([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchBathrooms = async () => {
-    setLoading(true);
-    try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
-      const endpoint = filter === '24hr' 
-        ? `/api/amenities/bathrooms`
-        : `/api/amenities?type=bathroom`;
-      
-      const response = await fetch(
-        `${backendUrl}${endpoint}?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=2`
-      );
-      const data = await response.json();
-      setBathrooms(filter === '24hr' ? data.bathrooms : data.amenities);
-    } catch (error) {
-      console.error('Error fetching bathrooms:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchBathrooms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]); // Only re-fetch when filter changes, not on location updates
 
   const openNavigation = (bathroom: Amenity) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${bathroom.coordinates.lat},${bathroom.coordinates.lng}`;

@@ -30,26 +30,29 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'tesla'>(teslaOnly ? 'tesla' : 'all');
 
+  // Fetch when filter changes (includes initial mount)
   useEffect(() => {
-    fetchStations();
-  }, [currentLocation, filter]);
+    const fetchStations = async () => {
+      setLoading(true);
+      try {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+        const teslaParam = filter === 'tesla' ? '&tesla=true' : '';
+        const response = await fetch(
+          `${backendUrl}/api/amenities/charging?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=10${teslaParam}`
+        );
+        const data = await response.json();
+        setStations(data.chargers || []);
+      } catch (error) {
+        console.error('Error fetching charging stations:', error);
+        setStations([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchStations = async () => {
-    setLoading(true);
-    try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
-      const teslaParam = filter === 'tesla' ? '&tesla=true' : '';
-      const response = await fetch(
-        `${backendUrl}/api/amenities/charging?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=5${teslaParam}`
-      );
-      const data = await response.json();
-      setStations(data.chargers);
-    } catch (error) {
-      console.error('Error fetching charging stations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchStations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]); // Only re-fetch when filter changes, not on location updates
 
   const openNavigation = (station: ChargingStation) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${station.coordinates.lat},${station.coordinates.lng}`;
