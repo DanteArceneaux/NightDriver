@@ -25,6 +25,7 @@ interface DraggableCardGridProps {
   showLayoutControls?: boolean; // Show lock/reset buttons
   externalLocked?: boolean; // Use external lock state (managed by parent)
   hideLockButton?: boolean; // Hide the lock button (when managed in header)
+  variant?: 'standard' | 'minimal'; // Styling variant for glassmorphism
 }
 
 interface CardState {
@@ -45,6 +46,7 @@ export function DraggableCardGrid({
   showLayoutControls = true,
   externalLocked,
   hideLockButton = false,
+  variant = 'standard',
 }: DraggableCardGridProps) {
   // Lock/Edit mode state - use external if provided, otherwise manage internally
   const [internalLocked, setInternalLocked] = useState(() => {
@@ -306,6 +308,7 @@ export function DraggableCardGrid({
               onToggleMaximize={() => toggleMaximized(card.id)}
               minHeight={card.minHeight ?? 150}
               maxHeight={card.maxHeight ?? 800}
+              variant={variant}
             />
           );
         })}
@@ -325,6 +328,7 @@ interface ReorderableCardProps {
   onToggleMaximize: () => void;
   minHeight: number;
   maxHeight: number;
+  variant?: 'standard' | 'minimal';
 }
 
 function ReorderableCard({
@@ -338,6 +342,7 @@ function ReorderableCard({
   onToggleMaximize,
   minHeight,
   maxHeight,
+  variant = 'standard',
 }: ReorderableCardProps) {
   const dragControls = useDragControls();
   const [isResizing, setIsResizing] = useState(false);
@@ -392,9 +397,10 @@ function ReorderableCard({
     >
       <motion.div
         className={cn(
-          'rounded-2xl overflow-hidden',
-          'bg-glass-dark/60 backdrop-blur-xl border border-white/10',
-          'shadow-xl transition-shadow',
+          'rounded-2xl overflow-hidden transition-shadow',
+          variant === 'minimal' 
+            ? 'bg-black/40 backdrop-blur-md border border-white/5 shadow-lg'
+            : 'bg-glass-dark/60 backdrop-blur-xl border border-white/10 shadow-xl',
           isResizing && 'select-none',
           isLocked && 'cursor-default'
         )}
@@ -404,8 +410,10 @@ function ReorderableCard({
         {/* Header with drag handle */}
         <div
           className={cn(
-            'flex items-center justify-between px-4 py-2 border-b border-white/10',
-            'bg-gradient-to-r from-theme-primary/10 to-theme-secondary/10',
+            'flex items-center justify-between px-4 py-2',
+            variant === 'minimal'
+              ? 'border-b border-white/5 bg-black/20'
+              : 'border-b border-white/10 bg-gradient-to-r from-theme-primary/10 to-theme-secondary/10',
             !isLocked && 'cursor-grab active:cursor-grabbing',
             isLocked && 'cursor-default'
           )}

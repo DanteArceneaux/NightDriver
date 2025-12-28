@@ -1,4 +1,5 @@
 import { useTheme } from '../theme';
+import { DreamLayout } from './DreamLayout';
 import { NeonCockpitLayout } from './NeonCockpitLayout';
 import { ProDashboardLayout } from './ProDashboardLayout';
 import { GameHudLayout } from './GameHudLayout';
@@ -9,6 +10,8 @@ export function AppLayout(props: LayoutProps) {
   const { layoutId } = useTheme();
 
   switch (layoutId) {
+    case 'dream':
+      return <DreamLayout {...props} />;
     case 'cockpit':
       return <NeonCockpitLayout {...props} />;
     case 'dashboard':
@@ -18,7 +21,7 @@ export function AppLayout(props: LayoutProps) {
     case 'car':
       return <CarModeLayout {...props} />;
     default:
-      return <NeonCockpitLayout {...props} />;
+      return <DreamLayout {...props} />; // Dream Layout is now the default
   }
 }
 

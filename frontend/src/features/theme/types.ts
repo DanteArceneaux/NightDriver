@@ -1,5 +1,5 @@
 export type ThemeId = 'neon' | 'pro' | 'hud' | 'car';
-export type LayoutId = 'cockpit' | 'dashboard' | 'hud' | 'car';
+export type LayoutId = 'dream' | 'cockpit' | 'dashboard' | 'hud' | 'car';
 
 export interface ThemeTokens {
   // Background
