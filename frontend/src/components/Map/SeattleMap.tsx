@@ -313,6 +313,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   const watchIdRef = useRef<number | null>(null);
   const [shouldCenterOnPosition, setShouldCenterOnPosition] = useState(false);
   const [geoStatus, setGeoStatus] = useState<'loading' | 'active' | 'denied' | 'unsupported'>('loading');
+  const [showManualLocation, setShowManualLocation] = useState(false);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -487,11 +488,24 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="absolute top-4 left-4 z-[1000] bg-yellow-600/95 backdrop-blur-lg border-2 border-yellow-400 rounded-xl px-4 py-2 shadow-2xl"
+          className="absolute top-4 left-4 z-[1000] bg-yellow-600/95 backdrop-blur-lg border-2 border-yellow-400 rounded-xl px-4 py-3 shadow-2xl max-w-xs"
         >
-          <div className="flex items-center gap-2 text-white text-sm font-bold">
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-            <span>Getting GPS location...</span>
+          <div className="text-white text-sm">
+            <div className="flex items-center gap-2 font-bold mb-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              <span>Getting GPS location...</span>
+            </div>
+            <div className="text-xs opacity-90 mb-2">
+              Check console (F12) for details
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowManualLocation(true)}
+              className="w-full bg-white text-yellow-600 font-bold py-2 px-3 rounded-lg text-xs"
+            >
+              Set Location Manually
+            </motion.button>
           </div>
         </motion.div>
       )}
@@ -510,15 +524,149 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
               3. Change <span className="font-bold">Location</span> to <span className="font-bold">"Allow"</span><br/>
               4. Refresh page (F5)
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.location.reload()}
-              className="w-full bg-white text-red-600 font-bold py-2 px-3 rounded-lg text-xs"
-            >
-              Refresh Page
-            </motion.button>
+            <div className="flex gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => window.location.reload()}
+                className="flex-1 bg-white text-red-600 font-bold py-2 px-3 rounded-lg text-xs"
+              >
+                Refresh
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setShowManualLocation(true);
+                  setGeoStatus('loading');
+                }}
+                className="flex-1 bg-yellow-500 text-black font-bold py-2 px-3 rounded-lg text-xs"
+              >
+                Manual
+              </motion.button>
+            </div>
           </div>
+        </motion.div>
+      )}
+
+      {/* Manual Location Input */}
+      {showManualLocation && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={() => setShowManualLocation(false)}
+        >
+          <motion.div
+            initial={{ y: 20 }}
+            animate={{ y: 0 }}
+            className="bg-gray-900 rounded-2xl border-2 border-cyan-500 shadow-2xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-white mb-4">Set Your Location</h3>
+            <div className="space-y-4">
+              <div className="text-sm text-gray-300 mb-4">
+                Click anywhere on the map OR enter coordinates below:
+              </div>
+              
+              {/* Quick Presets */}
+              <div className="grid grid-cols-2 gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    const pos: LivePosition = {
+                      lat: 47.6062,
+                      lng: -122.3321,
+                      accuracy: 10,
+                      speed: null,
+                      heading: null,
+                      timestamp: Date.now()
+                    };
+                    setLivePosition(pos);
+                    setGeoStatus('active');
+                    setShowManualLocation(false);
+                    console.log('📍 Manual location set: Downtown Seattle');
+                  }}
+                  className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-xl text-sm"
+                >
+                  Downtown Seattle
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    const pos: LivePosition = {
+                      lat: 47.4502,
+                      lng: -122.3088,
+                      accuracy: 10,
+                      speed: null,
+                      heading: null,
+                      timestamp: Date.now()
+                    };
+                    setLivePosition(pos);
+                    setGeoStatus('active');
+                    setShowManualLocation(false);
+                    console.log('📍 Manual location set: SeaTac Airport');
+                  }}
+                  className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-xl text-sm"
+                >
+                  SeaTac Airport
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    const pos: LivePosition = {
+                      lat: 47.6205,
+                      lng: -122.3493,
+                      accuracy: 10,
+                      speed: null,
+                      heading: null,
+                      timestamp: Date.now()
+                    };
+                    setLivePosition(pos);
+                    setGeoStatus('active');
+                    setShowManualLocation(false);
+                    console.log('📍 Manual location set: Capitol Hill');
+                  }}
+                  className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-xl text-sm"
+                >
+                  Capitol Hill
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    const pos: LivePosition = {
+                      lat: 47.6544,
+                      lng: -122.3078,
+                      accuracy: 10,
+                      speed: null,
+                      heading: null,
+                      timestamp: Date.now()
+                    };
+                    setLivePosition(pos);
+                    setGeoStatus('active');
+                    setShowManualLocation(false);
+                    console.log('📍 Manual location set: UW District');
+                  }}
+                  className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 px-4 rounded-xl text-sm"
+                >
+                  UW District
+                </motion.button>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowManualLocation(false)}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-xl"
+              >
+                Cancel
+              </motion.button>
+            </div>
+          </motion.div>
         </motion.div>
       )}
       
