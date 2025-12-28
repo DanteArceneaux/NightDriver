@@ -489,7 +489,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   return (
     <div ref={mapContainerRef} className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative">
       {/* Geolocation Status Indicator */}
-      {geoStatus === 'loading' && (
+      {geoStatus === 'loading' && !livePosition && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -515,7 +515,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         </motion.div>
       )}
       
-      {geoStatus === 'denied' && (
+      {geoStatus === 'denied' && !livePosition && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -675,7 +675,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         </motion.div>
       )}
       
-      {geoStatus === 'unsupported' && (
+      {geoStatus === 'unsupported' && !livePosition && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
