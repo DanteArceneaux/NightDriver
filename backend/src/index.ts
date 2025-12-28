@@ -13,6 +13,7 @@ import { RoutingService } from './services/routing.service.js';
 import { SurgeService } from './services/surge.service.js';
 import { EventAlertsService } from './services/eventAlerts.service.js';
 import { DriverPulseService } from './services/driverPulse.service.js';
+import { TeslaService } from './services/tesla.service.js';
 import type { WeatherConditions, Event, FlightArrival } from './types/index.js';
 import {
   weatherCache,
@@ -46,6 +47,7 @@ const scoringService = new ScoringService();
 const surgeService = new SurgeService();
 const eventAlertsService = new EventAlertsService();
 const driverPulseService = new DriverPulseService();
+const teslaService = new TeslaService();
 
 // Routes
 app.use('/api', createApiRouter(
@@ -56,7 +58,8 @@ app.use('/api', createApiRouter(
   scoringService,
   routingService,
   eventAlertsService,
-  driverPulseService
+  driverPulseService,
+  teslaService
 ));
 
 // Error handling middleware (must be after all routes)

@@ -10,7 +10,7 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      themeId: 'dream', // Default to Dream theme for v6.0
+      themeId: 'pro', // Default to Pro Dashboard theme for v7.0
       setThemeId: (themeId: ThemeId) => set({ themeId }),
     }),
     {

@@ -21,6 +21,9 @@ import {
 } from '../middleware/cache.middleware.js';
 import { rateLimitMiddleware } from '../middleware/rateLimit.middleware.js';
 
+import { TripChainService } from '../services/tripChain.service.js';
+import { TeslaService } from '../services/tesla.service.js';
+
 export function createApiRouter(
   weatherService: WeatherService,
   eventsService: EventsService,
@@ -29,7 +32,8 @@ export function createApiRouter(
   scoringService: ScoringService,
   routingService: RoutingService,
   eventAlertsService: EventAlertsService,
-  driverPulseService: DriverPulseService
+  driverPulseService: DriverPulseService,
+  teslaService: TeslaService
 ): Router {
   const router = Router();
 
@@ -779,6 +783,17 @@ export function createApiRouter(
     } catch (error) {
       console.error('Error fetching conventions:', error);
       res.status(500).json({ error: 'Failed to fetch conventions' });
+    }
+  });
+
+  // GET /api/tesla - Get Tesla vehicle data (NEW)
+  router.get('/tesla', async (_req: Request, res: Response) => {
+    try {
+      const data = await teslaService.getVehicleData();
+      res.json(data);
+    } catch (error) {
+      console.error('Error fetching Tesla data:', error);
+      res.status(500).json({ error: 'Failed to fetch Tesla data' });
     }
   });
 

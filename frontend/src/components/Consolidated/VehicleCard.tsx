@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Battery, Zap, Car, Settings2, Info } from 'lucide-react';
+import { Battery, Zap, Car, Settings2, Info, RefreshCcw } from 'lucide-react';
 
 export function VehicleCard() {
   const [batteryPercent, setBatteryPercent] = useState(() => {
@@ -10,8 +10,30 @@ export function VehicleCard() {
   
   const [vehicleType, setVehicleType] = useState<'ev' | 'gas'>(() => {
     const saved = localStorage.getItem('vehicleType');
-    return (saved as 'ev' | 'gas') || 'gas';
+    return (saved as 'ev' | 'gas') || 'ev'; // DEFAULT to EV in v7.0
   });
+
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<Date | null>(null);
+
+  const syncTeslaData = async () => {
+    setIsSyncing(true);
+    try {
+      // In production, this would hit your backend which handles Tesla OAuth/API
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/tesla`);
+      const data = await response.json();
+      
+      if (data.battery_level !== undefined) {
+        setBatteryPercent(data.battery_level);
+        setLastSync(new Date());
+        // Show success toast or feedback here if needed
+      }
+    } catch (error) {
+      console.error('Failed to sync Tesla data:', error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const [showSettings, setShowSettings] = useState(false);
 
@@ -95,16 +117,40 @@ export function VehicleCard() {
               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
                 <Battery className="w-3 h-3" /> Update Battery
               </span>
-              <span className={`text-xs font-black ${getBatteryColor()}`}>{batteryPercent}%</span>
+              <div className="flex items-center gap-3">
+                {lastSync && (
+                  <span className="text-[9px] text-gray-600 font-bold uppercase tracking-tighter">
+                    Synced {Math.floor((Date.now() - lastSync.getTime()) / 60000)}m ago
+                  </span>
+                )}
+                <span className={`text-xs font-black ${getBatteryColor()}`}>{batteryPercent}%</span>
+              </div>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={batteryPercent}
-              onChange={(e) => setBatteryPercent(parseInt(e.target.value))}
-              className="w-full h-2 bg-white/5 rounded-lg appearance-none cursor-pointer accent-theme-primary transition-all hover:bg-white/10"
-            />
+            
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={batteryPercent}
+                onChange={(e) => setBatteryPercent(parseInt(e.target.value))}
+                className="flex-grow h-2 bg-white/5 rounded-lg appearance-none cursor-pointer accent-theme-primary transition-all hover:bg-white/10"
+              />
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={syncTeslaData}
+                disabled={isSyncing}
+                className={`p-2 rounded-lg border transition-all ${
+                  isSyncing 
+                    ? 'bg-white/5 border-white/5 text-gray-600 animate-spin' 
+                    : 'bg-theme-primary/10 border-theme-primary/30 text-theme-primary hover:bg-theme-primary/20'
+                }`}
+                title="Sync with Tesla App"
+              >
+                <RefreshCcw className="w-3.5 h-3.5" />
+              </motion.button>
+            </div>
           </div>
 
           {batteryPercent < 30 && (
@@ -142,7 +188,7 @@ export function VehicleCard() {
       {/* Footer Info */}
       <div className="pt-2 flex items-center gap-2 text-[10px] text-gray-600 font-bold uppercase tracking-tighter">
         <Info className="w-3 h-3" />
-        Connect your Tesla account coming in v5.1
+        Tesla Sync Active • Live Range Updates
       </div>
 
       {/* Settings Overlay */}
