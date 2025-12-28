@@ -6,8 +6,14 @@ import L from 'leaflet';
 import { ZoneScore, Event } from '../../types';
 import { fetchConditions } from '../../lib/api';
 import { SafeStorage } from '../../lib/safeStorage';
-import { useTheme } from '../../features/theme';
+import { useThemeUtils } from '../../features/theme/themeUtils';
 import { HeatmapOverlay } from './HeatmapOverlay';
+import { 
+  sanitizeEmoji, 
+  sanitizeEventData, 
+  createSafeMarkerHtml,
+  createSafeCurrentPositionHtml 
+} from '../../lib/sanitize';
 import 'leaflet/dist/leaflet.css';
 
 interface SeattleMapProps {
@@ -75,45 +81,39 @@ function getVenueCoordinates(venueName: string): { lat: number; lng: number } | 
   return null;
 }
 
-// Create custom event icon with urgency ring
+// Create custom event icon with urgency ring (sanitized)
 function createEventIcon(emoji: string, isUrgent: boolean, themeId: string) {
-  const ringColor = themeId === 'pro' 
-    ? 'rgba(59, 130, 246, 0.8)'  // Pro: blue
-    : themeId === 'hud'
-    ? 'rgba(168, 85, 247, 0.9)'  // HUD: purple
-    : 'rgba(255, 170, 0, 0.9)';   // Neon: orange
-    
-  const glowColor = themeId === 'pro'
-    ? 'rgba(59, 130, 246, 0.5)'
-    : themeId === 'hud'
-    ? 'rgba(236, 72, 153, 0.6)'
-    : 'rgba(255, 0, 85, 0.6)';
+  // Get theme-aware styles
+  let ringColor, glowColor;
+  
+  switch (themeId) {
+    case 'pro':
+      ringColor = isUrgent ? 'rgba(239, 68, 68, 0.8)' : 'rgba(59, 130, 246, 0.8)';
+      glowColor = isUrgent ? 'rgba(239, 68, 68, 0.4)' : 'rgba(59, 130, 246, 0.4)';
+      break;
+    case 'hud':
+      ringColor = isUrgent ? 'rgba(34, 197, 94, 0.8)' : 'rgba(168, 85, 247, 0.9)';
+      glowColor = isUrgent ? 'rgba(34, 197, 94, 0.4)' : 'rgba(236, 72, 153, 0.6)';
+      break;
+    case 'car':
+      ringColor = isUrgent ? 'rgba(239, 68, 68, 0.8)' : 'rgba(34, 197, 94, 0.8)';
+      glowColor = isUrgent ? 'rgba(239, 68, 68, 0.4)' : 'rgba(34, 197, 94, 0.4)';
+      break;
+    default: // neon
+      ringColor = isUrgent ? 'rgba(236, 72, 153, 0.8)' : 'rgba(255, 170, 0, 0.9)';
+      glowColor = isUrgent ? 'rgba(236, 72, 153, 0.4)' : 'rgba(255, 0, 85, 0.6)';
+  }
+
+  const safeHtml = createSafeMarkerHtml({
+    emoji,
+    isUrgent,
+    ringColor,
+    glowColor,
+  });
 
   return L.divIcon({
     className: 'custom-event-marker',
-    html: `
-      <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-        ${isUrgent ? `
-          <div class="animate-pulse" style="
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border: 3px solid ${ringColor};
-            border-radius: 50%;
-            box-shadow: 0 0 15px ${glowColor};
-          "></div>
-        ` : ''}
-        <div style="
-          font-size: 32px;
-          text-shadow: 0 0 10px ${glowColor};
-          filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.6));
-          position: relative;
-          z-index: 10;
-        ">
-          ${emoji}
-        </div>
-      </div>
-    `,
+    html: safeHtml,
     iconSize: [48, 48],
     iconAnchor: [24, 24],
   });
@@ -229,75 +229,22 @@ function CenterOnPositionHandler({
         duration: 0.5,
       });
       // Reset the flag after centering
-      setTimeout(() => onCentered(), 500);
+      const timeoutId = setTimeout(() => onCentered(), 500);
+      
+      return () => {
+        clearTimeout(timeoutId);
+      };
     }
   }, [shouldCenter, position, map, onCentered]);
 
   return null;
 }
 
-// Create custom current position icon with Tesla emblem
+// Create custom current position icon with Tesla emblem (sanitized)
 function createCurrentPositionIcon() {
   return L.divIcon({
     className: 'current-position-marker',
-    html: `
-      <div style="position: relative; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
-        <!-- Outer pulsing ring -->
-        <div style="
-          position: absolute;
-          width: 56px;
-          height: 56px;
-          border: 3px solid #e82127;
-          border-radius: 50%;
-          animation: teslaPulse 2s ease-in-out infinite;
-        "></div>
-        <!-- Inner solid circle background -->
-        <div style="
-          position: absolute;
-          width: 44px;
-          height: 44px;
-          background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-          border-radius: 50%;
-          border: 2px solid #e82127;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
-        "></div>
-        <!-- Tesla "T" Logo -->
-        <svg width="28" height="28" viewBox="0 0 100 100" style="position: relative; z-index: 10;">
-          <!-- Tesla T shape -->
-          <path d="M50 10 L50 90 M20 10 L80 10" 
-                stroke="#e82127" 
-                stroke-width="14" 
-                stroke-linecap="round" 
-                fill="none"/>
-          <!-- Highlight on T -->
-          <path d="M50 10 L50 85" 
-                stroke="url(#teslaGradient)" 
-                stroke-width="8" 
-                stroke-linecap="round" 
-                fill="none"/>
-          <defs>
-            <linearGradient id="teslaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style="stop-color:#ff4444"/>
-              <stop offset="100%" style="stop-color:#cc0000"/>
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-      <style>
-        @keyframes teslaPulse {
-          0%, 100% { 
-            transform: scale(1); 
-            opacity: 0.7;
-            box-shadow: 0 0 0 0 rgba(232, 33, 39, 0.4);
-          }
-          50% { 
-            transform: scale(1.15); 
-            opacity: 1;
-            box-shadow: 0 0 20px 5px rgba(232, 33, 39, 0.3);
-          }
-        }
-      </style>
-    `,
+    html: createSafeCurrentPositionHtml(),
     iconSize: [56, 56],
     iconAnchor: [28, 28],
   });
@@ -308,7 +255,8 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   const center: [number, number] = [47.5500, -122.2000]; // Adjusted to show full metro area
   const zoom = 9; // Zoomed out to show from Marysville to Spanaway
   const [events, setEvents] = useState<Event[]>([]);
-  const { id: themeId } = useTheme();
+  const themeUtils = useThemeUtils();
+  const { themeId, getButtonClasses, getEventIconStyles } = themeUtils;
   const [mapLayer, setMapLayer] = useState<'dark' | 'satellite'>('dark');
   const [showHeatmap, setShowHeatmap] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -521,25 +469,13 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
     };
   }, []);
 
-  // Theme-aware button styles
+  // Theme-aware button styles using centralized utilities
   const getActiveButtonClass = () => {
-    if (themeId === 'hud') {
-      return 'bg-purple-600/80 text-white border-2 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.6)]';
-    }
-    if (themeId === 'pro') {
-      return 'bg-blue-600/80 text-white border-2 border-blue-400 shadow-lg';
-    }
-    return 'bg-theme-primary/30 text-theme-primary border-2 border-theme-primary/50 shadow-[0_0_15px_rgba(0,255,238,0.4)]';
+    return getButtonClasses('primary') + ' border-2';
   };
 
   const getInactiveButtonClass = () => {
-    if (themeId === 'hud') {
-      return 'bg-gray-900/60 border-2 border-purple-600/40 text-purple-300 hover:border-purple-500';
-    }
-    if (themeId === 'pro') {
-      return 'bg-slate-800/60 border border-slate-600 text-slate-300 hover:border-slate-500';
-    }
-    return 'bg-black/60 text-gray-400 border border-white/20 hover:bg-black/80';
+    return getButtonClasses('secondary') + ' opacity-70 hover:opacity-100';
   };
 
   // Convert m/s to mph
@@ -625,6 +561,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
               whileTap={{ scale: 0.95 }}
               onClick={() => window.location.reload()}
               className="w-full bg-white text-amber-700 font-bold py-2 px-3 rounded-lg text-xs"
+              aria-label="Retry geolocation"
             >
               Retry
             </motion.button>
@@ -650,6 +587,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
               whileTap={{ scale: 0.95 }}
               onClick={() => window.location.reload()}
               className="w-full bg-white text-red-700 font-bold py-2 px-3 rounded-lg text-xs"
+              aria-label="Refresh page"
             >
               Refresh
             </motion.button>
@@ -709,6 +647,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           onClick={() => setShouldCenterOnPosition(true)}
           className="absolute bottom-4 right-4 z-[1000] bg-gradient-to-r from-red-600 to-red-700 backdrop-blur-lg border-2 border-red-400 rounded-2xl px-4 py-3 shadow-2xl hover:from-red-500 hover:to-red-600 transition-all flex items-center gap-2"
           title="Center on my Tesla"
+          aria-label="Center map on current position"
         >
           <Crosshair className="w-5 h-5 text-white" />
           <span className="text-white font-bold text-sm">Center</span>
@@ -726,6 +665,8 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
             className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
               mapLayer === 'dark' ? getActiveButtonClass() : getInactiveButtonClass()
             }`}
+            aria-label="Switch to dark map view"
+            aria-pressed={mapLayer === 'dark'}
           >
             <MapIcon className="w-4 h-4" />
             <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>Dark</span>
@@ -737,6 +678,8 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
             className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
               mapLayer === 'satellite' ? getActiveButtonClass() : getInactiveButtonClass()
             }`}
+            aria-label="Switch to satellite map view"
+            aria-pressed={mapLayer === 'satellite'}
           >
             <Satellite className="w-4 h-4" />
             <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>Satellite</span>
@@ -751,6 +694,8 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
             showHeatmap ? getActiveButtonClass() : getInactiveButtonClass()
           }`}
+          aria-label={showHeatmap ? "Hide personal heatmap" : "Show personal heatmap"}
+          aria-pressed={showHeatmap}
         >
           <TrendingUp className="w-4 h-4" />
           <span className={themeId === 'hud' ? 'uppercase tracking-wider' : ''}>My History</span>
@@ -877,16 +822,20 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
             statusText = hours === 0 ? `Starts in ${mins}m` : `Starts in ${hours}h`;
           }
 
+          // Sanitize event data
+          const safeEvent = sanitizeEventData(event);
+          const safeEmoji = sanitizeEmoji(getEventEmoji(event.type));
+
           return (
             <Marker
               key={`event-${idx}`}
               position={[coords.lat, coords.lng]}
-              icon={createEventIcon(getEventEmoji(event.type), isUrgent, themeId)}
+              icon={createEventIcon(safeEmoji, isUrgent, themeId)}
             >
               <Tooltip direction="top" offset={[0, -24]} opacity={1}>
                 <div className="text-sm max-w-xs">
-                  <div className="font-bold text-white text-base mb-1">{event.name}</div>
-                  <div className="text-neon-orange text-xs mb-1">{event.venue}</div>
+                  <div className="font-bold text-white text-base mb-1">{safeEvent.name}</div>
+                  <div className="text-neon-orange text-xs mb-1">{safeEvent.venue}</div>
                   <div className="text-gray-300 text-xs mb-1">
                     {new Date(event.startTime).toLocaleTimeString('en-US', { 
                       hour: 'numeric', 
@@ -900,10 +849,10 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
                       {statusText}
                     </div>
                   )}
-                  {event.imageUrl && (
+                  {safeEvent.imageUrl && (
                     <img
-                      src={event.imageUrl}
-                      alt={event.name}
+                      src={safeEvent.imageUrl}
+                      alt={safeEvent.name}
                       className="w-full h-20 object-cover rounded mt-2"
                       onError={(e) => e.currentTarget.style.display = 'none'}
                     />

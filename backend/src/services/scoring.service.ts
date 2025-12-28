@@ -65,6 +65,15 @@ export class ScoringService {
     flights: FlightArrival[] = [],
     trafficData: Map<string, number> = new Map()
   ): ZoneScore[] {
+    // Optimize: Create event map by zoneId to avoid O(n*m) complexity
+    const eventsByZoneId = new Map<string, Event[]>();
+    for (const event of events) {
+      if (!eventsByZoneId.has(event.zoneId)) {
+        eventsByZoneId.set(event.zoneId, []);
+      }
+      eventsByZoneId.get(event.zoneId)!.push(event);
+    }
+
     const scores: ZoneScore[] = this.scoringZones.map(zone => {
       const dayOfWeek = currentTime.getDay();
       const hour = currentTime.getHours();
@@ -72,8 +81,9 @@ export class ScoringService {
       // Get baseline score from either micro-zone peak hours or legacy time patterns
       const baseline = this.getBaselineForZone(zone.id, dayOfWeek, hour);
 
-      // Calculate event boost
-      const eventBoost = this.calculateEventBoost(zone.id, events, currentTime);
+      // Calculate event boost (optimized with pre-grouped events)
+      const zoneEvents = eventsByZoneId.get(zone.id) || [];
+      const eventBoost = this.calculateEventBoostOptimized(zoneEvents, currentTime);
 
       // Calculate weather boost
       const weatherBoost = this.calculateWeatherBoost(weather);
@@ -257,11 +267,15 @@ export class ScoringService {
   }
 
   private calculateEventBoost(zoneId: string, events: Event[], currentTime: Date): number {
+    // Legacy method kept for backward compatibility
+    const zoneEvents = events.filter(event => event.zoneId === zoneId);
+    return this.calculateEventBoostOptimized(zoneEvents, currentTime);
+  }
+
+  private calculateEventBoostOptimized(zoneEvents: Event[], currentTime: Date): number {
     let boost = 0;
 
-    for (const event of events) {
-      if (event.zoneId !== zoneId) continue;
-
+    for (const event of zoneEvents) {
       const eventStart = new Date(event.startTime);
       const eventEnd = new Date(event.endTime);
       const hoursUntilStart = (eventStart.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
