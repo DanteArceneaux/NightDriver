@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Navigation, DollarSign, Battery } from 'lucide-react';
+import { getBackendUrl, isStaticHost } from '../../lib/api';
 
 interface ChargingStation {
   id: string;
@@ -19,6 +20,13 @@ interface ChargingStation {
   cost?: string;
 }
 
+// Mock charging stations for static hosting
+const MOCK_STATIONS: ChargingStation[] = [
+  { id: '1', name: 'Tesla Supercharger - SLU', type: 'charging', coordinates: { lat: 47.6232, lng: -122.3365 }, is24Hours: true, verified: true, distance: 0.5, chargerType: 'Tesla Supercharger', numStalls: 12, powerKw: 250 },
+  { id: '2', name: 'Electrify America - Northgate', type: 'charging', coordinates: { lat: 47.7081, lng: -122.3297 }, is24Hours: true, verified: true, distance: 2.1, chargerType: 'CCS', numStalls: 8, powerKw: 150 },
+  { id: '3', name: 'ChargePoint - Downtown', type: 'charging', coordinates: { lat: 47.6062, lng: -122.3321 }, is24Hours: true, verified: true, distance: 0.8, chargerType: 'CCS', numStalls: 4, powerKw: 50 },
+];
+
 interface ChargingStationFinderProps {
   currentLocation: { lat: number; lng: number };
   teslaOnly?: boolean;
@@ -34,8 +42,25 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
   useEffect(() => {
     const fetchStations = async () => {
       setLoading(true);
+      
+      // Use mock data on static hosts
+      if (isStaticHost) {
+        const filtered = filter === 'tesla'
+          ? MOCK_STATIONS.filter(s => s.chargerType?.toLowerCase().includes('tesla'))
+          : MOCK_STATIONS;
+        setStations(filtered);
+        setLoading(false);
+        return;
+      }
+      
       try {
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+        const backendUrl = getBackendUrl();
+        if (!backendUrl) {
+          setStations(MOCK_STATIONS);
+          setLoading(false);
+          return;
+        }
+        
         const teslaParam = filter === 'tesla' ? '&tesla=true' : '';
         const response = await fetch(
           `${backendUrl}/api/amenities/charging?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=10${teslaParam}`
@@ -44,7 +69,7 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
         setStations(data.chargers || []);
       } catch (error) {
         console.error('Error fetching charging stations:', error);
-        setStations([]);
+        setStations(MOCK_STATIONS);
       } finally {
         setLoading(false);
       }

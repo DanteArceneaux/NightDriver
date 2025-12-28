@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, AlertCircle } from 'lucide-react';
 import { useEarningsStore } from '../../features/earnings';
+import { getBackendUrl, isStaticHost } from '../../lib/api';
 
 interface PaceTrackerProps {
   onClose?: () => void;
@@ -22,8 +23,29 @@ export function PaceTracker({ onClose }: PaceTrackerProps) {
 
   const fetchPace = async () => {
     setLoading(true);
+    
+    // Use mock pace data on static hosts
+    if (isStaticHost) {
+      const hoursWorked = progress?.pacePerHour ? (currentEarnings / progress.pacePerHour) : 4;
+      const projectedEarnings = hoursWorked > 0 ? (currentEarnings / hoursWorked) * 8 : 0;
+      setPaceData({
+        onPace: projectedEarnings >= goalAmount,
+        currentPace: hoursWorked > 0 ? currentEarnings / hoursWorked : 0,
+        requiredPace: (goalAmount - currentEarnings) / Math.max(1, 8 - hoursWorked),
+        projectedTotal: projectedEarnings,
+        hoursRemaining: Math.max(0, 8 - hoursWorked),
+      });
+      setLoading(false);
+      return;
+    }
+    
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+      const backendUrl = getBackendUrl();
+      if (!backendUrl) {
+        setLoading(false);
+        return;
+      }
+      
       const response = await fetch(`${backendUrl}/api/pace-check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

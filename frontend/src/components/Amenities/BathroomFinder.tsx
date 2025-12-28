@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { getBackendUrl, isStaticHost } from '../../lib/api';
 
 interface Amenity {
   id: string;
@@ -17,6 +18,13 @@ interface Amenity {
   hasCode?: boolean;
 }
 
+// Mock bathrooms for static hosting
+const MOCK_BATHROOMS: Amenity[] = [
+  { id: '1', name: 'Starbucks - Pike Place', type: 'bathroom', coordinates: { lat: 47.6097, lng: -122.3425 }, is24Hours: false, verified: true, distance: 0.3, hours: '5am-9pm' },
+  { id: '2', name: 'QFC - Capitol Hill', type: 'bathroom', coordinates: { lat: 47.6205, lng: -122.3212 }, is24Hours: false, verified: true, distance: 0.8, hours: '6am-11pm' },
+  { id: '3', name: 'Gas Station - Aurora', type: 'bathroom', coordinates: { lat: 47.6512, lng: -122.3465 }, is24Hours: true, verified: true, distance: 1.2 },
+];
+
 interface BathroomFinderProps {
   currentLocation: { lat: number; lng: number };
   onClose?: () => void;
@@ -31,8 +39,25 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
   useEffect(() => {
     const fetchBathrooms = async () => {
       setLoading(true);
+      
+      // Use mock data on static hosts
+      if (isStaticHost) {
+        const filtered = filter === '24hr' 
+          ? MOCK_BATHROOMS.filter(b => b.is24Hours)
+          : MOCK_BATHROOMS;
+        setBathrooms(filtered);
+        setLoading(false);
+        return;
+      }
+      
       try {
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+        const backendUrl = getBackendUrl();
+        if (!backendUrl) {
+          setBathrooms(MOCK_BATHROOMS);
+          setLoading(false);
+          return;
+        }
+        
         // Fix URL construction - use & for additional params when base already has ?
         const endpoint = filter === '24hr' 
           ? `/api/amenities/bathrooms?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=5`
@@ -43,7 +68,7 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
         setBathrooms(filter === '24hr' ? data.bathrooms : data.amenities || []);
       } catch (error) {
         console.error('Error fetching bathrooms:', error);
-        setBathrooms([]);
+        setBathrooms(MOCK_BATHROOMS);
       } finally {
         setLoading(false);
       }

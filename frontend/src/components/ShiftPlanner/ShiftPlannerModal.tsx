@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, MapPin, DollarSign, Battery, Coffee, Zap } from 'lucide-react';
+import { getBackendUrl, isStaticHost } from '../../lib/api';
 
 interface ShiftPlanSegment {
   startTime: string;
@@ -29,6 +30,81 @@ interface ShiftPlannerModalProps {
   onClose?: () => void;
 }
 
+// Generate a mock shift plan for static hosting demo
+function generateMockShiftPlan(startTime: Date, endTime: Date, isEV: boolean): ShiftPlan {
+  const segments: ShiftPlanSegment[] = [
+    {
+      startTime: startTime.toISOString(),
+      endTime: new Date(startTime.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+      zoneId: 'seatac',
+      zoneName: 'SeaTac Airport',
+      coordinates: { lat: 47.4502, lng: -122.3088 },
+      expectedScore: 85,
+      activity: 'drive',
+      reason: 'Evening flight arrivals',
+      estimatedEarnings: 65,
+    },
+    {
+      startTime: new Date(startTime.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+      endTime: new Date(startTime.getTime() + 2.5 * 60 * 60 * 1000).toISOString(),
+      zoneId: 'break',
+      zoneName: 'Coffee Break',
+      coordinates: { lat: 47.6062, lng: -122.3321 },
+      expectedScore: 0,
+      activity: 'break',
+      reason: 'Recharge yourself',
+      estimatedEarnings: 0,
+    },
+    {
+      startTime: new Date(startTime.getTime() + 2.5 * 60 * 60 * 1000).toISOString(),
+      endTime: new Date(startTime.getTime() + 5 * 60 * 60 * 1000).toISOString(),
+      zoneId: 'capitol-hill',
+      zoneName: 'Capitol Hill',
+      coordinates: { lat: 47.6205, lng: -122.3212 },
+      expectedScore: 78,
+      activity: 'drive',
+      reason: 'Evening bar district surge',
+      estimatedEarnings: 90,
+    },
+  ];
+
+  if (isEV) {
+    segments.push({
+      startTime: new Date(startTime.getTime() + 5 * 60 * 60 * 1000).toISOString(),
+      endTime: new Date(startTime.getTime() + 5.5 * 60 * 60 * 1000).toISOString(),
+      zoneId: 'charge',
+      zoneName: 'Tesla Supercharger - SLU',
+      coordinates: { lat: 47.6232, lng: -122.3365 },
+      expectedScore: 0,
+      activity: 'charge',
+      reason: 'Quick charge to 80%',
+      estimatedEarnings: 0,
+    });
+  }
+
+  segments.push({
+    startTime: new Date(startTime.getTime() + (isEV ? 5.5 : 5) * 60 * 60 * 1000).toISOString(),
+    endTime: endTime.toISOString(),
+    zoneId: 'belltown',
+    zoneName: 'Belltown',
+    coordinates: { lat: 47.6147, lng: -122.3491 },
+    expectedScore: 92,
+    activity: 'drive',
+    reason: 'Late night bar close surge',
+    estimatedEarnings: 120,
+  });
+
+  return {
+    startTime: startTime.toISOString(),
+    endTime: endTime.toISOString(),
+    totalHours: 8,
+    segments,
+    estimatedTotalEarnings: 275,
+    chargeStops: isEV ? 1 : 0,
+    breakTime: 30,
+  };
+}
+
 export function ShiftPlannerModal({ currentLocation, onClose }: ShiftPlannerModalProps) {
   const [plan, setPlan] = useState<ShiftPlan | null>(null);
   const [loading, setLoading] = useState(false);
@@ -41,7 +117,20 @@ export function ShiftPlannerModal({ currentLocation, onClose }: ShiftPlannerModa
       const now = new Date();
       const endTime = new Date(now.getTime() + 8 * 60 * 60 * 1000); // 8 hours from now
 
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+      // Use mock plan on static hosts
+      if (isStaticHost) {
+        setPlan(generateMockShiftPlan(now, endTime, vehicleType === 'ev'));
+        setLoading(false);
+        return;
+      }
+
+      const backendUrl = getBackendUrl();
+      if (!backendUrl) {
+        setPlan(generateMockShiftPlan(now, endTime, vehicleType === 'ev'));
+        setLoading(false);
+        return;
+      }
+
       console.log('📅 Shift Planner Request:', {
         url: `${backendUrl}/api/shift-planner`,
         startTime: now.toISOString(),

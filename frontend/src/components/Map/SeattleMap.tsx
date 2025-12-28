@@ -548,13 +548,15 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   return (
     <div ref={mapContainerRef} className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative">
       {/* Geolocation Status / Source Indicator */}
-      {livePosition && locationSource && livePosition.speed === null && (
+      {livePosition && locationSource && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className={`absolute top-4 left-4 z-[1000] backdrop-blur-lg rounded-xl px-4 py-2 shadow-2xl border ${
-            locationSource === 'gps'
+            locationSource === 'gps' && livePosition.accuracy < 100
               ? 'bg-green-600/90 border-green-400'
+              : locationSource === 'gps'
+              ? 'bg-emerald-600/90 border-emerald-400'
               : locationSource === 'network'
               ? 'bg-amber-600/90 border-amber-300'
               : 'bg-slate-700/90 border-slate-400'
@@ -563,16 +565,29 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
             locationSource === 'gps'
               ? 'GPS-based location'
               : locationSource === 'network'
-              ? 'Approximate network/IP location'
+              ? 'Approximate network/IP location - move around to enable GPS'
               : 'Last known location'
           }
         >
           <div className="text-white text-xs font-bold flex items-center gap-2">
             <span className="uppercase tracking-wider">
-              {locationSource === 'gps' ? 'GPS' : locationSource === 'network' ? 'Network' : 'Last known'}
+              {locationSource === 'gps' 
+                ? (livePosition.accuracy < 100 ? '📍 GPS' : '📍 GPS') 
+                : locationSource === 'network' 
+                ? '🌐 Network' 
+                : '💾 Cached'}
             </span>
-            <span className="opacity-90">±{Math.round(livePosition.accuracy)}m</span>
+            <span className={`${livePosition.accuracy > 500 ? 'text-amber-200' : 'opacity-90'}`}>
+              ±{livePosition.accuracy > 1000 
+                ? `${(livePosition.accuracy / 1000).toFixed(1)}km` 
+                : `${Math.round(livePosition.accuracy)}m`}
+            </span>
           </div>
+          {locationSource === 'network' && (
+            <div className="text-amber-200 text-[10px] mt-1 opacity-90">
+              Approximate location - GPS unavailable
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -915,18 +930,20 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         {/* Current Position Marker */}
         {livePosition && (
           <>
-            {/* Accuracy Circle */}
-            <Circle
-              center={[livePosition.lat, livePosition.lng]}
-              radius={livePosition.accuracy}
-              pathOptions={{
-                color: '#0ea5e9',
-                fillColor: '#0ea5e9',
-                fillOpacity: 0.1,
-                weight: 1,
-                opacity: 0.5,
-              }}
-            />
+            {/* Accuracy Circle - only show if accuracy is reasonable (< 500m) */}
+            {livePosition.accuracy < 500 && (
+              <Circle
+                center={[livePosition.lat, livePosition.lng]}
+                radius={livePosition.accuracy}
+                pathOptions={{
+                  color: '#0ea5e9',
+                  fillColor: '#0ea5e9',
+                  fillOpacity: 0.1,
+                  weight: 1,
+                  opacity: 0.5,
+                }}
+              />
+            )}
             {/* Position Marker */}
             <Marker
               position={[livePosition.lat, livePosition.lng]}
@@ -941,8 +958,9 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
                     ) : (
                       <div>Speed: Unavailable</div>
                     )}
-                    <div className="text-gray-400 mt-1">
+                    <div className={`mt-1 ${livePosition.accuracy > 500 ? 'text-amber-400' : 'text-gray-400'}`}>
                       Accuracy: ±{livePosition.accuracy.toFixed(0)}m
+                      {livePosition.accuracy > 500 && ' (approximate)'}
                     </div>
                   </div>
                 </div>

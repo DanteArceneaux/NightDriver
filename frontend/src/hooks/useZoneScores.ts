@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { ZonesResponse, SurgeAlert } from '../types';
-import { fetchZones, BACKEND_URL } from '../lib/api';
+import { fetchZones, BACKEND_URL, isStaticHost } from '../lib/api';
 
 export function useZoneScores() {
   const [data, setData] = useState<ZonesResponse | null>(null);
@@ -46,6 +46,13 @@ export function useZoneScores() {
   useEffect(() => {
     // Initial HTTP load
     loadData();
+
+    // On static hosts, skip WebSocket entirely - just use polling for mock data
+    if (isStaticHost && !import.meta.env.VITE_BACKEND_URL) {
+      console.log('📦 Static host detected - using mock data with polling');
+      startFallbackPolling();
+      return () => stopFallbackPolling();
+    }
 
     // Attempt WebSocket connection
     console.log('🔌 Connecting to WebSocket:', BACKEND_URL);
@@ -93,7 +100,7 @@ export function useZoneScores() {
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('Surge Alert!', {
           body: `${alert.zoneName}: ${alert.multiplier}x surge`,
-          icon: '/icon.png',
+          icon: '/icon.svg',
         });
       }
       
