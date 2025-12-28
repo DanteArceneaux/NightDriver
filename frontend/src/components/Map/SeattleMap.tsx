@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Marker, Tooltip, useMap, Polyline, Circle } from 'react-leaflet';
 import { motion } from 'framer-motion';
-import { Map as MapIcon, Satellite, TrendingUp, Navigation2, Gauge } from 'lucide-react';
+import { Map as MapIcon, Satellite, TrendingUp, Navigation2, Gauge, Crosshair } from 'lucide-react';
 import L from 'leaflet';
 import { ZoneScore, Event } from '../../types';
 import { fetchConditions } from '../../lib/api';
@@ -206,52 +206,69 @@ function MapResizeHandler() {
   return null;
 }
 
-// Create custom current position icon (blue dot with pulse)
+// Component to handle centering on current position
+function CenterOnPositionHandler({ 
+  position, 
+  shouldCenter,
+  onCentered 
+}: { 
+  position: LivePosition | null; 
+  shouldCenter: boolean;
+  onCentered: () => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (shouldCenter && position) {
+      map.setView([position.lat, position.lng], 15, {
+        animate: true,
+        duration: 0.5,
+      });
+      // Reset the flag after centering
+      setTimeout(() => onCentered(), 500);
+    }
+  }, [shouldCenter, position, map, onCentered]);
+
+  return null;
+}
+
+// Create custom current position icon (Tesla-like car)
 function createCurrentPositionIcon(heading: number | null) {
-  const arrow = heading !== null ? `
-    <div style="
-      position: absolute;
-      width: 0;
-      height: 0;
-      border-left: 8px solid transparent;
-      border-right: 8px solid transparent;
-      border-bottom: 20px solid #0ea5e9;
-      top: -10px;
-      left: 50%;
-      transform: translateX(-50%) ${heading !== null ? `rotate(${heading}deg)` : ''};
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
-    "></div>
-  ` : '';
+  const rotation = heading !== null ? heading : 0;
   
   return L.divIcon({
     className: 'current-position-marker',
     html: `
-      <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-        <!-- Accuracy circle pulse -->
+      <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; transform: rotate(${rotation}deg);">
+        <!-- Pulsing background -->
         <div class="animate-pulse" style="
           position: absolute;
-          width: 36px;
-          height: 36px;
-          border: 2px solid #0ea5e9;
+          width: 40px;
+          height: 40px;
+          border: 2px solid #ef4444;
           border-radius: 50%;
-          background: rgba(14, 165, 233, 0.1);
+          background: rgba(239, 68, 68, 0.1);
         "></div>
-        <!-- Main blue dot -->
-        <div style="
-          width: 16px;
-          height: 16px;
-          background: #0ea5e9;
-          border: 3px solid white;
-          border-radius: 50%;
-          box-shadow: 0 0 10px rgba(14, 165, 233, 0.8), 0 2px 6px rgba(0, 0, 0, 0.5);
-          position: relative;
-          z-index: 10;
-        "></div>
-        ${arrow}
+        <!-- Tesla-style car icon -->
+        <svg width="32" height="32" viewBox="0 0 24 24" style="position: relative; z-index: 10; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));">
+          <!-- Car body -->
+          <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5H6.5c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z" fill="#ef4444" stroke="#dc2626" stroke-width="1"/>
+          <!-- Windshield -->
+          <path d="M6.5 7h11l1.5 4H5l1.5-4z" fill="#fca5a5" opacity="0.8"/>
+          <!-- Left wheel -->
+          <circle cx="7.5" cy="16" r="1.5" fill="#1f2937" stroke="#4b5563" stroke-width="0.5"/>
+          <!-- Right wheel -->
+          <circle cx="16.5" cy="16" r="1.5" fill="#1f2937" stroke="#4b5563" stroke-width="0.5"/>
+          <!-- Tesla "T" badge (front of car) -->
+          <g transform="translate(12, 8)">
+            <rect x="-1" y="-1.5" width="2" height="1" fill="white" opacity="0.9"/>
+            <rect x="-0.5" y="-0.5" width="1" height="2" fill="white" opacity="0.9"/>
+          </g>
+        </svg>
       </div>
     `,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
   });
 }
 
@@ -267,6 +284,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   const [livePosition, setLivePosition] = useState<LivePosition | null>(null);
   const [positionHistory, setPositionHistory] = useState<Array<[number, number]>>([]);
   const watchIdRef = useRef<number | null>(null);
+  const [shouldCenterOnPosition, setShouldCenterOnPosition] = useState(false);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -388,6 +406,19 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         </motion.div>
       )}
 
+      {/* Center on Position Button */}
+      {livePosition && (
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setShouldCenterOnPosition(true)}
+          className="absolute bottom-4 right-4 z-[1000] bg-gray-900/95 backdrop-blur-lg border-2 border-cyan-500/50 rounded-full p-4 shadow-2xl hover:border-cyan-400 transition-all"
+          title="Center on my location"
+        >
+          <Crosshair className="w-6 h-6 text-cyan-400" />
+        </motion.button>
+      )}
+
       {/* Map Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         {/* Map Layer Toggle */}
@@ -468,6 +499,11 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         )}
 
         <MapResizeHandler />
+        <CenterOnPositionHandler 
+          position={livePosition} 
+          shouldCenter={shouldCenterOnPosition}
+          onCentered={() => setShouldCenterOnPosition(false)}
+        />
 
         {/* Personal Heatmap Overlay */}
         <HeatmapOverlay enabled={showHeatmap} zones={zones} />
