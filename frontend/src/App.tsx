@@ -17,6 +17,7 @@ import { SkeletonHero, SkeletonMap, SkeletonTimeline, SkeletonLeaderboard } from
 import { requestNotificationPermission } from './lib/notifications';
 import { calculateDistance, estimateDriveTime, calculateEfficiency } from './lib/distance';
 import { fetchConditions } from './lib/api';
+import { SafeStorage } from './lib/safeStorage';
 
 function App() {
   const { data, loading, error, connected, refresh } = useZoneScores();
@@ -26,7 +27,7 @@ function App() {
   const [weather, setWeather] = useState<{ temp: number; description: string } | undefined>();
   const [shiftStartTime] = useState<Date>(() => {
     // Try to load from localStorage or start new shift
-    const saved = localStorage.getItem('shiftStartTime');
+    const saved = SafeStorage.getItem('shiftStartTime');
     return saved ? new Date(saved) : new Date();
   });
 
@@ -34,7 +35,7 @@ function App() {
   useEffect(() => {
     requestNotificationPermission();
     // Save shift start time
-    localStorage.setItem('shiftStartTime', shiftStartTime.toISOString());
+    SafeStorage.setItem('shiftStartTime', shiftStartTime.toISOString());
   }, [shiftStartTime]);
 
   // Fetch weather for header

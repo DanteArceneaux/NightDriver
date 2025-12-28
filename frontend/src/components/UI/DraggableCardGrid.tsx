@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, Reorder, useDragControls } from 'framer-motion';
 import { GripVertical, Maximize2, Minimize2, Lock, Unlock, RotateCcw } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { SafeStorage } from '../../lib/safeStorage';
 
 export interface CardConfig {
   id: string;
@@ -43,23 +44,23 @@ export function DraggableCardGrid({
 }: DraggableCardGridProps) {
   // Lock/Edit mode state - default to locked (safe driving mode)
   const [isLocked, setIsLocked] = useState(() => {
-    const saved = localStorage.getItem(`${storageKey}-locked`);
+    const saved = SafeStorage.getItem(`${storageKey}-locked`);
     return saved ? JSON.parse(saved) : true;
   });
   // Initialize order from localStorage or default (with version check)
   const [order, setOrder] = useState<string[]>(() => {
-    const savedVersion = localStorage.getItem(`${storageKey}-version`);
+    const savedVersion = SafeStorage.getItem(`${storageKey}-version`);
     const currentVersion = LAYOUT_VERSION.toString();
     
     // Reset if version changed
     if (savedVersion !== currentVersion) {
-      localStorage.removeItem(`${storageKey}-order`);
-      localStorage.removeItem(`${storageKey}-states`);
-      localStorage.setItem(`${storageKey}-version`, currentVersion);
+      SafeStorage.removeItem(`${storageKey}-order`);
+      SafeStorage.removeItem(`${storageKey}-states`);
+      SafeStorage.setItem(`${storageKey}-version`, currentVersion);
       return cards.map(c => c.id);
     }
     
-    const saved = localStorage.getItem(`${storageKey}-order`);
+    const saved = SafeStorage.getItem(`${storageKey}-order`);
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -72,7 +73,7 @@ export function DraggableCardGrid({
 
   // Initialize card states from localStorage
   const [cardStates, setCardStates] = useState<Record<string, CardState>>(() => {
-    const savedVersion = localStorage.getItem(`${storageKey}-version`);
+    const savedVersion = SafeStorage.getItem(`${storageKey}-version`);
     const currentVersion = LAYOUT_VERSION.toString();
     
     // Skip if version mismatch (already handled above)
@@ -80,7 +81,7 @@ export function DraggableCardGrid({
       return {};
     }
     
-    const saved = localStorage.getItem(`${storageKey}-states`);
+    const saved = SafeStorage.getItem(`${storageKey}-states`);
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -103,18 +104,18 @@ export function DraggableCardGrid({
 
   // Save order to localStorage
   useEffect(() => {
-    localStorage.setItem(`${storageKey}-order`, JSON.stringify(order));
+    SafeStorage.setItem(`${storageKey}-order`, JSON.stringify(order));
     onOrderChange?.(order);
   }, [order, storageKey, onOrderChange]);
 
   // Save card states to localStorage
   useEffect(() => {
-    localStorage.setItem(`${storageKey}-states`, JSON.stringify(cardStates));
+    SafeStorage.setItem(`${storageKey}-states`, JSON.stringify(cardStates));
   }, [cardStates, storageKey]);
 
   // Save lock state to localStorage
   useEffect(() => {
-    localStorage.setItem(`${storageKey}-locked`, JSON.stringify(isLocked));
+    SafeStorage.setItem(`${storageKey}-locked`, JSON.stringify(isLocked));
   }, [isLocked, storageKey]);
 
   // Get sorted cards based on order
