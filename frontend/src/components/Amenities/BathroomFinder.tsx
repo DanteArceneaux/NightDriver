@@ -34,9 +34,34 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
   const [bathrooms, setBathrooms] = useState<Amenity[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | '24hr'>('all');
+  const [lastFetchLocation, setLastFetchLocation] = useState(currentLocation);
 
-  // Fetch when filter changes (includes initial mount)
+  // Helper to check if location changed significantly (>0.1 miles / ~500 feet)
+  const hasLocationChangedSignificantly = (oldLoc: typeof currentLocation, newLoc: typeof currentLocation) => {
+    const R = 3959; // Earth's radius in miles
+    const dLat = (newLoc.lat - oldLoc.lat) * Math.PI / 180;
+    const dLng = (newLoc.lng - oldLoc.lng) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(oldLoc.lat * Math.PI / 180) * Math.cos(newLoc.lat * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    return distance > 0.1; // Only re-fetch if moved more than 0.1 miles
+  };
+
+  // Fetch when filter changes or location changes significantly
   useEffect(() => {
+    // Only fetch if filter changed OR location changed significantly
+    if (filter !== 'all' && filter !== '24hr') return; // Safety check
+    
+    const shouldFetch = 
+      !lastFetchLocation || 
+      filter !== filter || // Always fetch on filter change
+      hasLocationChangedSignificantly(lastFetchLocation, currentLocation);
+    
+    if (!shouldFetch) return;
+
     const fetchBathrooms = async () => {
       setLoading(true);
       
@@ -49,7 +74,6 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
           return;
         }
         
-        // Fix URL construction - use & for additional params when base already has ?
         const endpoint = filter === '24hr' 
           ? `/api/amenities/bathrooms?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=5`
           : `/api/amenities?type=bathroom&lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=5`;
@@ -60,6 +84,7 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
         }
         const data = await response.json();
         setBathrooms(filter === '24hr' ? data.bathrooms : data.amenities || []);
+        setLastFetchLocation(currentLocation); // Update last fetch location
       } catch (error) {
         console.error('Error fetching bathrooms:', error);
         setBathrooms(MOCK_BATHROOMS);
@@ -70,7 +95,7 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
 
     fetchBathrooms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, currentLocation]); // Re-fetch when filter OR location changes
+  }, [filter, currentLocation.lat, currentLocation.lng]); // Track lat/lng separately
 
   const openNavigation = (bathroom: Amenity) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${bathroom.coordinates.lat},${bathroom.coordinates.lng}`;
