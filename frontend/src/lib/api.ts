@@ -1,10 +1,6 @@
 import { ZonesResponse, Forecast, Conditions } from '../types';
 import { generateMockZones, generateMockForecast, generateMockConditions } from './mockData';
 
-// API base URL - uses Vite's proxy in development, direct URL in production
-// The Vite dev server proxies /api requests to the backend (http://localhost:3001)
-const API_BASE = '/api';
-
 // Backend URL for when we need direct connection (e.g., WebSocket)
 export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
@@ -13,6 +9,11 @@ export const isStaticHost = typeof window !== 'undefined' &&
   (window.location.hostname.includes('vercel.app') || 
    window.location.hostname.includes('netlify.app') ||
    window.location.hostname.includes('github.io'));
+
+// API base URL - uses direct backend URL when available, relative path for dev proxy
+const API_BASE = (isStaticHost && import.meta.env.VITE_BACKEND_URL) 
+  ? import.meta.env.VITE_BACKEND_URL + '/api'
+  : '/api';
 
 // Helper to get the appropriate backend URL for API calls
 export function getBackendUrl(): string {
