@@ -373,13 +373,13 @@ export class ESPNService {
     const periodsRemaining = Math.max(0, config.totalPeriods - period);
     let estimatedPeriodMinutes = 0;
     if (config.periodName === 'Quarter') {
-      estimatedPeriodMinutes = config.periodEstimates.quarterMinutes || 0;
+      estimatedPeriodMinutes = (config.periodEstimates as any).quarterMinutes || 0;
     } else if (config.periodName === 'Inning') {
-      estimatedPeriodMinutes = config.periodEstimates.inningMinutes || 0;
+      estimatedPeriodMinutes = (config.periodEstimates as any).inningMinutes || 0;
     } else if (config.periodName === 'Period') {
-      estimatedPeriodMinutes = config.periodEstimates.periodMinutes || 0;
+      estimatedPeriodMinutes = (config.periodEstimates as any).periodMinutes || 0;
     } else if (config.periodName === 'Half') {
-      estimatedPeriodMinutes = config.periodEstimates.halfMinutes || 0;
+      estimatedPeriodMinutes = (config.periodEstimates as any).halfMinutes || 0;
     }
 
     const clockMinutes = this.parseClockMinutes(clock) || estimatedPeriodMinutes;

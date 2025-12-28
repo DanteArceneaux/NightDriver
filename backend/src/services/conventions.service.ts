@@ -106,7 +106,7 @@ export class ConventionsService {
         // Map to our Convention interface
         return wsccConventions.map(c => ({
           name: c.name,
-          venue: c.venue.includes('WSCC') || c.venue.includes('Convention') ? 'WSCC' as const : 'Other' as const,
+          venue: c.venue.includes(this.WSCC_VENUE_KEYWORD) || c.venue.includes(this.CONVENTION_VENUE_KEYWORD) ? 'WSCC' as const : 'Other' as const,
           startDate: c.startDate,
           endDate: c.endDate,
           expectedAttendees: c.expectedAttendance || this.DEFAULT_EXPECTED_ATTENDEES,
