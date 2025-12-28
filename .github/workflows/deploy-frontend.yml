@@ -28,10 +28,9 @@ jobs:
         id: get_url
         run: |
           # This assumes a successful deployment on Vercel's side is already triggered by the push
-          # We'll try to find the latest deployment URL for the project 'night-driver'
-          # We use 'vercel ls night-driver' instead of --project flag which is not supported by ls
-          DEPLOYMENT_URL=$(vercel ls night-driver --token=${{ secrets.VERCEL_API_TOKEN }} | grep "https://" | head -n 1 | awk '{print $2}')
-          echo "DEPLOYMENT_URL=https://$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          # We'll use grep -o to extract the first string starting with https://
+          DEPLOYMENT_URL=$(vercel ls night-driver --token=${{ secrets.VERCEL_API_TOKEN }} | grep -o 'https://[a-zA-Z0-9\.-]*' | head -n 1)
+          echo "DEPLOYMENT_URL=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
 
       - name: Wait for Vercel Deployment to be Ready
         run: |
