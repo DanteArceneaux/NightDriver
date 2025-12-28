@@ -12,8 +12,12 @@ node_modules/
 # Build outputs
 dist/
 build/
-*/dist/
-*/build/
+**/dist/
+**/build/
+.vercel/
+.netlify/
+frontend/dist/
+backend/dist/
 
 # Logs
 *.log

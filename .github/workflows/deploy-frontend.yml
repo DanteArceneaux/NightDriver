@@ -57,9 +57,26 @@ jobs:
       - name: Verify Frontend Accessibility
         run: |
           # Basic curl to ensure the page responds (allowing 401/403 for Vercel protection)
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.get_url.outputs.DEPLOYMENT_URL }}" || echo "000")
+          URL="${{ steps.get_url.outputs.DEPLOYMENT_URL }}"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
+          
+          echo "Final check for $URL - Status: $STATUS"
+          
           if [ "$STATUS" -eq "200" ] || [ "$STATUS" -eq "301" ] || [ "$STATUS" -eq "302" ] || [ "$STATUS" -eq "401" ] || [ "$STATUS" -eq "403" ]; then
             echo "✅ Accessibility verified (Status $STATUS)";
+            
+            # Additional check for asset loading
+            ASSET_LINE=$(curl -s "$URL" | grep -o 'assets/index-[a-zA-Z0-9]*\.\(css\|js\)' | head -n 1)
+            if [ ! -z "$ASSET_LINE" ]; then
+              ASSET_URL="$URL/$ASSET_LINE"
+              ASSET_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$ASSET_URL" || echo "000")
+              if [ "$ASSET_STATUS" -eq "200" ]; then
+                echo "✅ Assets are loading correctly ($ASSET_LINE)";
+              else
+                echo "❌ Assets are returning 404! ($ASSET_LINE)";
+                exit 1;
+              fi
+            fi
           else
             echo "❌ Accessibility check failed (Status $STATUS)";
             exit 1;

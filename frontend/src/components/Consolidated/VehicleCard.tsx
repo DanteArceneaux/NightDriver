@@ -15,18 +15,53 @@ export function VehicleCard() {
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [isTeslaConnected, setIsTeslaConnected] = useState(() => {
+    return localStorage.getItem('isTeslaConnected') === 'true';
+  });
+
+  const connectTesla = async () => {
+    const token = prompt("Please enter your Tesla Access Token (generated from apps like 'Tesla Auth'):");
+    if (!token) return;
+
+    setIsSyncing(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/tesla/auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+      
+      if (response.ok) {
+        setIsTeslaConnected(true);
+        localStorage.setItem('isTeslaConnected', 'true');
+        alert("✅ Tesla Account Linked Successfully!");
+        syncTeslaData();
+      } else {
+        alert("❌ Failed to link account. Please check your token.");
+      }
+    } catch (error) {
+      console.error('Connection error:', error);
+      alert("❌ Connection error. Is your backend running?");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const syncTeslaData = async () => {
     setIsSyncing(true);
     try {
-      // In production, this would hit your backend which handles Tesla OAuth/API
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/tesla`);
       const data = await response.json();
       
       if (data.battery_level !== undefined) {
         setBatteryPercent(data.battery_level);
         setLastSync(new Date());
-        // Show success toast or feedback here if needed
+        
+        // Update connected state if data is not mock
+        if (!data.is_demo) {
+          setIsTeslaConnected(true);
+          localStorage.setItem('isTeslaConnected', 'true');
+        }
       }
     } catch (error) {
       console.error('Failed to sync Tesla data:', error);
@@ -186,9 +221,20 @@ export function VehicleCard() {
       )}
 
       {/* Footer Info */}
-      <div className="pt-2 flex items-center gap-2 text-[10px] text-gray-600 font-bold uppercase tracking-tighter">
-        <Info className="w-3 h-3" />
-        Tesla Sync Active • Live Range Updates
+      <div className="pt-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-[10px] text-gray-600 font-bold uppercase tracking-tighter">
+          <Info className="w-3 h-3" />
+          {isTeslaConnected ? 'Tesla Sync Active • Live Updates' : 'Tesla Mock Data • Demo Mode'}
+        </div>
+        
+        {!isTeslaConnected && (
+          <button 
+            onClick={connectTesla}
+            className="text-[10px] text-cyan-400 font-black uppercase tracking-widest hover:text-cyan-300 transition-colors"
+          >
+            Connect Tesla
+          </button>
+        )}
       </div>
 
       {/* Settings Overlay */}

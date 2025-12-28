@@ -797,6 +797,22 @@ export function createApiRouter(
     }
   });
 
+  // POST /api/tesla/auth - Update Tesla Access Token (NEW)
+  router.post('/tesla/auth', async (req: Request, res: Response) => {
+    try {
+      const { token } = req.body;
+      if (!token) {
+        return res.status(400).json({ error: 'Token is required' });
+      }
+      
+      teslaService.setAccessToken(token);
+      res.json({ success: true, message: 'Tesla token updated successfully' });
+    } catch (error) {
+      console.error('Error updating Tesla token:', error);
+      res.status(500).json({ error: 'Failed to update Tesla token' });
+    }
+  });
+
   return router;
 }
 
