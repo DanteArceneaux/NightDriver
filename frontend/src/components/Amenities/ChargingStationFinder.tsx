@@ -37,9 +37,10 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
   const fetchStations = async () => {
     setLoading(true);
     try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
       const teslaParam = filter === 'tesla' ? '&tesla=true' : '';
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/amenities/charging?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=5${teslaParam}`
+        `${backendUrl}/api/amenities/charging?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=5${teslaParam}`
       );
       const data = await response.json();
       setStations(data.chargers);

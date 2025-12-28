@@ -34,12 +34,13 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
   const fetchBathrooms = async () => {
     setLoading(true);
     try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
       const endpoint = filter === '24hr' 
         ? `/api/amenities/bathrooms`
         : `/api/amenities?type=bathroom`;
       
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}${endpoint}?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=2`
+        `${backendUrl}${endpoint}?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=2`
       );
       const data = await response.json();
       setBathrooms(filter === '24hr' ? data.bathrooms : data.amenities);
