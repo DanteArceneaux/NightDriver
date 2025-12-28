@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { getBackendUrl } from '../../lib/api';
@@ -34,43 +34,63 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
   const [bathrooms, setBathrooms] = useState<Amenity[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | '24hr'>('all');
-  const [lastFetchLocation, setLastFetchLocation] = useState(currentLocation);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
+  
+  // Use ref to track last fetch - doesn't trigger re-renders
+  const lastFetchRef = useRef<{ lat: number; lng: number; filter: string } | null>(null);
+  const isMountedRef = useRef(true);
 
-  // Helper to check if location changed significantly (>0.1 miles / ~500 feet)
-  const hasLocationChangedSignificantly = (oldLoc: typeof currentLocation, newLoc: typeof currentLocation) => {
-    const R = 3959; // Earth's radius in miles
-    const dLat = (newLoc.lat - oldLoc.lat) * Math.PI / 180;
-    const dLng = (newLoc.lng - oldLoc.lng) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(oldLoc.lat * Math.PI / 180) * Math.cos(newLoc.lat * Math.PI / 180) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-    return distance > 0.1; // Only re-fetch if moved more than 0.1 miles
-  };
+  // Memoized distance calculator
+  const hasLocationChangedSignificantly = useCallback(
+    (oldLoc: { lat: number; lng: number }, newLoc: { lat: number; lng: number }) => {
+      const R = 3959; // Earth radius in miles
+      const dLat = (newLoc.lat - oldLoc.lat) * Math.PI / 180;
+      const dLng = (newLoc.lng - oldLoc.lng) * Math.PI / 180;
+      const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(oldLoc.lat * Math.PI / 180) * Math.cos(newLoc.lat * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c > 0.1; // > 0.1 miles (~500 feet)
+    }, []
+  );
 
-  // Fetch when filter changes or location changes significantly
+  // Track mounted state
   useEffect(() => {
-    // Only fetch if filter changed OR location changed significantly
-    if (filter !== 'all' && filter !== '24hr') return; // Safety check
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  // Main fetch effect
+  useEffect(() => {
+    const lastFetch = lastFetchRef.current;
     
-    const shouldFetch = 
-      !lastFetchLocation || 
-      filter !== filter || // Always fetch on filter change
-      hasLocationChangedSignificantly(lastFetchLocation, currentLocation);
-    
-    if (!shouldFetch) return;
+    // Determine if we should fetch
+    const isFirstFetch = !lastFetch;
+    const filterChanged = lastFetch && lastFetch.filter !== filter;
+    const locationChanged = lastFetch && hasLocationChangedSignificantly(
+      { lat: lastFetch.lat, lng: lastFetch.lng }, 
+      currentLocation
+    );
+
+    // Skip if nothing changed (except first fetch)
+    if (!isFirstFetch && !filterChanged && !locationChanged) {
+      return;
+    }
 
     const fetchBathrooms = async () => {
-      setLoading(true);
+      // Only show loading on first fetch to prevent flashing
+      if (isFirstFetch) {
+        setLoading(true);
+      }
       
       try {
         const backendUrl = getBackendUrl();
         if (!backendUrl) {
           console.warn('No backend URL available, using mock data');
-          setBathrooms(MOCK_BATHROOMS);
-          setLoading(false);
+          if (isMountedRef.current) {
+            setBathrooms(MOCK_BATHROOMS);
+          }
           return;
         }
         
@@ -79,23 +99,35 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
           : `/api/amenities?type=bathroom&lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=5`;
         
         const response = await fetch(`${backendUrl}${endpoint}`);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
         const data = await response.json();
-        setBathrooms(filter === '24hr' ? data.bathrooms : data.amenities || []);
-        setLastFetchLocation(currentLocation); // Update last fetch location
+        
+        if (isMountedRef.current) {
+          setBathrooms(filter === '24hr' ? data.bathrooms || [] : data.amenities || []);
+          // Update ref (no re-render triggered!)
+          lastFetchRef.current = { 
+            lat: currentLocation.lat, 
+            lng: currentLocation.lng, 
+            filter 
+          };
+          setHasInitiallyLoaded(true);
+        }
       } catch (error) {
         console.error('Error fetching bathrooms:', error);
-        setBathrooms(MOCK_BATHROOMS);
+        if (isMountedRef.current) {
+          setBathrooms(MOCK_BATHROOMS);
+          setHasInitiallyLoaded(true);
+        }
       } finally {
-        setLoading(false);
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
       }
     };
 
     fetchBathrooms();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, currentLocation.lat, currentLocation.lng]); // Track lat/lng separately
+  }, [filter, currentLocation.lat, currentLocation.lng, hasLocationChangedSignificantly]);
 
   const openNavigation = (bathroom: Amenity) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${bathroom.coordinates.lat},${bathroom.coordinates.lng}`;
@@ -166,7 +198,7 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
 
         {/* List */}
         <div className="overflow-y-auto max-h-[60vh] p-4 space-y-3">
-          {loading ? (
+          {loading && !hasInitiallyLoaded ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-4 border-cyan-500 border-t-transparent"></div>
             </div>
@@ -176,13 +208,14 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
               <p>No bathrooms found nearby</p>
             </div>
           ) : (
-            <AnimatePresence>
-              {bathrooms.map((bathroom, index) => (
+            <AnimatePresence mode="popLayout" initial={false}>
+              {bathrooms.map((bathroom) => (
                 <motion.div
                   key={bathroom.id}
-                  initial={{ opacity: 0, x: -20 }}
+                  layout
+                  initial={false}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  exit={{ opacity: 0, x: -20 }}
                   className="bg-gray-800 rounded-xl p-4 border border-gray-700 hover:border-cyan-500/50 transition-all"
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -251,4 +284,3 @@ export function BathroomFinder({ currentLocation, onClose }: BathroomFinderProps
     </motion.div>
   );
 }
-

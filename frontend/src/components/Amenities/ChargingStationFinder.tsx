@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Navigation, DollarSign, Battery } from 'lucide-react';
 import { getBackendUrl } from '../../lib/api';
@@ -37,40 +37,63 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
   const [stations, setStations] = useState<ChargingStation[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'tesla'>(teslaOnly ? 'tesla' : 'all');
-  const [lastFetchLocation, setLastFetchLocation] = useState(currentLocation);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
+  
+  // Use ref to track last fetch - doesn't trigger re-renders
+  const lastFetchRef = useRef<{ lat: number; lng: number; filter: string } | null>(null);
+  const isMountedRef = useRef(true);
 
-  // Helper to check if location changed significantly (>0.1 miles / ~500 feet)
-  const hasLocationChangedSignificantly = (oldLoc: typeof currentLocation, newLoc: typeof currentLocation) => {
-    const R = 3959; // Earth's radius in miles
-    const dLat = (newLoc.lat - oldLoc.lat) * Math.PI / 180;
-    const dLng = (newLoc.lng - oldLoc.lng) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(oldLoc.lat * Math.PI / 180) * Math.cos(newLoc.lat * Math.PI / 180) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-    return distance > 0.1; // Only re-fetch if moved more than 0.1 miles
-  };
+  // Memoized distance calculator
+  const hasLocationChangedSignificantly = useCallback(
+    (oldLoc: { lat: number; lng: number }, newLoc: { lat: number; lng: number }) => {
+      const R = 3959; // Earth radius in miles
+      const dLat = (newLoc.lat - oldLoc.lat) * Math.PI / 180;
+      const dLng = (newLoc.lng - oldLoc.lng) * Math.PI / 180;
+      const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(oldLoc.lat * Math.PI / 180) * Math.cos(newLoc.lat * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c > 0.1; // > 0.1 miles (~500 feet)
+    }, []
+  );
 
-  // Fetch when filter changes or location changes significantly
+  // Track mounted state
   useEffect(() => {
-    // Only fetch if filter changed OR location changed significantly
-    const shouldFetch = 
-      !lastFetchLocation || 
-      hasLocationChangedSignificantly(lastFetchLocation, currentLocation);
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  // Main fetch effect
+  useEffect(() => {
+    const lastFetch = lastFetchRef.current;
     
-    if (!shouldFetch) return;
+    // Determine if we should fetch
+    const isFirstFetch = !lastFetch;
+    const filterChanged = lastFetch && lastFetch.filter !== filter;
+    const locationChanged = lastFetch && hasLocationChangedSignificantly(
+      { lat: lastFetch.lat, lng: lastFetch.lng }, 
+      currentLocation
+    );
+
+    // Skip if nothing changed (except first fetch)
+    if (!isFirstFetch && !filterChanged && !locationChanged) {
+      return;
+    }
 
     const fetchStations = async () => {
-      setLoading(true);
+      // Only show loading on first fetch to prevent flashing
+      if (isFirstFetch) {
+        setLoading(true);
+      }
       
       try {
         const backendUrl = getBackendUrl();
         if (!backendUrl) {
           console.warn('No backend URL available, using mock data');
-          setStations(MOCK_STATIONS);
-          setLoading(false);
+          if (isMountedRef.current) {
+            setStations(MOCK_STATIONS);
+          }
           return;
         }
         
@@ -78,23 +101,35 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
         const response = await fetch(
           `${backendUrl}/api/amenities/charging?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=10${teslaParam}`
         );
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
         const data = await response.json();
-        setStations(data.chargers || []);
-        setLastFetchLocation(currentLocation); // Update last fetch location
+        
+        if (isMountedRef.current) {
+          setStations(data.chargers || []);
+          // Update ref (no re-render triggered!)
+          lastFetchRef.current = { 
+            lat: currentLocation.lat, 
+            lng: currentLocation.lng, 
+            filter 
+          };
+          setHasInitiallyLoaded(true);
+        }
       } catch (error) {
         console.error('Error fetching charging stations:', error);
-        setStations(MOCK_STATIONS);
+        if (isMountedRef.current) {
+          setStations(MOCK_STATIONS);
+          setHasInitiallyLoaded(true);
+        }
       } finally {
-        setLoading(false);
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
       }
     };
 
     fetchStations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, currentLocation.lat, currentLocation.lng]); // Track lat/lng separately
+  }, [filter, currentLocation.lat, currentLocation.lng, hasLocationChangedSignificantly]);
 
   const openNavigation = (station: ChargingStation) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${station.coordinates.lat},${station.coordinates.lng}`;
@@ -102,15 +137,15 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
   };
 
   const getChargerIcon = (type?: string) => {
-    if (type === 'tesla') return '⚡';
-    if (type === 'ccs') return '🔌';
-    if (type === 'chademo') return '🔋';
+    if (type?.toLowerCase().includes('tesla')) return '⚡';
+    if (type?.toLowerCase().includes('ccs')) return '🔌';
+    if (type?.toLowerCase().includes('chademo')) return '🔋';
     return '⚡';
   };
 
   const getChargerColor = (type?: string) => {
-    if (type === 'tesla') return 'text-red-400';
-    if (type === 'ccs') return 'text-blue-400';
+    if (type?.toLowerCase().includes('tesla')) return 'text-red-400';
+    if (type?.toLowerCase().includes('ccs')) return 'text-blue-400';
     return 'text-green-400';
   };
 
@@ -178,7 +213,7 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
 
         {/* List */}
         <div className="overflow-y-auto max-h-[60vh] p-4 space-y-3">
-          {loading ? (
+          {loading && !hasInitiallyLoaded ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent"></div>
             </div>
@@ -188,13 +223,14 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
               <p>No charging stations found nearby</p>
             </div>
           ) : (
-            <AnimatePresence>
-              {stations.map((station, index) => (
+            <AnimatePresence mode="popLayout" initial={false}>
+              {stations.map((station) => (
                 <motion.div
                   key={station.id}
-                  initial={{ opacity: 0, x: -20 }}
+                  layout
+                  initial={false}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  exit={{ opacity: 0, x: -20 }}
                   className="bg-gray-800 rounded-xl p-4 border border-gray-700 hover:border-green-500/50 transition-all"
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -267,4 +303,3 @@ export function ChargingStationFinder({ currentLocation, teslaOnly = false, onCl
     </motion.div>
   );
 }
-
