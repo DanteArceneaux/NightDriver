@@ -448,9 +448,9 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           console.warn('⚠️ watchPosition error:', { code: error.code, message: error.message });
         },
         {
-          enableHighAccuracy: isMobile,
-          maximumAge: 10000,
-          timeout: 20000,
+          enableHighAccuracy: true, // Always try for GPS on mobile/desktop
+          maximumAge: 5000, // Reduced from 10s to 5s for fresher data
+          timeout: 15000, // Give it 15 seconds to lock on
         }
       );
     };
@@ -503,9 +503,9 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           }
         },
         {
-          enableHighAccuracy: isMobile,
-          maximumAge: isMobile ? 10000 : 60000,
-          timeout: isMobile ? 15000 : 20000,
+          enableHighAccuracy: true, // Always try for high accuracy (GPS)
+          maximumAge: isMobile ? 5000 : 30000, // mobile needs fresh, desktop can use older
+          timeout: 10000, // Reduced from 15s to 10s for initial lock
         }
       );
     };
