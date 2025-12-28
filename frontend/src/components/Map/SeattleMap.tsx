@@ -312,6 +312,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
   const [positionHistory, setPositionHistory] = useState<Array<[number, number]>>([]);
   const watchIdRef = useRef<number | null>(null);
   const [shouldCenterOnPosition, setShouldCenterOnPosition] = useState(false);
+  const [geoStatus, setGeoStatus] = useState<'loading' | 'active' | 'denied' | 'unsupported'>('loading');
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -327,10 +328,16 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
 
   // Track live position
   useEffect(() => {
+    console.log('🔍 Geolocation setup starting...');
+    
     if (!navigator.geolocation) {
-      console.warn('Geolocation is not supported by this browser');
+      console.error('❌ Geolocation is not supported by this browser');
+      setGeoStatus('unsupported');
       return;
     }
+
+    console.log('✅ Geolocation API available, requesting position...');
+    setGeoStatus('loading');
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
@@ -343,13 +350,15 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           timestamp: position.timestamp,
         };
 
-        console.log('📍 Position update:', {
+        console.log('📍 Position update SUCCESS:', {
           lat: newPos.lat.toFixed(6),
           lng: newPos.lng.toFixed(6),
+          accuracy: `${newPos.accuracy.toFixed(0)}m`,
           speed: newPos.speed ? `${(newPos.speed * 2.237).toFixed(1)} mph` : 'N/A',
           heading: newPos.heading ? `${newPos.heading.toFixed(0)}°` : 'N/A',
         });
 
+        setGeoStatus('active');
         setLivePosition(newPos);
 
         // Add to history trail (keep last 50 points)
@@ -359,12 +368,19 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         });
       },
       (error) => {
-        console.error('Geolocation error:', error);
+        console.error('❌ Geolocation error:', {
+          code: error.code,
+          message: error.message,
+          PERMISSION_DENIED: error.code === 1,
+          POSITION_UNAVAILABLE: error.code === 2,
+          TIMEOUT: error.code === 3,
+        });
+        setGeoStatus('denied');
       },
       {
         enableHighAccuracy: true,
         maximumAge: 1000,
-        timeout: 5000,
+        timeout: 10000, // Increased timeout to 10 seconds
       }
     );
 
@@ -372,6 +388,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
 
     return () => {
       if (watchIdRef.current !== null) {
+        console.log('🛑 Stopping geolocation watch');
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
     };
@@ -403,6 +420,47 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
 
   return (
     <div ref={mapContainerRef} className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative">
+      {/* Geolocation Status Indicator */}
+      {geoStatus === 'loading' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute top-4 left-4 z-[1000] bg-yellow-600/95 backdrop-blur-lg border-2 border-yellow-400 rounded-xl px-4 py-2 shadow-2xl"
+        >
+          <div className="flex items-center gap-2 text-white text-sm font-bold">
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            <span>Getting GPS location...</span>
+          </div>
+        </motion.div>
+      )}
+      
+      {geoStatus === 'denied' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute top-4 left-4 z-[1000] bg-red-600/95 backdrop-blur-lg border-2 border-red-400 rounded-xl px-4 py-3 shadow-2xl max-w-xs"
+        >
+          <div className="text-white text-sm">
+            <div className="font-bold mb-1">❌ Location Access Denied</div>
+            <div className="text-xs opacity-90">
+              Click the <span className="font-bold">🔒 lock icon</span> in address bar → Location → Allow
+            </div>
+          </div>
+        </motion.div>
+      )}
+      
+      {geoStatus === 'unsupported' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute top-4 left-4 z-[1000] bg-gray-600/95 backdrop-blur-lg border-2 border-gray-400 rounded-xl px-4 py-3 shadow-2xl"
+        >
+          <div className="text-white text-sm font-bold">
+            ⚠️ Geolocation not supported
+          </div>
+        </motion.div>
+      )}
+
       {/* Speed Widget */}
       {livePosition && livePosition.speed !== null && (
         <motion.div
