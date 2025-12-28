@@ -7,7 +7,7 @@ import { AppLayout } from './features/layout';
 import { useTheme } from './features/theme';
 import { Header } from './components/Header/Header';
 import { SurgeAlert } from './components/SurgeAlert';
-import { EventAlertBanner } from './components/Alerts/EventAlertBanner';
+// import { EventAlertBanner } from './components/Alerts/EventAlertBanner'; // Removed - hard to close on iPhone
 import { QuickActionsBar } from './components/QuickActions/QuickActionsBar';
 import { BreakReminder } from './components/Alerts/BreakReminder';
 import { SkeletonHero, SkeletonMap, SkeletonTimeline, SkeletonLeaderboard } from './components/Skeleton/Skeleton';
