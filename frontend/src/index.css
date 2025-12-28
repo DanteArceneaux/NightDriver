@@ -130,7 +130,7 @@
   }
   
   .glass-strong {
-    @apply rounded-[2.5rem];
+    border-radius: 2.5rem;
   }
 
   .touch-target {
@@ -139,13 +139,14 @@
   }
 }
 
-@media (max-width: 430px) {
-  /* Standard iPhone */
+@media (max-width: 429px) {
+  /* Standard iPhone and smaller */
   html {
     font-size: 14px;
   }
   
   .glass-strong {
+    -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
   }
 }

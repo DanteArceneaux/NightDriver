@@ -19,14 +19,9 @@ export function QuickActionsBar({ currentLocation }: QuickActionsBarProps) {
 
   return (
     <>
-      {/* 
-          Optimized for iPhone 16 Pro Max: 
-          - Increased padding for larger thumb reach
-          - Elevated further from the bottom safe area
-          - Wider gap between actions
-      */}
-      <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-[440px]">
-        <div className="bg-gray-900/95 backdrop-blur-2xl rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 p-2 sm:p-4">
+      {/* Quick Actions Bar - Bottom navigation */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-[440px] pb-safe">
+        <div className="bg-gray-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-3 sm:p-4">
           <div className="flex items-center justify-between gap-1">
             {/* Bathroom Finder */}
             <button
