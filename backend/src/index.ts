@@ -59,10 +59,10 @@ app.use('/api', createApiRouter(
 ));
 
 // Root endpoint
-app.get('/', (_req, res) => {
+app.get('/', (_req: express.Request, res: express.Response) => {
   res.json({
     name: 'Seattle Uber Driver Optimizer API',
-    version: '4.1.0',
+    version: '4.2.5',
     features: [
       'Real-time WebSocket updates',
       'Surge detection',
