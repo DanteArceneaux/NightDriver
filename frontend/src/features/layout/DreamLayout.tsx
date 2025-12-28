@@ -157,40 +157,6 @@ export function DreamLayout(props: LayoutProps) {
         )}
       </div>
 
-      {/* ==================== LAYER 1: MAP CONTROLS ==================== */}
-      {/* Map Lock Toggle - Always visible, bottom-left */}
-      <div 
-        className="fixed z-50 pointer-events-auto"
-        style={{
-          bottom: isDrawerOpen ? 'calc(70vh + 16px)' : '200px',
-          left: '16px',
-          transition: 'bottom 0.3s ease-out',
-        }}
-      >
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setMapLocked(!mapLocked)}
-          className={`flex items-center gap-2 px-4 py-3 rounded-2xl backdrop-blur-xl shadow-lg transition-all ${
-            mapLocked
-              ? 'bg-amber-500/90 text-black border-2 border-amber-400'
-              : 'bg-emerald-500/90 text-white border-2 border-emerald-400'
-          }`}
-          style={{ minHeight: '48px', minWidth: '48px' }} // Apple HIG minimum
-        >
-          {mapLocked ? (
-            <>
-              <Lock className="w-5 h-5" />
-              <span className="font-bold text-sm">TAP TO UNLOCK MAP</span>
-            </>
-          ) : (
-            <>
-              <Unlock className="w-5 h-5" />
-              <span className="font-bold text-sm">MAP UNLOCKED</span>
-            </>
-          )}
-        </motion.button>
-      </div>
-
       {/* ==================== LAYER 2: MICRO HUD ==================== */}
       <AnimatePresence>
         {!focusMode && (
@@ -200,19 +166,19 @@ export function DreamLayout(props: LayoutProps) {
             exit={{ y: -100, opacity: 0 }}
             className="fixed left-0 right-0 z-40 pointer-events-none"
             style={{
-              // Safe area for Dynamic Island
+              // Safe area for Dynamic Island + extra padding to avoid overlap
               top: 'max(env(safe-area-inset-top, 16px), 16px)',
               paddingLeft: '16px',
               paddingRight: '16px',
             }}
           >
             {/* Single row HUD - clean, no overlap */}
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
               {/* Left: Status Pills */}
               <div className="flex items-center gap-2 pointer-events-auto">
                 {/* Connection Status */}
                 <div
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold backdrop-blur-xl ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold backdrop-blur-xl shadow-lg ${
                     props.connected
                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
                       : 'bg-red-500/20 text-red-400 border border-red-500/50'
@@ -220,35 +186,46 @@ export function DreamLayout(props: LayoutProps) {
                   style={{ minHeight: '40px' }}
                 >
                   <Radio className="w-3.5 h-3.5" />
-                  <span>{props.connected ? 'LIVE' : 'OFFLINE'}</span>
+                  <span className="hidden sm:inline">{props.connected ? 'LIVE' : 'OFFLINE'}</span>
                 </div>
 
                 {/* GPS Status */}
                 {props.driverLocation && (
                   <div 
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500/20 backdrop-blur-xl border border-cyan-500/50 text-cyan-400 text-xs font-bold"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500/20 backdrop-blur-xl border border-cyan-500/50 text-cyan-400 text-xs font-bold shadow-lg"
                     style={{ minHeight: '40px' }}
                   >
                     <MapPin className="w-3.5 h-3.5" />
-                    <span>GPS</span>
+                    <span className="hidden sm:inline">GPS</span>
                   </div>
                 )}
               </div>
 
-              {/* Right: Earnings + Focus */}
+              {/* Right: Earnings + Focus + Lock */}
               <div className="flex items-center gap-2 pointer-events-auto">
+                {/* Map Lock Toggle - Integrated here */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setMapLocked(!mapLocked)}
+                  className={`p-3 rounded-xl backdrop-blur-xl transition-all shadow-lg ${
+                    mapLocked
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50'
+                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                  }`}
+                  style={{ minHeight: '40px', minWidth: '40px' }}
+                >
+                  {mapLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                </motion.button>
+
                 {/* Earnings Pill */}
                 {progress && (
                   <div 
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/70 backdrop-blur-xl border border-white/20"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/70 backdrop-blur-xl border border-white/20 shadow-lg"
                     style={{ minHeight: '40px' }}
                   >
                     <DollarSign className="w-4 h-4 text-emerald-400" />
                     <span className="text-base font-black text-white">
                       ${progress.currentEarnings.toFixed(0)}
-                    </span>
-                    <span className="text-[10px] text-gray-400 font-medium">
-                      /{progress.dailyGoal}
                     </span>
                   </div>
                 )}
@@ -260,14 +237,14 @@ export function DreamLayout(props: LayoutProps) {
                     setFocusMode(!focusMode);
                     if (!focusMode) setIsDrawerOpen(false);
                   }}
-                  className={`p-3 rounded-xl backdrop-blur-xl transition-all ${
+                  className={`p-3 rounded-xl backdrop-blur-xl transition-all shadow-lg ${
                     focusMode
                       ? 'bg-cyan-500 text-black border-2 border-cyan-400'
                       : 'bg-black/70 text-white border border-white/20'
                   }`}
-                  style={{ minHeight: '44px', minWidth: '44px' }}
+                  style={{ minHeight: '40px', minWidth: '40px' }}
                 >
-                  {focusMode ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                  {focusMode ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </motion.button>
               </div>
             </div>
