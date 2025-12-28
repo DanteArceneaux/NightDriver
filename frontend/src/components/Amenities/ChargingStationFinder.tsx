@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Navigation, DollarSign, Battery } from 'lucide-react';
-import { getBackendUrl, isStaticHost } from '../../lib/api';
+import { getBackendUrl } from '../../lib/api';
 
 interface ChargingStation {
   id: string;
