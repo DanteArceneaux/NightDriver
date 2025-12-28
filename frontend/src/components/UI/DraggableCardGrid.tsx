@@ -23,6 +23,8 @@ interface DraggableCardGridProps {
   className?: string;
   onOrderChange?: (newOrder: string[]) => void;
   showLayoutControls?: boolean; // Show lock/reset buttons
+  externalLocked?: boolean; // Use external lock state (managed by parent)
+  hideLockButton?: boolean; // Hide the lock button (when managed in header)
 }
 
 interface CardState {
@@ -41,12 +43,18 @@ export function DraggableCardGrid({
   className,
   onOrderChange,
   showLayoutControls = true,
+  externalLocked,
+  hideLockButton = false,
 }: DraggableCardGridProps) {
-  // Lock/Edit mode state - default to locked (safe driving mode)
-  const [isLocked, setIsLocked] = useState(() => {
+  // Lock/Edit mode state - use external if provided, otherwise manage internally
+  const [internalLocked, setInternalLocked] = useState(() => {
+    if (externalLocked !== undefined) return externalLocked;
     const saved = SafeStorage.getItem(`${storageKey}-locked`);
     return saved ? JSON.parse(saved) : true;
   });
+  
+  // Use external lock state if provided, otherwise use internal
+  const isLocked = externalLocked !== undefined ? externalLocked : internalLocked;
   // Initialize order from localStorage or default (with version check)
   const [order, setOrder] = useState<string[]>(() => {
     const savedVersion = SafeStorage.getItem(`${storageKey}-version`);
@@ -113,10 +121,12 @@ export function DraggableCardGrid({
     SafeStorage.setItem(`${storageKey}-states`, JSON.stringify(cardStates));
   }, [cardStates, storageKey]);
 
-  // Save lock state to localStorage
+  // Save lock state to localStorage (only if managing internally)
   useEffect(() => {
-    SafeStorage.setItem(`${storageKey}-locked`, JSON.stringify(isLocked));
-  }, [isLocked, storageKey]);
+    if (externalLocked === undefined) {
+      SafeStorage.setItem(`${storageKey}-locked`, JSON.stringify(internalLocked));
+    }
+  }, [internalLocked, storageKey, externalLocked]);
 
   // Get sorted cards based on order
   const sortedCards = order
@@ -212,19 +222,21 @@ export function DraggableCardGrid({
       {/* Layout Controls */}
       {showLayoutControls && (
         <div className="flex items-center justify-end gap-2 mb-4">
-          <button
-            onClick={() => setIsLocked(!isLocked)}
-            className={cn(
-              'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-              isLocked
-                ? 'bg-neon-green/20 text-neon-green border border-neon-green/50'
-                : 'bg-neon-orange/20 text-neon-orange border border-neon-orange/50'
-            )}
-            aria-label={isLocked ? 'Unlock layout to edit' : 'Lock layout to prevent accidental changes'}
-          >
-            {isLocked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
-            <span>{isLocked ? 'Locked' : 'Editing'}</span>
-          </button>
+          {!hideLockButton && (
+            <button
+              onClick={() => setInternalLocked(!internalLocked)}
+              className={cn(
+                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                isLocked
+                  ? 'bg-neon-green/20 text-neon-green border border-neon-green/50'
+                  : 'bg-neon-orange/20 text-neon-orange border border-neon-orange/50'
+              )}
+              aria-label={isLocked ? 'Unlock layout to edit' : 'Lock layout to prevent accidental changes'}
+            >
+              {isLocked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
+              <span>{isLocked ? 'Locked' : 'Editing'}</span>
+            </button>
+          )}
           
           {!isLocked && (
             <>

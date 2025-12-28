@@ -24,6 +24,17 @@ export function NeonCockpitLayout(props: LayoutProps) {
     return (saved as LayoutMode) || 'split';
   });
   
+  // Manage lock state globally for this layout
+  const [isLocked, setIsLocked] = useState(() => {
+    const saved = localStorage.getItem('cockpit-layout-locked');
+    return saved ? JSON.parse(saved) : true; // Default locked for safety
+  });
+  
+  // Save lock state
+  useEffect(() => {
+    localStorage.setItem('cockpit-layout-locked', JSON.stringify(isLocked));
+  }, [isLocked]);
+  
   // Detect screen size
   const [isDesktop, setIsDesktop] = useState(false);
   
@@ -199,6 +210,9 @@ export function NeonCockpitLayout(props: LayoutProps) {
         onRefresh={props.onRefresh}
         weather={props.weather}
         lastUpdate={props.lastUpdate}
+        isLocked={isLocked}
+        onToggleLock={() => setIsLocked(!isLocked)}
+        showLockToggle={true}
       />
 
       {/* Main Content */}
@@ -247,6 +261,8 @@ export function NeonCockpitLayout(props: LayoutProps) {
                 cards={allCards}
                 storageKey="neon-cockpit-stack"
                 showLayoutControls
+                externalLocked={isLocked}
+                hideLockButton={true}
               />
             </div>
           )}
@@ -267,6 +283,8 @@ export function NeonCockpitLayout(props: LayoutProps) {
                   cards={infoCards}
                   storageKey="neon-cockpit-info"
                   showLayoutControls
+                  externalLocked={isLocked}
+                  hideLockButton={true}
                 />
               </div>
             </div>

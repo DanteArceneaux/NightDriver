@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Radio, MapPin, CloudRain, RefreshCw, HelpCircle, Palette, ChevronDown, Settings, BarChart3 } from 'lucide-react';
+import { Radio, MapPin, CloudRain, RefreshCw, HelpCircle, Palette, ChevronDown, Settings, BarChart3, Lock, Unlock } from 'lucide-react';
 import { ScoreLegend } from '../Legend/ScoreLegend';
 import { SettingsModal } from '../Settings/SettingsModal';
 import { AnalyticsView } from '../Analytics/AnalyticsView';
@@ -15,9 +15,12 @@ interface HeaderProps {
   onRefresh: () => void;
   weather?: { temp: number; description: string };
   lastUpdate?: Date | null;
+  isLocked?: boolean;
+  onToggleLock?: () => void;
+  showLockToggle?: boolean;
 }
 
-export function Header({ connected, countdown, hasLocation, onRefresh, weather, lastUpdate }: HeaderProps) {
+export function Header({ connected, countdown, hasLocation, onRefresh, weather, lastUpdate, isLocked = true, onToggleLock, showLockToggle = false }: HeaderProps) {
   const [showLegend, setShowLegend] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -95,8 +98,27 @@ export function Header({ connected, countdown, hasLocation, onRefresh, weather, 
               </div>
             </div>
 
-            {/* Right: Countdown Ring + Refresh */}
-            <div className="flex items-center gap-4">
+            {/* Right: Lock Toggle + Countdown Ring + Actions */}
+            <div className="flex items-center gap-3">
+              {/* Lock/Unlock Toggle */}
+              {showLockToggle && onToggleLock && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onToggleLock}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                    isLocked
+                      ? 'bg-neon-green/20 text-neon-green border-neon-green/50 glow-green-sm'
+                      : 'bg-neon-orange/20 text-neon-orange border-neon-orange/50 glow-orange-sm'
+                  }`}
+                  title={isLocked ? 'Locked: Safe for driving' : 'Editing: Customize layout'}
+                  aria-label={isLocked ? 'Unlock layout to edit' : 'Lock layout to prevent accidental changes'}
+                >
+                  {isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                  <span className="hidden sm:inline">{isLocked ? 'Locked' : 'Edit'}</span>
+                </motion.button>
+              )}
+
               {/* Circular Countdown */}
               <div className="relative w-12 h-12 flex items-center justify-center">
                 <svg className="absolute w-full h-full transform -rotate-90">
