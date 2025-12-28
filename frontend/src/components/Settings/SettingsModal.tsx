@@ -28,12 +28,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const getCurrentColorScheme = (): ColorScheme => {
     switch (currentThemeId) {
       case 'dream':
-        return settings.neonColorScheme; // Dream uses neon color scheme
-      case 'neon':
-        return settings.neonColorScheme;
+        return settings.proColorScheme; // Dream uses pro color scheme in v8.0
+      // 'neon' case removed in v8.0
       case 'pro':
         return settings.proColorScheme;
-      // 'hud' case removed - Game HUD eliminated
       case 'car':
         return settings.carColorScheme;
       default:

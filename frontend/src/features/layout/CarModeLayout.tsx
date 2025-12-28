@@ -42,7 +42,7 @@ export function CarModeLayout({ zones, topPick, driverLocation, onZoneClick }: L
         <div className="flex items-center justify-between">
           <motion.button
             whileTap={{ scale: 0.95 }}
-            onClick={() => setThemeId('neon')}
+            onClick={() => setThemeId('pro')}
             className="flex items-center gap-3 px-6 py-4 bg-gray-800 rounded-2xl text-white font-black text-xl"
           >
             <ArrowLeft className="w-8 h-8" />

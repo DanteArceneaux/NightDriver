@@ -7,7 +7,6 @@ import type { ColorScheme } from '../settings/types';
 export function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
   const { id: themeId } = useTheme();
   const {
-    neonColorScheme,
     proColorScheme,
     carColorScheme,
   } = useSettingsStore();
@@ -16,11 +15,9 @@ export function ColorSchemeProvider({ children }: { children: React.ReactNode })
     let colorScheme: ColorScheme;
     switch (themeId) {
       case 'dream':
-        colorScheme = neonColorScheme; // Use neon color scheme for Dream theme
+        colorScheme = proColorScheme; // Dream uses pro color scheme in v8.0
         break;
-      case 'neon':
-        colorScheme = neonColorScheme;
-        break;
+      // 'neon' case removed in v8.0
       case 'pro':
         colorScheme = proColorScheme;
         break;
@@ -31,13 +28,13 @@ export function ColorSchemeProvider({ children }: { children: React.ReactNode })
         colorScheme = 'default';
     }
 
-    const colorVars = getColorVars(themeId as 'neon' | 'pro' | 'car' | 'dream', colorScheme);
+    const colorVars = getColorVars(themeId as 'pro' | 'car' | 'dream', colorScheme);
     const root = document.documentElement;
 
     Object.entries(colorVars).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });
-  }, [themeId, neonColorScheme, proColorScheme, carColorScheme]);
+  }, [themeId, proColorScheme, carColorScheme]);
 
   return <>{children}</>;
 }

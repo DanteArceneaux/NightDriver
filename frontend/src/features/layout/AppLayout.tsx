@@ -1,8 +1,7 @@
 import { useTheme } from '../theme';
 import { DreamLayout } from './DreamLayout';
-import { NeonCockpitLayout } from './NeonCockpitLayout';
+// NeonCockpitLayout removed in v8.0
 import { ProDashboardLayout } from './ProDashboardLayout';
-// GameHudLayout removed per user request
 import { CarModeLayout } from './CarModeLayout';
 import type { LayoutProps } from './types';
 
@@ -12,15 +11,13 @@ export function AppLayout(props: LayoutProps) {
   switch (layoutId) {
     case 'dream':
       return <DreamLayout {...props} />;
-    case 'cockpit':
-      return <NeonCockpitLayout {...props} />;
+    // 'cockpit' case removed - Neon Cockpit eliminated in v8.0
     case 'dashboard':
       return <ProDashboardLayout {...props} />;
-    // 'hud' case removed - Game HUD eliminated per user request
     case 'car':
       return <CarModeLayout {...props} />;
     default:
-      return <DreamLayout {...props} />; // Dream Layout is now the default
+      return <ProDashboardLayout {...props} />; // Pro Dashboard is default in v8.0
   }
 }
 

@@ -1,53 +1,6 @@
 import type { Theme, ThemeTokens } from './types';
 
-// Neon Cockpit Theme (current style, enhanced)
-const neonTokens: ThemeTokens = {
-  // Background
-  bgPrimary: 'bg-gradient-to-b from-[#0a0e27] via-[#1a1f3a] to-[#0f1419]',
-  bgSecondary: 'bg-white/5 backdrop-blur-xl',
-  bgTertiary: 'bg-white/10 backdrop-blur-xl',
-  bgGradient: 'bg-gradient-to-br from-neon-pink/30 via-neon-purple/20 to-transparent',
-  
-  // Cards
-  cardBg: 'glass-strong',
-  cardBorder: 'border border-white/10',
-  cardHover: 'hover:border-neon-cyan/50 hover:shadow-neon-cyan',
-  
-  // Glass effects
-  glassBg: 'bg-white/5 backdrop-blur-md',
-  glassBorder: 'border border-white/10',
-  
-  // Text
-  textPrimary: 'text-white',
-  textSecondary: 'text-gray-300',
-  textMuted: 'text-gray-500',
-  primaryText: 'text-white',
-  
-  // Accent colors
-  accentSurge: 'text-neon-pink',
-  accentHot: 'text-neon-orange',
-  accentWarm: 'text-neon-cyan',
-  accentCool: 'text-blue-400',
-  
-  // Effects
-  glow: 'shadow-neon-cyan',
-  shadow: 'shadow-2xl shadow-black/50',
-  backdrop: 'backdrop-blur-xl',
-  
-  // Buttons
-  btnPrimary: 'bg-gradient-to-r from-neon-cyan/30 to-neon-purple/30 border border-neon-cyan/50 hover:from-neon-cyan/40 hover:to-neon-purple/40',
-  btnPrimaryHover: 'hover:scale-105',
-  btnSecondary: 'bg-white/5 border border-white/20 hover:bg-white/10',
-  btnSecondaryHover: 'hover:border-white/40',
-  
-  // Typography
-  fontDisplay: 'font-black tracking-tight',
-  fontBody: 'font-medium',
-  
-  // Spacing
-  spacing: 'space-y-6',
-  borderRadius: 'rounded-2xl',
-};
+// Neon Cockpit Theme removed in v8.0
 
 // Pro Dashboard Theme (clean, minimal, premium)
 const proTokens: ThemeTokens = {
@@ -205,19 +158,13 @@ export const themes: Record<string, Theme> = {
     layoutId: 'dream',
     tokens: dreamTokens,
   },
-  neon: {
-    id: 'neon',
-    name: 'Neon Cockpit',
-    layoutId: 'cockpit',
-    tokens: neonTokens,
-  },
+  // Neon Cockpit removed in v8.0
   pro: {
     id: 'pro',
     name: 'Pro Dashboard',
     layoutId: 'dashboard',
     tokens: proTokens,
   },
-  // Game HUD removed per user request
   car: {
     id: 'car',
     name: 'Car Mode',

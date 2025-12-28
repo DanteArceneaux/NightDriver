@@ -1,14 +1,6 @@
 import type { ColorScheme } from './types';
 
-// Color scheme definitions for each theme
-export const neonColorSchemes: Record<ColorScheme, { primary: string; secondary: string; accent: string }> = {
-  default: { primary: '#00ffee', secondary: '#a855f7', accent: '#ff006e' },
-  blue: { primary: '#3b82f6', secondary: '#60a5fa', accent: '#1d4ed8' },
-  purple: { primary: '#a855f7', secondary: '#c084fc', accent: '#7e22ce' },
-  green: { primary: '#10b981', secondary: '#34d399', accent: '#059669' },
-  orange: { primary: '#f97316', secondary: '#fb923c', accent: '#ea580c' },
-  red: { primary: '#ef4444', secondary: '#f87171', accent: '#dc2626' },
-};
+// neonColorSchemes removed in v8.0
 
 export const proColorSchemes: Record<ColorScheme, { primary: string; secondary: string; accent: string }> = {
   default: { primary: '#3b82f6', secondary: '#60a5fa', accent: '#1d4ed8' },
@@ -30,12 +22,12 @@ export const carColorSchemes: Record<ColorScheme, { primary: string; secondary: 
   red: { primary: '#ef4444', secondary: '#dc2626', accent: '#b91c1c' },
 };
 
-// Dream color schemes (same as neon for now)
-export const dreamColorSchemes = neonColorSchemes;
+// Dream color schemes use pro colors in v8.0
+export const dreamColorSchemes = proColorSchemes;
 
 // Helper to get CSS variables for a color scheme
 export function getColorVars(
-  theme: 'dream' | 'neon' | 'pro' | 'car',
+  theme: 'dream' | 'pro' | 'car', // 'neon' removed in v8.0
   scheme: ColorScheme
 ): Record<string, string> {
   let colors;
@@ -43,13 +35,10 @@ export function getColorVars(
     case 'dream':
       colors = dreamColorSchemes[scheme];
       break;
-    case 'neon':
-      colors = neonColorSchemes[scheme];
-      break;
+    // 'neon' case removed in v8.0
     case 'pro':
       colors = proColorSchemes[scheme];
       break;
-    // 'hud' case removed - Game HUD eliminated
     case 'car':
       colors = carColorSchemes[scheme];
       break;
