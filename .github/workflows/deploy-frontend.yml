@@ -33,11 +33,20 @@ jobs:
           echo "DEPLOYMENT_URL=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
 
       - name: Wait for Vercel Deployment to be Ready
-        uses: nev7n/wait_for_deploy-action@v1.2.0
-        with:
-          url: ${{ steps.get_url.outputs.DEPLOYMENT_URL }}
-          timeout: 300 # Wait for up to 5 minutes
-          interval: 10 # Check every 10 seconds
+        run: |
+          echo "Waiting for deployment at ${{ steps.get_url.outputs.DEPLOYMENT_URL }}"
+          for i in $(seq 1 30);
+          do
+            if curl -s -f -o /dev/null ${{ steps.get_url.outputs.DEPLOYMENT_URL }};
+            then
+              echo "Deployment is ready!";
+              exit 0;
+            fi;
+            echo "Attempt $i: Deployment not ready yet, waiting 10 seconds...";
+            sleep 10;
+          done;
+          echo "Deployment timed out after 5 minutes.";
+          exit 1;
 
       - name: Verify Frontend Accessibility
         run: |
