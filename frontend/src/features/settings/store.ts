@@ -5,7 +5,7 @@ import { defaultSettings } from './types';
 
 interface SettingsStore extends AppSettings {
   updateSettings: (settings: Partial<AppSettings>) => void;
-  setColorScheme: (theme: 'neon' | 'pro' | 'hud' | 'car', scheme: ColorScheme) => void;
+  setColorScheme: (theme: 'dream' | 'neon' | 'pro' | 'hud' | 'car', scheme: ColorScheme) => void;
   togglePreferredZone: (zoneId: string) => void;
   toggleAvoidZone: (zoneId: string) => void;
   reset: () => void;

@@ -27,6 +27,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   const getCurrentColorScheme = (): ColorScheme => {
     switch (currentThemeId) {
+      case 'dream':
+        return settings.neonColorScheme; // Dream uses neon color scheme
       case 'neon':
         return settings.neonColorScheme;
       case 'pro':
