@@ -232,22 +232,22 @@ function CenterOnPositionHandler({
   return null;
 }
 
-// Create custom current position icon (Tesla-like car)
-function createCurrentPositionIcon(heading: number | null) {
-  const rotation = heading !== null ? heading : 0;
-  
+// Create custom current position icon (Tesla-like car) - Memoized to prevent flashing
+// Note: We don't rotate the icon itself anymore, just use a static icon
+function createCurrentPositionIcon() {
   return L.divIcon({
     className: 'current-position-marker',
     html: `
-      <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; transform: rotate(${rotation}deg);">
-        <!-- Pulsing background -->
-        <div class="animate-pulse" style="
+      <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+        <!-- Pulsing background (smooth animation via CSS) -->
+        <div style="
           position: absolute;
           width: 40px;
           height: 40px;
           border: 2px solid #ef4444;
           border-radius: 50%;
           background: rgba(239, 68, 68, 0.1);
+          animation: pulseGlow 2s ease-in-out infinite;
         "></div>
         <!-- Tesla-style car icon -->
         <svg width="32" height="32" viewBox="0 0 24 24" style="position: relative; z-index: 10; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));">
@@ -266,6 +266,18 @@ function createCurrentPositionIcon(heading: number | null) {
           </g>
         </svg>
       </div>
+      <style>
+        @keyframes pulseGlow {
+          0%, 100% { 
+            transform: scale(1); 
+            opacity: 0.6; 
+          }
+          50% { 
+            transform: scale(1.1); 
+            opacity: 0.9; 
+          }
+        }
+      </style>
     `,
     iconSize: [48, 48],
     iconAnchor: [24, 24],
@@ -649,7 +661,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
             {/* Position Marker */}
             <Marker
               position={[livePosition.lat, livePosition.lng]}
-              icon={createCurrentPositionIcon(livePosition.heading)}
+              icon={createCurrentPositionIcon()}
             >
               <Tooltip direction="top" offset={[0, -20]} opacity={1} permanent={false}>
                 <div className="text-sm">
