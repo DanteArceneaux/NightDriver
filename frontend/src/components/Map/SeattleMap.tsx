@@ -232,55 +232,70 @@ function CenterOnPositionHandler({
   return null;
 }
 
-// Create custom current position icon (Tesla-like car) - Memoized to prevent flashing
-// Note: We don't rotate the icon itself anymore, just use a static icon
+// Create custom current position icon with Tesla emblem
 function createCurrentPositionIcon() {
   return L.divIcon({
     className: 'current-position-marker',
     html: `
-      <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-        <!-- Pulsing background (smooth animation via CSS) -->
+      <div style="position: relative; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+        <!-- Outer pulsing ring -->
         <div style="
           position: absolute;
-          width: 40px;
-          height: 40px;
-          border: 2px solid #ef4444;
+          width: 56px;
+          height: 56px;
+          border: 3px solid #e82127;
           border-radius: 50%;
-          background: rgba(239, 68, 68, 0.1);
-          animation: pulseGlow 2s ease-in-out infinite;
+          animation: teslaPulse 2s ease-in-out infinite;
         "></div>
-        <!-- Tesla-style car icon -->
-        <svg width="32" height="32" viewBox="0 0 24 24" style="position: relative; z-index: 10; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));">
-          <!-- Car body -->
-          <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5H6.5c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z" fill="#ef4444" stroke="#dc2626" stroke-width="1"/>
-          <!-- Windshield -->
-          <path d="M6.5 7h11l1.5 4H5l1.5-4z" fill="#fca5a5" opacity="0.8"/>
-          <!-- Left wheel -->
-          <circle cx="7.5" cy="16" r="1.5" fill="#1f2937" stroke="#4b5563" stroke-width="0.5"/>
-          <!-- Right wheel -->
-          <circle cx="16.5" cy="16" r="1.5" fill="#1f2937" stroke="#4b5563" stroke-width="0.5"/>
-          <!-- Tesla "T" badge (front of car) -->
-          <g transform="translate(12, 8)">
-            <rect x="-1" y="-1.5" width="2" height="1" fill="white" opacity="0.9"/>
-            <rect x="-0.5" y="-0.5" width="1" height="2" fill="white" opacity="0.9"/>
-          </g>
+        <!-- Inner solid circle background -->
+        <div style="
+          position: absolute;
+          width: 44px;
+          height: 44px;
+          background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+          border-radius: 50%;
+          border: 2px solid #e82127;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+        "></div>
+        <!-- Tesla "T" Logo -->
+        <svg width="28" height="28" viewBox="0 0 100 100" style="position: relative; z-index: 10;">
+          <!-- Tesla T shape -->
+          <path d="M50 10 L50 90 M20 10 L80 10" 
+                stroke="#e82127" 
+                stroke-width="14" 
+                stroke-linecap="round" 
+                fill="none"/>
+          <!-- Highlight on T -->
+          <path d="M50 10 L50 85" 
+                stroke="url(#teslaGradient)" 
+                stroke-width="8" 
+                stroke-linecap="round" 
+                fill="none"/>
+          <defs>
+            <linearGradient id="teslaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#ff4444"/>
+              <stop offset="100%" style="stop-color:#cc0000"/>
+            </linearGradient>
+          </defs>
         </svg>
       </div>
       <style>
-        @keyframes pulseGlow {
+        @keyframes teslaPulse {
           0%, 100% { 
             transform: scale(1); 
-            opacity: 0.6; 
+            opacity: 0.7;
+            box-shadow: 0 0 0 0 rgba(232, 33, 39, 0.4);
           }
           50% { 
-            transform: scale(1.1); 
-            opacity: 0.9; 
+            transform: scale(1.15); 
+            opacity: 1;
+            box-shadow: 0 0 20px 5px rgba(232, 33, 39, 0.3);
           }
         }
       </style>
     `,
-    iconSize: [48, 48],
-    iconAnchor: [24, 24],
+    iconSize: [56, 56],
+    iconAnchor: [28, 28],
   });
 }
 
@@ -421,13 +436,16 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
       {/* Center on Position Button */}
       {livePosition && (
         <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => setShouldCenterOnPosition(true)}
-          className="absolute bottom-4 right-4 z-[1000] bg-gray-900/95 backdrop-blur-lg border-2 border-cyan-500/50 rounded-full p-4 shadow-2xl hover:border-cyan-400 transition-all"
-          title="Center on my location"
+          className="absolute bottom-4 right-4 z-[1000] bg-gradient-to-r from-red-600 to-red-700 backdrop-blur-lg border-2 border-red-400 rounded-2xl px-4 py-3 shadow-2xl hover:from-red-500 hover:to-red-600 transition-all flex items-center gap-2"
+          title="Center on my Tesla"
         >
-          <Crosshair className="w-6 h-6 text-cyan-400" />
+          <Crosshair className="w-5 h-5 text-white" />
+          <span className="text-white font-bold text-sm">Center</span>
         </motion.button>
       )}
 
