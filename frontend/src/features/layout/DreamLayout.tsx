@@ -181,7 +181,7 @@ export function DreamLayout(props: LayoutProps) {
             }}
           >
             {/* Single row HUD - clean, no overlap */}
-            <div className="flex items-center justify-between gap-3 max-w-7xl mx-auto">
+            <div className="flex items-center justify-between gap-2 sm:gap-3 max-w-7xl mx-auto flex-nowrap">
               {/* Left: Status Pills (Auto-collapsing on small mobile) */}
               <div className="flex items-center gap-2 pointer-events-auto flex-shrink-0">
                 {/* Connection Status */}
@@ -230,12 +230,12 @@ export function DreamLayout(props: LayoutProps) {
               </div>
 
               {/* Right: Actions (Lock, Theme, Settings, Eye) */}
-              <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto flex-shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3 pointer-events-auto flex-shrink-0">
                 {/* Map Lock Toggle */}
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setMapLocked(!mapLocked)}
-                  className={`p-2.5 rounded-xl backdrop-blur-xl transition-all shadow-lg border ${
+                  className={`p-2 xs:p-2.5 rounded-xl backdrop-blur-xl transition-all shadow-lg border ${
                     mapLocked
                       ? 'bg-amber-500/20 text-amber-400 border-amber-500/50'
                       : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
@@ -243,7 +243,7 @@ export function DreamLayout(props: LayoutProps) {
                   style={{ minHeight: '40px', minWidth: '40px' }}
                   title={mapLocked ? "Unlock Map" : "Lock Map"}
                 >
-                  {mapLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                  {mapLocked ? <Lock className="w-3.5 h-3.5 xs:w-4 xs:h-4" /> : <Unlock className="w-3.5 h-3.5 xs:w-4 xs:h-4" />}
                 </motion.button>
 
                 {/* Theme Selector Toggle */}
@@ -251,13 +251,13 @@ export function DreamLayout(props: LayoutProps) {
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setShowThemeMenu(!showThemeMenu)}
-                    className={`p-2.5 rounded-xl backdrop-blur-xl transition-all shadow-lg border ${
+                    className={`p-2 xs:p-2.5 rounded-xl backdrop-blur-xl transition-all shadow-lg border ${
                       showThemeMenu ? 'bg-theme-primary text-black' : 'bg-black/60 text-white border-white/10'
                     }`}
                     style={{ minHeight: '40px', minWidth: '40px' }}
                     title="Switch Layout"
                   >
-                    <Palette className="w-4 h-4" />
+                    <Palette className="w-3.5 h-3.5 xs:w-4 xs:h-4" />
                   </motion.button>
 
                   <AnimatePresence>
@@ -300,11 +300,11 @@ export function DreamLayout(props: LayoutProps) {
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setShowSettings(true)}
-                  className="p-2.5 rounded-xl backdrop-blur-xl bg-black/60 text-white border border-white/10 shadow-lg"
+                  className="p-2 xs:p-2.5 rounded-xl backdrop-blur-xl bg-black/60 text-white border border-white/10 shadow-lg"
                   style={{ minHeight: '40px', minWidth: '40px' }}
                   title="Settings"
                 >
-                  <SettingsIcon className="w-4 h-4" />
+                  <SettingsIcon className="w-3.5 h-3.5 xs:w-4 xs:h-4" />
                 </motion.button>
 
                 {/* Focus Mode Toggle */}
@@ -314,7 +314,7 @@ export function DreamLayout(props: LayoutProps) {
                     setFocusMode(!focusMode);
                     if (!focusMode) setIsDrawerOpen(false);
                   }}
-                  className={`p-2.5 rounded-xl backdrop-blur-xl transition-all shadow-lg border ${
+                  className={`p-2 xs:p-2.5 rounded-xl backdrop-blur-xl transition-all shadow-lg border ${
                     focusMode
                       ? 'bg-cyan-500 text-black border-cyan-400'
                       : 'bg-black/60 text-white border-white/10'
@@ -322,7 +322,7 @@ export function DreamLayout(props: LayoutProps) {
                   style={{ minHeight: '40px', minWidth: '40px' }}
                   title="Toggle Focus Mode"
                 >
-                  {focusMode ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  {focusMode ? <Eye className="w-3.5 h-3.5 xs:w-4 xs:h-4" /> : <EyeOff className="w-3.5 h-3.5 xs:w-4 xs:h-4" />}
                 </motion.button>
               </div>
             </div>
