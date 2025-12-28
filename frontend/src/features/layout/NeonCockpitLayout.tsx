@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { TrendingUp, Calendar, Activity, Trophy, Map, Navigation, LayoutGrid, Columns2 } from 'lucide-react';
+import { TrendingUp, Calendar, Activity, Trophy, Map, Navigation, LayoutGrid, Columns2, DollarSign, Car } from 'lucide-react';
 import type { LayoutProps } from './types';
 import { Header } from '../../components/Header/Header';
 import { SeattleMap } from '../../components/Map/SeattleMap';
@@ -10,6 +10,8 @@ import { EventsPanel } from '../../components/Events/EventsPanel';
 import { Leaderboard } from '../../components/ZoneList/Leaderboard';
 import { ZoneDetailSheet } from '../../components/ZoneDetail/ZoneDetailSheet';
 import { DraggableCardGrid, CardConfig } from '../../components/UI/DraggableCardGrid';
+import { EarningsCard } from '../../components/Consolidated/EarningsCard';
+import { VehicleCard } from '../../components/Consolidated/VehicleCard';
 import { motion } from 'framer-motion';
 
 type LayoutMode = 'stack' | 'split';
@@ -68,6 +70,30 @@ export function NeonCockpitLayout(props: LayoutProps) {
 
   // Define other cards (for right panel in split mode, or all cards in stack mode)
   const infoCards: CardConfig[] = useMemo(() => [
+    {
+      id: 'earnings',
+      title: 'Earnings & Goals',
+      icon: <DollarSign className="w-4 h-4 text-theme-primary" />,
+      content: <EarningsCard />,
+      defaultHeight: 450,
+      minHeight: 350,
+      maxHeight: 600,
+      collapsible: true,
+      resizable: true,
+      allowScroll: true,
+    },
+    {
+      id: 'vehicle',
+      title: 'Vehicle Status',
+      icon: <Car className="w-4 h-4 text-neon-green" />,
+      content: <VehicleCard />,
+      defaultHeight: 350,
+      minHeight: 250,
+      maxHeight: 500,
+      collapsible: true,
+      resizable: true,
+      allowScroll: true,
+    },
     {
       id: 'top-pick',
       title: 'Top Pick',

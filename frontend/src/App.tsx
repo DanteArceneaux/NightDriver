@@ -6,13 +6,9 @@ import { useAutoRefresh } from './hooks/useAutoRefresh';
 import { AppLayout } from './features/layout';
 import { Header } from './components/Header/Header';
 import { SurgeAlert } from './components/SurgeAlert';
-import { QuickLogButton } from './components/Trip/QuickLogButton';
 import { EventAlertBanner } from './components/Alerts/EventAlertBanner';
-import { GoalProgressWidget } from './components/Earnings/GoalProgressWidget';
-import { QuickEarningsButtons } from './components/Earnings/QuickEarningsButtons';
 import { QuickActionsBar } from './components/QuickActions/QuickActionsBar';
 import { BreakReminder } from './components/Alerts/BreakReminder';
-import { TeslaBatteryWidget } from './components/Vehicle/TeslaBatteryWidget';
 import { SkeletonHero, SkeletonMap, SkeletonTimeline, SkeletonLeaderboard } from './components/Skeleton/Skeleton';
 import { requestNotificationPermission } from './lib/notifications';
 import { calculateDistance, estimateDriveTime, calculateEfficiency } from './lib/distance';
@@ -132,23 +128,14 @@ function App() {
       {/* Event Alerts */}
       <EventAlertBanner />
 
-      {/* Goal Progress Widget */}
-      <GoalProgressWidget />
-
-      {/* Quick Earnings Buttons */}
-      <QuickEarningsButtons />
-
-      {/* Quick Log Button */}
-      <QuickLogButton zones={sortedZones} />
-
       {/* Break Reminder (every 4 hours) */}
       <BreakReminder shiftStartTime={shiftStartTime} />
 
-      {/* Tesla Battery Widget */}
-      <TeslaBatteryWidget />
-
-      {/* Quick Actions Bar (Bathroom, Charging, Shift Planner) */}
-      <QuickActionsBar currentLocation={driverLocation || { lat: 47.6062, lng: -122.3321 }} />
+      {/* Quick Actions Bar (Bathroom, Charging, Shift Planner, Log Trip) */}
+      <QuickActionsBar 
+        currentLocation={driverLocation || { lat: 47.6062, lng: -122.3321 }} 
+        zones={sortedZones}
+      />
 
       {/* Theme-aware Layout */}
       <AppLayout
