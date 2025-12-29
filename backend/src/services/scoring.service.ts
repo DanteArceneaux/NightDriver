@@ -51,14 +51,9 @@ export class ScoringService {
   }
 
   private buildScoringZones(): Zone[] {
-    // Any legacy zone whose ID exists in microZones is replaced (avoid duplicates).
-    // This keeps the system future-proof as we add more micro-zones over time.
-    const replacedLegacyZoneIds = new Set<string>(microZones.map(z => z.id));
-
-    const legacyOnlyZones = legacyZones.filter(z => !replacedLegacyZoneIds.has(z.id));
-
-    // Micro-zones first so they show up at top of any non-sorted lists
-    return [...microZones, ...legacyOnlyZones];
+    // POLYGON FIX: Use ONLY legacy zones (29 macro zones) to match GeoJSON polygons
+    // Micro-zones disabled for v9.1.2 until we have polygon definitions for all 101 micro-zones
+    return legacyZones;
   }
 
   calculateZoneScores(
