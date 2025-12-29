@@ -1,22 +1,24 @@
 import { useMemo } from 'react';
 import { Polygon, Tooltip } from 'react-leaflet';
-import { cellToBoundary, polygonToCells, latLngToCell } from 'h3-js';
+import { cellToBoundary, latLngToCell, gridDisk } from 'h3-js';
 import type { ZoneScore } from '../../types';
 import allZonesGeoJSON from '../../data/allZones.json';
 
-// H3 Resolution: 8 is better for city-wide visibility (~0.7km edge)
-// 9 was too fine (~170m) and hard to see at zoom 9-11
+// H3 Resolution: 8 (approx 0.7km edge) - Good for city blocks
 const H3_RESOLUTION = 8; 
+
+// Radius to fill for each zone (in hex rings)
+// Adjust based on typical zone size
+const FILL_RADIUS = 2; 
 
 interface HexGridLayerProps {
   zones: ZoneScore[];
   onZoneClick?: (zone: ZoneScore) => void;
 }
 
-// Uber-like color scale
 function getHexStyle(score: number) {
-  let fillColor = '#3b82f6'; // Blue
-  let fillOpacity = 0.4; // Higher base opacity
+  let fillColor = '#3b82f6'; 
+  let fillOpacity = 0.5;
 
   if (score >= 85) {
     fillColor = '#ff0055'; // Neon Pink
@@ -31,7 +33,6 @@ function getHexStyle(score: number) {
     fillColor = '#06b6d4'; // Neon Cyan
     fillOpacity = 0.5;
   } else {
-    // Low score
     fillColor = '#3b82f6';
     fillOpacity = 0.3;
   }
@@ -39,9 +40,20 @@ function getHexStyle(score: number) {
   return {
     fillColor,
     fillOpacity,
-    stroke: false, // Seamless
+    stroke: false,
     weight: 0,
   };
+}
+
+// Helper to find polygon centroid
+function getPolygonCentroid(coordinates: number[][]): [number, number] {
+  let latSum = 0;
+  let lngSum = 0;
+  coordinates.forEach(coord => {
+    lngSum += coord[0];
+    latSum += coord[1];
+  });
+  return [latSum / coordinates.length, lngSum / coordinates.length];
 }
 
 export function HexGridLayer({ zones, onZoneClick }: HexGridLayerProps) {
@@ -55,21 +67,22 @@ export function HexGridLayer({ zones, onZoneClick }: HexGridLayerProps) {
       
       if (!zoneData) return;
 
-      // GeoJSON [lng, lat] -> H3 [lat, lng]
-      const coordinates = feature.geometry.coordinates[0].map((coord: number[]) => [coord[1], coord[0]]);
-      
       try {
-        let hexes = polygonToCells(coordinates, H3_RESOLUTION, true);
-        
-        // Fallback for small zones that might get missed by H3 grid center-point check
-        if (hexes.length === 0) {
-           const centerLat = coordinates[0][0];
-           const centerLng = coordinates[0][1];
-           hexes = [latLngToCell(centerLat, centerLng, H3_RESOLUTION)];
-        }
+        // Robust Method: Centroid + Radial Fill
+        // 1. Get Centroid
+        // GeoJSON coordinates are [lng, lat]
+        const rawCoords = feature.geometry.coordinates[0];
+        const [centerLat, centerLng] = getPolygonCentroid(rawCoords);
+
+        // 2. Get Center Hex
+        const centerHex = latLngToCell(centerLat, centerLng, H3_RESOLUTION);
+
+        // 3. Fill neighbors (create a cluster of hexes)
+        const hexes = gridDisk(centerHex, FILL_RADIUS);
 
         hexes.forEach((h3Index: string) => {
           const existing = hexMap.get(h3Index);
+          // Overwrite if this zone has a higher score
           if (!existing || zoneData.score > existing.score) {
             hexMap.set(h3Index, {
               score: zoneData.score,
