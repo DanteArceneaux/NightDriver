@@ -27,7 +27,7 @@ export interface ZoneScoreFactors {
   hotelCheckout?: number;
   hospitalShifts?: number;
   uwClasses?: number;
-  pulse?: number;
+  // pulse removed - was fake/unused data
 }
 
 export interface ZoneScore {

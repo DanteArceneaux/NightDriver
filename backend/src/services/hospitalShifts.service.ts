@@ -47,7 +47,8 @@ export class HospitalShiftsService {
     if (active.length === 0) return 0;
 
     // Prefer the strongest window if multiple overlap (rare)
-    const base = active.some(w => w.label.includes('Major')) ? 12 : 9;
+    // REDUCED from 12/9 → 8/6 (33% reduction)
+    const base = active.some(w => w.label.includes('Major')) ? 8 : 6;
     return Math.round(base * scale);
   }
 
@@ -170,6 +171,7 @@ export class HospitalShiftsService {
     return d;
   }
 }
+
 
 
 

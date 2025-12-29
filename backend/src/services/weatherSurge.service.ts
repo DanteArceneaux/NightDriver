@@ -20,25 +20,25 @@ export class WeatherSurgeService {
   calculateSurgeMultiplier(weather: WeatherConditions): number {
     let multiplier = 1.0;
 
-    // Rain = major surge
+    // Rain = major surge (INCREASED: 0.4 → 1.0 = 2x total)
     if (weather.isRaining) {
-      multiplier += 0.4;
+      multiplier += 1.0;
     }
 
-    // Cold temperature = people less likely to walk
+    // Cold temperature = people less likely to walk (BOOSTED)
     if (weather.temperature < 40) {
-      multiplier += 0.15;
+      multiplier += 0.3;
     } else if (weather.temperature < 50) {
-      multiplier += 0.1;
+      multiplier += 0.2;
     }
 
-    // Check for heavy rain indicators
+    // Check for heavy rain indicators (BOOSTED)
     const desc = weather.description.toLowerCase();
     if (desc.includes('heavy') || desc.includes('storm')) {
-      multiplier += 0.3;
+      multiplier += 0.5;
     }
 
-    return Math.min(2.0, multiplier); // Cap at 2x
+    return Math.min(2.5, multiplier); // Cap at 2.5x (increased from 2.0x)
   }
 
   /**
@@ -93,6 +93,7 @@ export class WeatherSurgeService {
     return recommendations;
   }
 }
+
 
 
 

@@ -12,7 +12,6 @@ import { TrafficService } from './services/traffic.service.js';
 import { RoutingService } from './services/routing.service.js';
 import { SurgeService } from './services/surge.service.js';
 import { EventAlertsService } from './services/eventAlerts.service.js';
-import { DriverPulseService } from './services/driverPulse.service.js';
 import { TeslaService } from './services/tesla.service.js';
 import type { WeatherConditions, Event, FlightArrival } from './types/index.js';
 import {
@@ -46,7 +45,6 @@ const routingService = new RoutingService(config.apis.traffic.key); // TomTom ke
 const scoringService = new ScoringService();
 const surgeService = new SurgeService();
 const eventAlertsService = new EventAlertsService();
-const driverPulseService = new DriverPulseService();
 const teslaService = new TeslaService();
 
 // Routes
@@ -58,7 +56,6 @@ app.use('/api', createApiRouter(
   scoringService,
   routingService,
   eventAlertsService,
-  driverPulseService,
   teslaService
 ));
 
@@ -75,7 +72,6 @@ app.get('/', (_req: express.Request, res: express.Response) => {
       'Surge detection',
       'Micro-zones (granular Seattle scoring)',
       'Money-makers intelligence (ferries, hotel checkout, hospitals, UW bursts)',
-      'Driver Pulse (crowdsourced ground truth)',
       'Trip chain recommendations',
     ],
     endpoints: {
@@ -157,32 +153,16 @@ async function broadcastScores() {
       traffic
     );
 
-    // Apply real-time Driver Pulse modifiers (crowdsourced ground truth)
-    const zonesWithPulses = zoneScores
-      .map((z) => {
-        const pulse = driverPulseService.getScoreModifier(z.id);
-        const score = Math.min(100, Math.max(0, z.score + pulse));
-        return {
-          ...z,
-          score,
-          factors: {
-            ...z.factors,
-            pulse,
-          },
-        };
-      })
-      .sort((a, b) => b.score - a.score);
-
-    const topPick = scoringService.determineTopPick(zonesWithPulses as any, events, flights);
+    const topPick = scoringService.determineTopPick(zoneScores, events, flights);
 
     const data = {
       timestamp: currentTime.toISOString(),
       topPick,
-      zones: zonesWithPulses,
+      zones: zoneScores,
     };
 
     // Detect surges
-    const surges = surgeService.detectSurges(zonesWithPulses as any);
+    const surges = surgeService.detectSurges(zoneScores);
 
     // Broadcast to all connected clients
     io.emit('scores:update', data);

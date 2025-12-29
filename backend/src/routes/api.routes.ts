@@ -6,7 +6,7 @@ import { FlightsService } from '../services/flights.service.js';
 import { TrafficService } from '../services/traffic.service.js';
 import { RoutingService } from '../services/routing.service.js';
 import { EventAlertsService } from '../services/eventAlerts.service.js';
-import { DriverPulseService } from '../services/driverPulse.service.js';
+// DriverPulseService removed - was fake/unused data
 import { zones as legacyZones } from '../data/zones.js';
 import { microZones } from '../data/microZones.js';
 import type { WeatherConditions, Event, FlightArrival, ZoneScore } from '../types/index.js';
@@ -30,7 +30,6 @@ export function createApiRouter(
   scoringService: ScoringService,
   routingService: RoutingService,
   eventAlertsService: EventAlertsService,
-  driverPulseService: DriverPulseService,
   teslaService: TeslaService
 ): Router {
   const router = Router();
@@ -91,20 +90,7 @@ export function createApiRouter(
       // Check cache first
       const cached = getCached(scoresCache, 'zones');
       if (cached) {
-        // Apply real-time pulse modifiers (do NOT cache pulses)
-        const [events, flights] = await Promise.all([
-          getEventsData(eventsService),
-          getFlightsData(flightsService),
-        ]);
-
-        const zonesWithPulses = applyPulseModifiers((cached as any).zones, driverPulseService);
-        const topPick = scoringService.determineTopPick(zonesWithPulses, events, flights);
-
-        return res.json({
-          ...(cached as any),
-          topPick,
-          zones: zonesWithPulses,
-        });
+        return res.json(cached);
       }
 
       // Gather all data
@@ -125,24 +111,16 @@ export function createApiRouter(
         traffic
       );
 
-      const baseResponse = {
+      const response = {
         timestamp: currentTime.toISOString(),
         topPick: scoringService.determineTopPick(zoneScores, events, flights),
         zones: zoneScores,
       };
 
-      // Cache the base response (no pulses)
-      setCache(scoresCache, 'zones', baseResponse);
+      // Cache the response
+      setCache(scoresCache, 'zones', response);
 
-      // Apply real-time pulse modifiers for the response
-      const zonesWithPulses = applyPulseModifiers(zoneScores, driverPulseService);
-      const topPickWithPulses = scoringService.determineTopPick(zonesWithPulses, events, flights);
-
-      res.json({
-        ...baseResponse,
-        topPick: topPickWithPulses,
-        zones: zonesWithPulses,
-      });
+      res.json(response);
     } catch (error) {
       console.error('Error in /zones:', error);
       res.status(500).json({ error: 'Failed to calculate zone scores' });
@@ -200,18 +178,11 @@ export function createApiRouter(
         return res.status(404).json({ error: 'Zone score not found' });
       }
 
-      // Apply pulse modifier for this zone (real-time, not cached)
-      const pulse = driverPulseService.getScoreModifier(id);
-      const scoreWithPulse = Math.min(100, Math.max(0, (zoneScore.score || 0) + pulse));
-
       res.json({
         ...zone,
-        score: scoreWithPulse,
+        score: zoneScore.score,
         trend: zoneScore.trend,
-        factors: {
-          ...(zoneScore.factors || {}),
-          pulse,
-        },
+        factors: zoneScore.factors || {},
       });
     } catch (error) {
       console.error('Error in /zones/:id:', error);
@@ -375,50 +346,7 @@ export function createApiRouter(
     }
   });
 
-  // POST /api/pulse/report - Report driver pulse (ground truth)
-  router.post('/pulse/report', async (req: Request, res: Response) => {
-    try {
-      const { zoneId, type } = req.body;
-
-      if (!zoneId || !type) {
-        return res.status(400).json({ error: 'zoneId and type are required' });
-      }
-
-      const validTypes = ['airport_full', 'surge_fake', 'traffic_bad', 'high_demand', 'quiet'];
-      if (!validTypes.includes(type)) {
-        return res.status(400).json({ error: 'Invalid pulse type' });
-      }
-
-      const report = driverPulseService.reportPulse(zoneId, type);
-      res.json({ success: true, report });
-    } catch (error) {
-      console.error('Error reporting pulse:', error);
-      res.status(500).json({ error: 'Failed to report pulse' });
-    }
-  });
-
-  // GET /api/pulse - Get all active pulses
-  router.get('/pulse', async (_req: Request, res: Response) => {
-    try {
-      const pulses = driverPulseService.getAllPulses();
-      res.json({ pulses });
-    } catch (error) {
-      console.error('Error fetching pulses:', error);
-      res.status(500).json({ error: 'Failed to fetch pulses' });
-    }
-  });
-
-  // GET /api/pulse/:zoneId - Get pulses for a specific zone
-  router.get('/pulse/:zoneId', async (req: Request, res: Response) => {
-    try {
-      const { zoneId } = req.params;
-      const pulses = driverPulseService.getPulsesForZone(zoneId);
-      res.json({ pulses });
-    } catch (error) {
-      console.error('Error fetching zone pulses:', error);
-      res.status(500).json({ error: 'Failed to fetch zone pulses' });
-    }
-  });
+  // DriverPulse endpoints removed - was fake/unused data
 
   // GET /api/live-sports - Get live Seattle sports games with real-time status
   router.get('/live-sports', async (_req: Request, res: Response) => {
@@ -486,13 +414,10 @@ export function createApiRouter(
         );
       }
 
-      // Apply real-time pulses
-      const zonesWithPulses = applyPulseModifiers(baseZones, driverPulseService);
-
       const { TripChainService } = await import('../services/tripChain.service.js');
       const tripChainService = new TripChainService();
 
-      const recommendations = tripChainService.getRecommendations(fromZoneId, zonesWithPulses, 3);
+      const recommendations = tripChainService.getRecommendations(fromZoneId, baseZones, 3);
 
       res.json({
         timestamp: currentTime.toISOString(),
@@ -860,28 +785,5 @@ async function getTrafficData(trafficService: TrafficService): Promise<Map<strin
   return traffic;
 }
 
-/**
- * Apply real-time Driver Pulse modifiers to zone scores.
- * This is intentionally NOT part of ScoringService because pulses are in-memory
- * and owned by the live DriverPulseService instance (routes + websocket).
- */
-function applyPulseModifiers(zones: ZoneScore[], driverPulseService: DriverPulseService): ZoneScore[] {
-  const withPulses = zones.map((z) => {
-    const pulse = driverPulseService.getScoreModifier(z.id);
-    const score = Math.min(100, Math.max(0, z.score + pulse));
-
-    return {
-      ...z,
-      score,
-      factors: {
-        ...(z.factors || ({} as any)),
-        pulse,
-      },
-    };
-  });
-
-  // Ensure sort is consistent after applying pulses
-  withPulses.sort((a, b) => b.score - a.score);
-  return withPulses;
-}
+// applyPulseModifiers removed - DriverPulse was fake/unused data
 

@@ -57,11 +57,12 @@ export class UWClassesService {
 
     if (!inWaveA && !inWaveB) return 0;
 
-    let base = 6; // small & conservative
+    let base = 4; // REDUCED from 6 → 4 (33% reduction)
 
     // Stronger at the start/end of the academic day
-    if (hour >= 7 && hour <= 9) base += 2;
-    if (hour >= 16 && hour <= 18) base += 2;
+    // REDUCED from +2 → +1
+    if (hour >= 7 && hour <= 9) base += 1;
+    if (hour >= 16 && hour <= 18) base += 1;
 
     return Math.round(base * scale);
   }
@@ -146,6 +147,7 @@ export class UWClassesService {
     return windows;
   }
 }
+
 
 
 

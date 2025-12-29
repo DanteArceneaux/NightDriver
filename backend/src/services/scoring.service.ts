@@ -345,14 +345,14 @@ export class ScoringService {
 
     let boost = 0;
 
-    // Rain increases demand everywhere
+    // Rain increases demand everywhere (DOUBLED from 15 → 30)
     if (weather.isRaining) {
-      boost += 15;
+      boost += 30;
     }
 
-    // Rain predicted soon
+    // Rain predicted soon (DOUBLED from 8 → 16)
     if (weather.rainPrediction.includes('soon') || weather.rainPrediction.includes('within')) {
-      boost += 8;
+      boost += 16;
     }
 
     return boost;
@@ -384,9 +384,10 @@ export class ScoringService {
   private calculateTrafficBoost(zoneId: string, trafficData: Map<string, number>): number {
     const congestionLevel = trafficData.get(zoneId) || 0;
 
-    // Higher traffic = slightly more demand (people prefer rides over driving)
+    // Higher traffic = MAJOR demand boost (people prefer rides over driving)
+    // MASSIVELY BOOSTED: 0.5x → 3.0x (max 5pts → 30pts)
     // congestionLevel is 0-10 scale
-    return congestionLevel * 0.5;
+    return congestionLevel * 3.0;
   }
 
   private calculateEstimatedEarnings(score: number, hour: number, dayOfWeek: number, zoneId?: string): number {

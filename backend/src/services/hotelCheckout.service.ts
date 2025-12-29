@@ -52,18 +52,21 @@ export class HotelCheckoutService {
 
     if (downtownWave) {
       // Stronger in hotel-heavy zones, mild spillover to nearby waterfront/cruise
-      boost += 14 * scale;
+      // REDUCED from 14 → 9 (36% reduction)
+      boost += 9 * scale;
     }
 
     if (airportWave) {
       // Focused on airport hotel cluster
       // Use a lower base so we don't swamp flight signals
-      boost += 10 * scale;
+      // REDUCED from 10 → 7 (30% reduction)
+      boost += 7 * scale;
     }
 
     if (boost > 0 && isWeekend) {
       // Weekend leisure travel slightly increases the checkout wave
-      boost += 2 * scale;
+      // REDUCED from 2 → 1 (50% reduction)
+      boost += 1 * scale;
     }
 
     return Math.round(boost);
@@ -162,6 +165,7 @@ export class HotelCheckoutService {
     return d;
   }
 }
+
 
 
 

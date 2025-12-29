@@ -52,7 +52,7 @@ export class FerriesService {
     const inWave = this.isInFerryWaveWindow(currentTime);
     if (!inWave) return 0;
 
-    const baseWaveBoost = 12; // conservative baseline
+    const baseWaveBoost = 8; // REDUCED from 12 → 8 (33% reduction)
     const peakBoost = this.getCommuterPeakBoost(currentTime);
     const weekendBoost = this.getWeekendTouristBoost(currentTime);
 
@@ -189,6 +189,7 @@ export class FerriesService {
     return t;
   }
 }
+
 
 
 
