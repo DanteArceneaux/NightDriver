@@ -1,86 +1,86 @@
 import { useMemo } from 'react';
 import { Polygon, Tooltip } from 'react-leaflet';
-import { cellToBoundary, polygonToCells } from 'h3-js';
+import { cellToBoundary, polygonToCells, latLngToCell } from 'h3-js';
 import type { ZoneScore } from '../../types';
 import allZonesGeoJSON from '../../data/allZones.json';
 
-// H3 Resolution: 9 is good for neighborhood blocks (~170m edge)
-// 10 is very fine (~66m edge).
-const H3_RESOLUTION = 9; 
+// H3 Resolution: 8 is better for city-wide visibility (~0.7km edge)
+// 9 was too fine (~170m) and hard to see at zoom 9-11
+const H3_RESOLUTION = 8; 
 
 interface HexGridLayerProps {
   zones: ZoneScore[];
   onZoneClick?: (zone: ZoneScore) => void;
 }
 
-// Re-using the color logic but optimized for hexes
+// Uber-like color scale
 function getHexStyle(score: number) {
-  // Smooth opacity curve
-  // < 40: Very transparent (0.1 - 0.2)
-  // 40-60: Medium (0.3 - 0.5)
-  // > 60: Solid (0.6 - 0.8)
-  
   let fillColor = '#3b82f6'; // Blue
-  let fillOpacity = 0.1;
+  let fillOpacity = 0.4; // Higher base opacity
 
   if (score >= 85) {
     fillColor = '#ff0055'; // Neon Pink
-    fillOpacity = 0.6;
+    fillOpacity = 0.8;
   } else if (score >= 70) {
     fillColor = '#d946ef'; // Neon Fuchsia
-    fillOpacity = 0.5;
+    fillOpacity = 0.7;
   } else if (score >= 55) {
     fillColor = '#f59e0b'; // Neon Amber
-    fillOpacity = 0.45;
+    fillOpacity = 0.6;
   } else if (score >= 40) {
     fillColor = '#06b6d4'; // Neon Cyan
-    fillOpacity = 0.3;
+    fillOpacity = 0.5;
   } else {
     // Low score
     fillColor = '#3b82f6';
-    fillOpacity = 0.1;
+    fillOpacity = 0.3;
   }
 
   return {
     fillColor,
     fillOpacity,
-    stroke: false, // Ensure seamless look
+    stroke: false, // Seamless
     weight: 0,
   };
 }
 
 export function HexGridLayer({ zones, onZoneClick }: HexGridLayerProps) {
-  // 1. Compute the Hex Grid from the Zones
-  // We use useMemo to avoid recalculating on every render unless zones change
   const hexData = useMemo(() => {
     const hexMap = new Map<string, { score: number; zoneName: string; zoneId: string }>();
-    
-    // Create a map for fast score lookup
     const zoneScoreMap = new Map(zones.map(z => [z.id, z]));
 
     (allZonesGeoJSON as any).features.forEach((feature: any) => {
       const zoneId = feature.properties.id;
       const zoneData = zoneScoreMap.get(zoneId);
       
-      if (!zoneData) return; // Skip if no score data
+      if (!zoneData) return;
 
-      // GeoJSON is [lng, lat], H3 needs [lat, lng] for polygonToCells
+      // GeoJSON [lng, lat] -> H3 [lat, lng]
       const coordinates = feature.geometry.coordinates[0].map((coord: number[]) => [coord[1], coord[0]]);
       
-      // Get all hexes in this polygon
-      const hexes = polygonToCells(coordinates, H3_RESOLUTION, true);
-
-      hexes.forEach((h3Index: string) => {
-        // If hex is already there, take the MAX score (handle overlap)
-        const existing = hexMap.get(h3Index);
-        if (!existing || zoneData.score > existing.score) {
-          hexMap.set(h3Index, {
-            score: zoneData.score,
-            zoneName: zoneData.name,
-            zoneId: zoneData.id
-          });
+      try {
+        let hexes = polygonToCells(coordinates, H3_RESOLUTION, true);
+        
+        // Fallback for small zones that might get missed by H3 grid center-point check
+        if (hexes.length === 0) {
+           const centerLat = coordinates[0][0];
+           const centerLng = coordinates[0][1];
+           hexes = [latLngToCell(centerLat, centerLng, H3_RESOLUTION)];
         }
-      });
+
+        hexes.forEach((h3Index: string) => {
+          const existing = hexMap.get(h3Index);
+          if (!existing || zoneData.score > existing.score) {
+            hexMap.set(h3Index, {
+              score: zoneData.score,
+              zoneName: zoneData.name,
+              zoneId: zoneData.id
+            });
+          }
+        });
+      } catch (err) {
+        console.warn(`HexGridLayer: Error processing ${zoneId}`, err);
+      }
     });
 
     return Array.from(hexMap.entries());
@@ -89,7 +89,6 @@ export function HexGridLayer({ zones, onZoneClick }: HexGridLayerProps) {
   return (
     <>
       {hexData.map(([h3Index, data]) => {
-        // cellToBoundary returns [[lat, lng], ...]
         const boundary = cellToBoundary(h3Index);
         const style = getHexStyle(data.score);
 
@@ -104,19 +103,13 @@ export function HexGridLayer({ zones, onZoneClick }: HexGridLayerProps) {
                 if (z && onZoneClick) onZoneClick(z);
               },
               mouseover: (e) => {
-                e.target.setStyle({
-                  fillOpacity: 0.8, // Highlight on hover
-                });
+                e.target.setStyle({ fillOpacity: 0.9 });
               },
               mouseout: (e) => {
-                e.target.setStyle({
-                  fillOpacity: style.fillOpacity,
-                });
+                e.target.setStyle({ fillOpacity: style.fillOpacity });
               }
             }}
           >
-           {/* Only show tooltip for high value cells to reduce DOM load if needed, 
-               but for now we include it for all */}
            <Tooltip sticky direction="top" className="custom-tooltip">
              <div className="text-sm font-bold">
                <div className="text-white">{data.zoneName}</div>

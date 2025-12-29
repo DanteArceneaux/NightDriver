@@ -1,23 +1,40 @@
 import { ZonesResponse, Forecast, Conditions } from '../types';
 
-// Seattle zones data
+// Seattle zones data - Updated to match allZones.json IDs for seamless hex grid
 const zones = [
-  { id: 'downtown', name: 'Downtown Seattle', coordinates: { lat: 47.6062, lng: -122.3321 }, demandDrivers: ['office', 'retail', 'tourism'] },
-  { id: 'capitol-hill', name: 'Capitol Hill', coordinates: { lat: 47.6253, lng: -122.3222 }, demandDrivers: ['nightlife', 'dining', 'residential'] },
-  { id: 'slu', name: 'South Lake Union', coordinates: { lat: 47.6264, lng: -122.3369 }, demandDrivers: ['tech', 'office', 'dining'] },
-  { id: 'belltown', name: 'Belltown', coordinates: { lat: 47.6148, lng: -122.3478 }, demandDrivers: ['nightlife', 'dining', 'residential'] },
-  { id: 'pioneer-square', name: 'Pioneer Square', coordinates: { lat: 47.6015, lng: -122.3343 }, demandDrivers: ['sports', 'nightlife', 'tourism'] },
-  { id: 'sodo', name: 'SODO', coordinates: { lat: 47.5807, lng: -122.3343 }, demandDrivers: ['sports', 'industrial', 'events'] },
-  { id: 'u-district', name: 'University District', coordinates: { lat: 47.6588, lng: -122.3130 }, demandDrivers: ['university', 'student', 'dining'] },
-  { id: 'fremont', name: 'Fremont', coordinates: { lat: 47.6515, lng: -122.3500 }, demandDrivers: ['tech', 'quirky', 'dining'] },
-  { id: 'ballard', name: 'Ballard', coordinates: { lat: 47.6677, lng: -122.3850 }, demandDrivers: ['nightlife', 'brewery', 'residential'] },
-  { id: 'queen-anne', name: 'Queen Anne', coordinates: { lat: 47.6324, lng: -122.3571 }, demandDrivers: ['residential', 'dining', 'views'] },
-  { id: 'west-seattle', name: 'West Seattle', coordinates: { lat: 47.5665, lng: -122.3870 }, demandDrivers: ['beach', 'residential', 'dining'] },
-  { id: 'columbia-city', name: 'Columbia City', coordinates: { lat: 47.5595, lng: -122.2865 }, demandDrivers: ['diverse', 'dining', 'residential'] },
-  { id: 'seatac', name: 'SeaTac Airport', coordinates: { lat: 47.4502, lng: -122.3088 }, demandDrivers: ['airport', 'travel', 'hotels'] },
-  { id: 'bellevue-dt', name: 'Bellevue Downtown', coordinates: { lat: 47.6101, lng: -122.2015 }, demandDrivers: ['tech', 'shopping', 'office'] },
-  { id: 'kirkland', name: 'Kirkland Waterfront', coordinates: { lat: 47.6769, lng: -122.2060 }, demandDrivers: ['waterfront', 'dining', 'residential'] },
-  { id: 'redmond', name: 'Redmond', coordinates: { lat: 47.6740, lng: -122.1215 }, demandDrivers: ['tech', 'microsoft', 'residential'] },
+  // Downtown Core
+  { id: 'downtown', name: 'Downtown Central', coordinates: { lat: 47.6062, lng: -122.3321 }, demandDrivers: ['office', 'retail'] },
+  { id: 'retail_core', name: 'Retail Core', coordinates: { lat: 47.6100, lng: -122.3350 }, demandDrivers: ['retail', 'tourism'] },
+  { id: 'financial_district', name: 'Financial District', coordinates: { lat: 47.6050, lng: -122.3320 }, demandDrivers: ['office'] },
+  { id: 'pike_place_market', name: 'Pike Place Market', coordinates: { lat: 47.6090, lng: -122.3410 }, demandDrivers: ['tourism', 'dining'] },
+  
+  // Capitol Hill
+  { id: 'capitol_hill', name: 'Capitol Hill', coordinates: { lat: 47.6253, lng: -122.3222 }, demandDrivers: ['nightlife'] },
+  { id: 'pike_pine_bars', name: 'Pike/Pine Corridor', coordinates: { lat: 47.6140, lng: -122.3160 }, demandDrivers: ['nightlife', 'dining'] },
+  { id: 'broadway_retail', name: 'Broadway', coordinates: { lat: 47.6200, lng: -122.3200 }, demandDrivers: ['dining', 'nightlife'] },
+  { id: 'cal_anderson', name: 'Cal Anderson', coordinates: { lat: 47.6170, lng: -122.3190 }, demandDrivers: ['events'] },
+
+  // Belltown & Waterfront
+  { id: 'belltown', name: 'Belltown', coordinates: { lat: 47.6148, lng: -122.3478 }, demandDrivers: ['nightlife', 'residential'] },
+  { id: 'belltown_bars', name: 'Belltown Nightlife', coordinates: { lat: 47.6150, lng: -122.3450 }, demandDrivers: ['nightlife', 'dining'] },
+  { id: 'waterfront_piers', name: 'Waterfront', coordinates: { lat: 47.6050, lng: -122.3400 }, demandDrivers: ['tourism'] },
+  
+  // Pioneer Square & SODO
+  { id: 'pioneer_square', name: 'Pioneer Square', coordinates: { lat: 47.6015, lng: -122.3343 }, demandDrivers: ['nightlife'] },
+  { id: 'stadium_district', name: 'Stadiums', coordinates: { lat: 47.5952, lng: -122.3316 }, demandDrivers: ['sports', 'events'] },
+  { id: 'sodo', name: 'SODO', coordinates: { lat: 47.5807, lng: -122.3343 }, demandDrivers: ['industrial', 'sports'] },
+  
+  // Other Neighborhoods
+  { id: 'slu', name: 'South Lake Union', coordinates: { lat: 47.6264, lng: -122.3369 }, demandDrivers: ['tech', 'office'] },
+  { id: 'u-district', name: 'University District', coordinates: { lat: 47.6588, lng: -122.3130 }, demandDrivers: ['university'] },
+  { id: 'fremont', name: 'Fremont', coordinates: { lat: 47.6515, lng: -122.3500 }, demandDrivers: ['tech', 'dining'] },
+  { id: 'ballard', name: 'Ballard', coordinates: { lat: 47.6677, lng: -122.3850 }, demandDrivers: ['nightlife', 'brewery'] },
+  { id: 'queen-anne', name: 'Queen Anne', coordinates: { lat: 47.6324, lng: -122.3571 }, demandDrivers: ['residential', 'views'] },
+  { id: 'west-seattle', name: 'West Seattle', coordinates: { lat: 47.5665, lng: -122.3870 }, demandDrivers: ['residential', 'dining'] },
+  { id: 'seatac', name: 'SeaTac Airport', coordinates: { lat: 47.4502, lng: -122.3088 }, demandDrivers: ['airport'] },
+  { id: 'bellevue-dt', name: 'Bellevue Downtown', coordinates: { lat: 47.6101, lng: -122.2015 }, demandDrivers: ['tech', 'shopping'] },
+  { id: 'kirkland', name: 'Kirkland Waterfront', coordinates: { lat: 47.6769, lng: -122.2060 }, demandDrivers: ['waterfront'] },
+  { id: 'redmond', name: 'Redmond', coordinates: { lat: 47.6740, lng: -122.1215 }, demandDrivers: ['tech'] },
 ];
 
 export function generateMockZones(): ZonesResponse {
@@ -37,8 +54,8 @@ export function generateMockZones(): ZonesResponse {
 
     // Zone-specific adjustments
     if (zone.id === 'seatac') baseScore += 15;
-    if (zone.id === 'downtown') baseScore += isWeekend ? 10 : 15;
-    if (zone.id === 'capitol-hill' && (hour >= 21 || hour <= 2)) baseScore += 20;
+    if (zone.id.includes('downtown') || zone.id === 'retail_core') baseScore += isWeekend ? 10 : 15;
+    if ((zone.id.includes('capitol') || zone.id === 'pike_pine_bars') && (hour >= 21 || hour <= 2)) baseScore += 20;
     if (zone.id === 'slu' && hour >= 17 && hour <= 19) baseScore += 15;
     if (zone.demandDrivers.includes('nightlife') && (hour >= 21 || hour <= 2)) baseScore += 15;
     if (zone.demandDrivers.includes('sports') && isWeekend) baseScore += 10;
@@ -123,7 +140,7 @@ export function generateMockConditions(): Conditions {
       venue: 'Lumen Field',
       startTime: new Date(Date.now() + 3600000 * 3).toISOString(),
       endTime: new Date(Date.now() + 3600000 * 6).toISOString(),
-      zoneId: 'sodo',
+      zoneId: 'stadium_district',
       type: 'sports' as const,
       attendees: 68000,
     },
@@ -149,6 +166,7 @@ export function generateMockConditions(): Conditions {
     events,
     flights,
     lastUpdated: new Date().toISOString(),
+    // @ts-ignore
+    driverSupply: { estimatedDrivers: 15, modifier: 1.2 }
   };
 }
-
