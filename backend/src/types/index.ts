@@ -107,6 +107,8 @@ export interface FlightArrival {
   arrivalTime: string;
   origin: string;
   terminal: string;
+  status?: string; // 'Scheduled', 'In Flight', 'Landed', 'Cancelled', etc.
+  carrier?: string; // Airline name
 }
 
 export interface Conditions {
