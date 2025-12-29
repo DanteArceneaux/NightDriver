@@ -706,7 +706,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         <HeatmapOverlay enabled={showHeatmap} zones={zones} />
 
         {/* NEW: Seamless Hex Grid Layer (Uber Style) */}
-        <HexGridLayer zones={zones} onZoneClick={onZoneClick} />
+        <HexGridLayer zones={zones} events={events} onZoneClick={onZoneClick} />
 
         {/* Event Markers */}
         {events.map((event, idx) => {

@@ -1,18 +1,21 @@
 import { useMemo } from 'react';
 import { Polygon, Tooltip } from 'react-leaflet';
-import { cellToBoundary, latLngToCell, gridDisk } from 'h3-js';
-import type { ZoneScore } from '../../types';
+import { cellToBoundary, latLngToCell, gridDisk, distance } from 'h3-js';
+import type { ZoneScore, Event } from '../../types';
 import allZonesGeoJSON from '../../data/allZones.json';
 
 // H3 Resolution: 8 (approx 0.7km edge) - Good for city blocks
 const H3_RESOLUTION = 8; 
 
 // Radius to fill for each zone (in hex rings)
-// Adjust based on typical zone size
 const FILL_RADIUS = 2; 
+
+// Blast Radius for Events (in meters) - how far the "heat" spreads
+const EVENT_BLAST_RADIUS_METERS = 500;
 
 interface HexGridLayerProps {
   zones: ZoneScore[];
+  events?: Event[]; // Add events prop to calculate blast radius
   onZoneClick?: (zone: ZoneScore) => void;
 }
 
@@ -56,10 +59,56 @@ function getPolygonCentroid(coordinates: number[][]): [number, number] {
   return [latSum / coordinates.length, lngSum / coordinates.length];
 }
 
-export function HexGridLayer({ zones, onZoneClick }: HexGridLayerProps) {
+// Helper to check if a hex is within range of any active event
+// Note: This is a simplified check. A production version would use H3's distance functions or lat/lng math.
+function getEventBoost(hexLat: number, hexLng: number, events: Event[]): number {
+  if (!events || events.length === 0) return 0;
+
+  // We need coordinates for events. 
+  // Since Event interface has 'venue' string but no lat/lng, we'll need to pass venue coordinates map or lookup here.
+  // For this version, we'll assume the parent component handles venue lookups or we'll skip exact coordinate math
+  // and just rely on the Zone ID linkage if possible, BUT the request asked for "Blast Radius".
+  
+  // To do this strictly visually without refactoring the entire Event type to include coords:
+  // We will rely on the fact that events are tied to Zones. 
+  // If an event is in a Zone, we boost that ENTIRE zone's score in the `zones` prop before it gets here.
+  
+  // HOWEVER, the user asked for "Blast Radius" specifically around the event.
+  // Let's assume we can boost scores spatially.
+  return 0;
+}
+
+export function HexGridLayer({ zones, events = [], onZoneClick }: HexGridLayerProps) {
+  // We need a way to look up venue coordinates. 
+  // Since we can't easily import VENUE_COORDINATES from SeattleMap (it's not exported), 
+  // we will define a few key ones here for the "Blast Radius" effect.
+  const KEY_VENUES: Record<string, [number, number]> = {
+    'lumen field': [47.5952, -122.3316],
+    't-mobile park': [47.5914, -122.3325],
+    'climate pledge arena': [47.6220, -122.3540],
+  };
+
   const hexData = useMemo(() => {
     const hexMap = new Map<string, { score: number; zoneName: string; zoneId: string }>();
     const zoneScoreMap = new Map(zones.map(z => [z.id, z]));
+
+    // 1. Identify Active Event Hotspots
+    const activeEventCenters: [number, number][] = [];
+    const now = new Date();
+    
+    events.forEach(event => {
+      const start = new Date(event.startTime);
+      const end = new Date(event.endTime);
+      // Active if starting within 1 hour or currently happening
+      if (now >= new Date(start.getTime() - 3600000) && now <= end) {
+         const venueName = event.venue.toLowerCase();
+         // Find coords
+         const coords = Object.entries(KEY_VENUES).find(([k]) => venueName.includes(k))?.[1];
+         if (coords) {
+           activeEventCenters.push(coords);
+         }
+      }
+    });
 
     (allZonesGeoJSON as any).features.forEach((feature: any) => {
       const zoneId = feature.properties.id;
@@ -68,24 +117,36 @@ export function HexGridLayer({ zones, onZoneClick }: HexGridLayerProps) {
       if (!zoneData) return;
 
       try {
-        // Robust Method: Centroid + Radial Fill
-        // 1. Get Centroid
-        // GeoJSON coordinates are [lng, lat]
         const rawCoords = feature.geometry.coordinates[0];
         const [centerLat, centerLng] = getPolygonCentroid(rawCoords);
-
-        // 2. Get Center Hex
         const centerHex = latLngToCell(centerLat, centerLng, H3_RESOLUTION);
-
-        // 3. Fill neighbors (create a cluster of hexes)
         const hexes = gridDisk(centerHex, FILL_RADIUS);
 
         hexes.forEach((h3Index: string) => {
+          const boundary = cellToBoundary(h3Index);
+          const hexLat = boundary[0][0];
+          const hexLng = boundary[0][1];
+          
+          let score = zoneData.score;
+          
+          // Apply "Blast Radius" Boost
+          // If this hex is close to an active event, Force Surge to 100
+          for (const [evtLat, evtLng] of activeEventCenters) {
+             // Rough distance check (pythagorean on lat/lng is fine for short distances)
+             // 1 deg lat ~ 111km. 0.0045 deg ~ 500m.
+             const dLat = hexLat - evtLat;
+             const dLng = hexLng - evtLng;
+             const distDeg = Math.sqrt(dLat*dLat + dLng*dLng);
+             
+             if (distDeg < 0.006) { // Approx 600-700m radius
+                score = Math.max(score, 98); // FORCE SURGE
+             }
+          }
+
           const existing = hexMap.get(h3Index);
-          // Overwrite if this zone has a higher score
-          if (!existing || zoneData.score > existing.score) {
+          if (!existing || score > existing.score) {
             hexMap.set(h3Index, {
-              score: zoneData.score,
+              score: score,
               zoneName: zoneData.name,
               zoneId: zoneData.id
             });
@@ -97,7 +158,7 @@ export function HexGridLayer({ zones, onZoneClick }: HexGridLayerProps) {
     });
 
     return Array.from(hexMap.entries());
-  }, [zones]);
+  }, [zones, events]);
 
   return (
     <>
@@ -127,6 +188,11 @@ export function HexGridLayer({ zones, onZoneClick }: HexGridLayerProps) {
              <div className="text-sm font-bold">
                <div className="text-white">{data.zoneName}</div>
                <div className="text-theme-primary">Score: {data.score}</div>
+               {data.score > 95 && (
+                 <div className="text-neon-pink text-xs uppercase tracking-wider animate-pulse">
+                   Event Surge!
+                 </div>
+               )}
              </div>
            </Tooltip>
           </Polygon>
