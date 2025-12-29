@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Polygon, Tooltip } from 'react-leaflet';
-import { cellToBoundary, latLngToCell, gridDisk, distance } from 'h3-js';
+import { cellToBoundary, latLngToCell, gridDisk } from 'h3-js';
 import type { ZoneScore, Event } from '../../types';
 import allZonesGeoJSON from '../../data/allZones.json';
 
@@ -9,9 +9,6 @@ const H3_RESOLUTION = 8;
 
 // Radius to fill for each zone (in hex rings)
 const FILL_RADIUS = 2; 
-
-// Blast Radius for Events (in meters) - how far the "heat" spreads
-const EVENT_BLAST_RADIUS_METERS = 500;
 
 interface HexGridLayerProps {
   zones: ZoneScore[];
@@ -59,29 +56,8 @@ function getPolygonCentroid(coordinates: number[][]): [number, number] {
   return [latSum / coordinates.length, lngSum / coordinates.length];
 }
 
-// Helper to check if a hex is within range of any active event
-// Note: This is a simplified check. A production version would use H3's distance functions or lat/lng math.
-function getEventBoost(hexLat: number, hexLng: number, events: Event[]): number {
-  if (!events || events.length === 0) return 0;
-
-  // We need coordinates for events. 
-  // Since Event interface has 'venue' string but no lat/lng, we'll need to pass venue coordinates map or lookup here.
-  // For this version, we'll assume the parent component handles venue lookups or we'll skip exact coordinate math
-  // and just rely on the Zone ID linkage if possible, BUT the request asked for "Blast Radius".
-  
-  // To do this strictly visually without refactoring the entire Event type to include coords:
-  // We will rely on the fact that events are tied to Zones. 
-  // If an event is in a Zone, we boost that ENTIRE zone's score in the `zones` prop before it gets here.
-  
-  // HOWEVER, the user asked for "Blast Radius" specifically around the event.
-  // Let's assume we can boost scores spatially.
-  return 0;
-}
-
 export function HexGridLayer({ zones, events = [], onZoneClick }: HexGridLayerProps) {
   // We need a way to look up venue coordinates. 
-  // Since we can't easily import VENUE_COORDINATES from SeattleMap (it's not exported), 
-  // we will define a few key ones here for the "Blast Radius" effect.
   const KEY_VENUES: Record<string, [number, number]> = {
     'lumen field': [47.5952, -122.3316],
     't-mobile park': [47.5914, -122.3325],
