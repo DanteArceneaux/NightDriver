@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Marker, Tooltip, useMap, Polyline, Circle, Polygon } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Tooltip, useMap, Polyline, Circle } from 'react-leaflet';
 import { motion } from 'framer-motion';
 import { Map as MapIcon, Satellite, TrendingUp, Navigation2, Gauge, Crosshair } from 'lucide-react';
 import L from 'leaflet';
@@ -8,7 +8,7 @@ import { fetchConditions } from '../../lib/api';
 import { SafeStorage } from '../../lib/safeStorage';
 import { useThemeUtils } from '../../features/theme/themeUtils';
 import { HeatmapOverlay } from './HeatmapOverlay';
-import allZonesGeoJSON from '../../data/allZones.json';
+import { HexGridLayer } from './HexGridLayer';
 import { 
   sanitizeEmoji, 
   sanitizeEventData, 
@@ -47,34 +47,6 @@ const VENUE_COORDINATES: Record<string, { lat: number; lng: number }> = {
   'pike place': { lat: 47.6097, lng: -122.3419 },
   'seattle center': { lat: 47.6205, lng: -122.3540 },
 };
-
-function getColorForScore(score: number): { fill: string; stroke: string; className: string } {
-  if (score >= 85) return { 
-    fill: '#ff0055',    // Neon Pink
-    stroke: '#ff99aa', 
-    className: 'zone-surge'
-  };
-  if (score >= 70) return { 
-    fill: '#d946ef',    // Neon Fuchsia
-    stroke: '#f0abfc', 
-    className: 'zone-surge'
-  };
-  if (score >= 55) return { 
-    fill: '#f59e0b',    // Neon Amber
-    stroke: '#fcd34d',
-    className: 'zone-hot'
-  };
-  if (score >= 40) return { 
-    fill: '#06b6d4',    // Neon Cyan
-    stroke: '#67e8f9', 
-    className: 'zone-warm'
-  };
-  return { 
-    fill: '#3b82f6',    // Standard Blue
-    stroke: '#60a5fa', 
-    className: 'zone-cool'
-  };
-}
 
 // Get venue coordinates from venue name
 function getVenueCoordinates(venueName: string): { lat: number; lng: number } | null {
@@ -733,153 +705,8 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         {/* Personal Heatmap Overlay */}
         <HeatmapOverlay enabled={showHeatmap} zones={zones} />
 
-        {/* Zone Polygons (Uber/Lyft Style) */}
-        {zones.map((zone) => {
-          const styles = getColorForScore(zone.score);
-          
-          // VISUAL HIERARCHY LOGIC
-          // Make low score zones ghost-like to fix the "clutter"
-          const isHighValue = zone.score >= 55;
-          const isLowValue = zone.score < 40;
-          
-          // Dynamic styles based on importance
-          const baseWeight = isHighValue ? 2 : 1;
-          const baseOpacity = isLowValue ? 0.3 : 0.9;
-          const baseFillOpacity = isLowValue ? 0.05 : (isHighValue ? 0.5 : 0.25);
-          
-            // Find matching GeoJSON feature for this zone
-            const geoFeature = (allZonesGeoJSON as any)?.features?.find(
-              (f: any) => f.properties.id === zone.id
-            );
-          
-          // Fallback to circle marker if no polygon exists
-          if (!geoFeature) {
-            const baseRadius = 12 + (zone.score / 100) * 13;
-            return (
-              <CircleMarker
-                key={zone.id}
-                center={[zone.coordinates.lat, zone.coordinates.lng]}
-                radius={baseRadius}
-                pathOptions={{
-                  fillColor: styles.fill,
-                  color: styles.stroke,
-                  weight: baseWeight,
-                  opacity: baseOpacity,
-                  fillOpacity: baseFillOpacity,
-                  className: styles.className,
-                }}
-                eventHandlers={{
-                  click: () => onZoneClick?.(zone),
-                }}
-              >
-                <Tooltip 
-                  direction="top" 
-                  offset={[0, -10]} 
-                  opacity={1}
-                  className="custom-tooltip"
-                >
-                  <div className="text-sm">
-                    <div className="font-bold text-white text-base mb-1">{zone.name}</div>
-                    <div className="text-theme-primary font-bold text-lg mb-2">Score: {zone.score}</div>
-                    <div className="text-xs text-gray-300 space-y-1">
-                      <div className="text-gray-400">Base: {zone.factors.baseline}</div>
-                      {zone.factors.events > 0 && (
-                        <div className="text-neon-orange">🎵 Events: +{zone.factors.events}</div>
-                      )}
-                      {zone.factors.weather > 0 && (
-                        <div className="text-blue-400">🌧️ Weather: +{zone.factors.weather}</div>
-                      )}
-                      {zone.factors.flights > 0 && (
-                        <div className="text-neon-green">✈️ Flights: +{zone.factors.flights}</div>
-                      )}
-                    </div>
-                  </div>
-                </Tooltip>
-              </CircleMarker>
-            );
-          }
-          
-          // Extract polygon coordinates (GeoJSON is [lng, lat], Leaflet needs [lat, lng])
-          const positions = geoFeature.geometry.coordinates[0].map(
-            ([lng, lat]: [number, number]) => [lat, lng] as [number, number]
-          );
-          
-          return (
-            <Polygon
-              key={zone.id}
-              positions={positions}
-              pathOptions={{
-                fillColor: styles.fill,
-                color: styles.stroke,
-                weight: baseWeight,
-                opacity: baseOpacity,
-                fillOpacity: baseFillOpacity,
-                className: styles.className,
-                lineCap: 'round',
-                lineJoin: 'round',
-              }}
-              eventHandlers={{
-                click: () => onZoneClick?.(zone),
-                mouseover: (e) => {
-                  const layer = e.target;
-                  layer.setStyle({
-                    fillOpacity: 0.7,
-                    weight: 3,
-                    opacity: 1,
-                    color: '#ffffff', // Flash white border on hover
-                  });
-                  layer.bringToFront(); // CRITICAL: Brings hovered zone to top
-                },
-                mouseout: (e) => {
-                  const layer = e.target;
-                  layer.setStyle({
-                    fillOpacity: baseFillOpacity,
-                    weight: baseWeight,
-                    opacity: baseOpacity,
-                    color: styles.stroke,
-                  });
-                },
-              }}
-            >
-              <Tooltip 
-                direction="top" 
-                offset={[0, -10]} 
-                opacity={1}
-                className="custom-tooltip"
-                sticky
-              >
-                <div className="text-sm">
-                  <div className="font-bold text-white text-base mb-1">{zone.name}</div>
-                  <div className="text-theme-primary font-bold text-lg mb-2">Score: {zone.score}</div>
-                  <div className="text-xs text-gray-300 space-y-1">
-                    <div className="text-gray-400">Base: {zone.factors.baseline}</div>
-                    {zone.factors.events > 0 && (
-                      <div className="text-red-400 font-bold">🔥 Events: +{zone.factors.events}</div>
-                    )}
-                    {zone.factors.weather > 0 && (
-                      <div className="text-blue-400">🌧️ Weather: +{zone.factors.weather}</div>
-                    )}
-                    {zone.factors.traffic > 0 && (
-                      <div className="text-orange-400">🚗 Traffic: +{zone.factors.traffic}</div>
-                    )}
-                    {zone.factors.flights > 0 && (
-                      <div className="text-green-400">✈️ Flights: +{zone.factors.flights}</div>
-                    )}
-                    {zone.driverSupply && (
-                      <div className={`font-bold ${
-                        zone.driverSupply.estimatedDrivers < 10 ? 'text-green-400' : 
-                        zone.driverSupply.estimatedDrivers < 20 ? 'text-yellow-400' : 
-                        'text-red-400'
-                      }`}>
-                        🚗 Drivers: ~{zone.driverSupply.estimatedDrivers} ({zone.driverSupply.modifier > 0 ? '+' : ''}{zone.driverSupply.modifier})
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Tooltip>
-            </Polygon>
-          );
-        })}
+        {/* NEW: Seamless Hex Grid Layer (Uber Style) */}
+        <HexGridLayer zones={zones} onZoneClick={onZoneClick} />
 
         {/* Event Markers */}
         {events.map((event, idx) => {
