@@ -305,41 +305,41 @@ export class ScoringService {
       // Type-specific scoring
       const eventType = event.type || 'other';
 
-      // 🔥 PRIORITY 1: EVENT ENDING SOON (0-30 min before end) - MASSIVE SURGE
+      // 🔥 PRIORITY 1: EVENT ENDING SOON (0-30 min before end) - STRONG SURGE (v9.1.1 rebalanced)
       // As the event gets closer to ending, urgency increases exponentially
       if (minutesUntilEnd > 0 && minutesUntilEnd <= 30) {
         const urgencyMultiplier = 1 + (30 - minutesUntilEnd) / 30; // 1.0x to 2.0x
         if (eventType === 'sports') {
-          boost += 50 * urgencyMultiplier; // Up to 100pts!
+          boost += 30 * urgencyMultiplier; // Up to 60pts
         } else if (eventType === 'concert') {
-          boost += 40 * urgencyMultiplier; // Up to 80pts
+          boost += 25 * urgencyMultiplier; // Up to 50pts
         } else if (eventType === 'festival') {
-          boost += 35 * urgencyMultiplier;
+          boost += 20 * urgencyMultiplier; // Up to 40pts
         } else {
-          boost += 30 * urgencyMultiplier;
+          boost += 18 * urgencyMultiplier; // Up to 36pts
         }
       }
       
-      // 🔥 PRIORITY 2: EVENT JUST ENDED (0-60 min after) - POST-EVENT WAVE
+      // 🔥 PRIORITY 2: EVENT JUST ENDED (0-60 min after) - POST-EVENT WAVE (v9.1.1 rebalanced)
       // Linear decay as people disperse
       else if (minutesAfterEnd >= 0 && minutesAfterEnd <= 60) {
         const decayFactor = 1 - (minutesAfterEnd / 60); // 1.0 → 0.0 over 60 min
         if (eventType === 'sports') {
-          boost += 60 * decayFactor; // Starts at 60pts, decays to 0
+          boost += 35 * decayFactor; // Starts at 35pts, decays to 0
         } else if (eventType === 'concert') {
-          boost += 45 * decayFactor;
+          boost += 28 * decayFactor; // Starts at 28pts
         } else if (eventType === 'festival') {
-          boost += 40 * decayFactor;
+          boost += 25 * decayFactor; // Starts at 25pts
         } else {
-          boost += 35 * decayFactor;
+          boost += 20 * decayFactor; // Starts at 20pts
         }
       }
       
       // Event ending in 30-60 min - moderate boost
       else if (minutesUntilEnd > 30 && minutesUntilEnd <= 60) {
-        if (eventType === 'sports') boost += 25;
-        else if (eventType === 'concert') boost += 20;
-        else boost += 15;
+        if (eventType === 'sports') boost += 15;
+        else if (eventType === 'concert') boost += 12;
+        else boost += 10;
       }
       
       // Event is happening now (but not ending soon)
@@ -367,14 +367,14 @@ export class ScoringService {
 
     let boost = 0;
 
-    // Rain increases demand everywhere (DOUBLED from 15 → 30)
+    // Rain increases demand everywhere (v9.1.1 rebalanced: 30 → 18)
     if (weather.isRaining) {
-      boost += 30;
+      boost += 18;
     }
 
-    // Rain predicted soon (DOUBLED from 8 → 16)
+    // Rain predicted soon (v9.1.1 rebalanced: 16 → 10)
     if (weather.rainPrediction.includes('soon') || weather.rainPrediction.includes('within')) {
-      boost += 16;
+      boost += 10;
     }
 
     return boost;

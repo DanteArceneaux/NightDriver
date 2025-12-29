@@ -340,6 +340,346 @@
           [-122.3450, 47.6700]
         ]]
       }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "stadium",
+        "name": "Stadium District"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.3416, 47.5852],
+          [-122.3216, 47.5852],
+          [-122.3216, 47.6052],
+          [-122.3416, 47.6052],
+          [-122.3416, 47.5852]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "pioneer_square",
+        "name": "Pioneer Square"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.3431, 47.5914],
+          [-122.3231, 47.5914],
+          [-122.3231, 47.6114],
+          [-122.3431, 47.6114],
+          [-122.3431, 47.5914]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "waterfront",
+        "name": "Waterfront/Pier"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.3530, 47.5962],
+          [-122.3330, 47.5962],
+          [-122.3330, 47.6162],
+          [-122.3530, 47.6162],
+          [-122.3530, 47.5962]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "shoreline",
+        "name": "Shoreline"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.3615, 47.7357],
+          [-122.3215, 47.7357],
+          [-122.3215, 47.7757],
+          [-122.3615, 47.7757],
+          [-122.3615, 47.7357]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "lynnwood",
+        "name": "Lynnwood"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.3351, 47.8009],
+          [-122.2951, 47.8009],
+          [-122.2951, 47.8409],
+          [-122.3351, 47.8409],
+          [-122.3351, 47.8009]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "everett",
+        "name": "Everett"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.2221, 47.9590],
+          [-122.1821, 47.9590],
+          [-122.1821, 47.9990],
+          [-122.2221, 47.9990],
+          [-122.2221, 47.9590]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "marysville",
+        "name": "Marysville"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.1971, 48.0318],
+          [-122.1571, 48.0318],
+          [-122.1571, 48.0718],
+          [-122.1971, 48.0718],
+          [-122.1971, 48.0318]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "bellevue",
+        "name": "Bellevue"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.2215, 47.5901],
+          [-122.1815, 47.5901],
+          [-122.1815, 47.6301],
+          [-122.2215, 47.6301],
+          [-122.2215, 47.5901]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kirkland",
+        "name": "Kirkland"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.2287, 47.6615],
+          [-122.1887, 47.6615],
+          [-122.1887, 47.7015],
+          [-122.2287, 47.7015],
+          [-122.2287, 47.6615]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "redmond",
+        "name": "Redmond"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.1415, 47.6540],
+          [-122.1015, 47.6540],
+          [-122.1015, 47.6940],
+          [-122.1415, 47.6940],
+          [-122.1415, 47.6540]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "sammamish",
+        "name": "Sammamish"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.0556, 47.5963],
+          [-122.0156, 47.5963],
+          [-122.0156, 47.6363],
+          [-122.0556, 47.6363],
+          [-122.0556, 47.5963]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "issaquah",
+        "name": "Issaquah"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.0526, 47.5101],
+          [-122.0126, 47.5101],
+          [-122.0126, 47.5501],
+          [-122.0526, 47.5501],
+          [-122.0526, 47.5101]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "renton",
+        "name": "Renton"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.2371, 47.4629],
+          [-122.1971, 47.4629],
+          [-122.1971, 47.5029],
+          [-122.2371, 47.5029],
+          [-122.2371, 47.4629]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tukwila",
+        "name": "Tukwila"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.2807, 47.4540],
+          [-122.2407, 47.4540],
+          [-122.2407, 47.4940],
+          [-122.2807, 47.4940],
+          [-122.2807, 47.4540]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "burien",
+        "name": "Burien"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.3668, 47.4504],
+          [-122.3268, 47.4504],
+          [-122.3268, 47.4904],
+          [-122.3668, 47.4904],
+          [-122.3668, 47.4504]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kent",
+        "name": "Kent"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.2548, 47.3609],
+          [-122.2148, 47.3609],
+          [-122.2148, 47.4009],
+          [-122.2548, 47.4009],
+          [-122.2548, 47.3609]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "federal_way",
+        "name": "Federal Way"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.3326, 47.3023],
+          [-122.2926, 47.3023],
+          [-122.2926, 47.3423],
+          [-122.3326, 47.3423],
+          [-122.3326, 47.3023]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tacoma",
+        "name": "Tacoma"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.4643, 47.2329],
+          [-122.4243, 47.2329],
+          [-122.4243, 47.2729],
+          [-122.4643, 47.2729],
+          [-122.4643, 47.2329]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "lakewood",
+        "name": "Lakewood"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.5385, 47.1517],
+          [-122.4985, 47.1517],
+          [-122.4985, 47.1917],
+          [-122.5385, 47.1917],
+          [-122.5385, 47.1517]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "spanaway",
+        "name": "Spanaway"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.4546, 47.0840],
+          [-122.4146, 47.0840],
+          [-122.4146, 47.1240],
+          [-122.4546, 47.1240],
+          [-122.4546, 47.0840]
+        ]]
+      }
     }
   ]
 }

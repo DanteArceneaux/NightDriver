@@ -238,15 +238,15 @@ export function EventsPanel() {
                               : 'text-neon-orange'
                           }`}>
                             +{
-                              // NEW v9.0 scoring: Ending is MASSIVE (up to 100pts)
-                              timeInfo.status === 'ending' && event.type === 'sports' ? '80-100' :
-                              timeInfo.status === 'ending' && event.type === 'concert' ? '60-80' :
-                              timeInfo.status === 'ending' ? '50-70' :
-                              timeInfo.status === 'live' && event.type === 'sports' ? '50-60' :
-                              timeInfo.status === 'live' && event.type === 'concert' ? '40-45' :
-                              timeInfo.status === 'live' ? '35-40' :
-                              timeInfo.status === 'starting' ? '8-12' : 
-                              '5'
+                              // v9.1.1 scoring: Rebalanced for realistic scores
+                              timeInfo.status === 'ending' && event.type === 'sports' ? '30-60' :
+                              timeInfo.status === 'ending' && event.type === 'concert' ? '25-50' :
+                              timeInfo.status === 'ending' ? '18-40' :
+                              timeInfo.status === 'live' && event.type === 'sports' ? '25-35' :
+                              timeInfo.status === 'live' && event.type === 'concert' ? '20-28' :
+                              timeInfo.status === 'live' ? '15-25' :
+                              timeInfo.status === 'starting' ? '10-15' : 
+                              '5-10'
                             } pts
                           </span>
                         </div>
