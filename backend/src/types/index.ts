@@ -38,6 +38,7 @@ export interface ZoneScore {
   estimatedHourlyRate?: number;
   factors: ZoneScoreFactors;
   coordinates: Coordinates;
+  driverSupply?: DriverSupplyEstimate; // v9.1: Estimated driver competition
 }
 
 export interface TopPick {
@@ -109,6 +110,13 @@ export interface FlightArrival {
   terminal: string;
   status?: string; // 'Scheduled', 'In Flight', 'Landed', 'Cancelled', etc.
   carrier?: string; // Airline name
+}
+
+export interface DriverSupplyEstimate {
+  estimatedDrivers: number; // Number of estimated drivers available in the zone
+  confidence: 'high' | 'medium' | 'low'; // How reliable is this estimate
+  source: 'heuristic' | 'crowdsourced'; // How the estimate was derived
+  modifier: number; // The score modifier based on supply/demand imbalance
 }
 
 export interface Conditions {

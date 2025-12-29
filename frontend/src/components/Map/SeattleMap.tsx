@@ -843,6 +843,15 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
                     {zone.factors.flights > 0 && (
                       <div className="text-green-400">✈️ Flights: +{zone.factors.flights}</div>
                     )}
+                    {zone.driverSupply && (
+                      <div className={`font-bold ${
+                        zone.driverSupply.estimatedDrivers < 10 ? 'text-green-400' : 
+                        zone.driverSupply.estimatedDrivers < 20 ? 'text-yellow-400' : 
+                        'text-red-400'
+                      }`}>
+                        🚗 Drivers: ~{zone.driverSupply.estimatedDrivers} ({zone.driverSupply.modifier > 0 ? '+' : ''}{zone.driverSupply.modifier})
+                      </div>
+                    )}
                   </div>
                 </div>
               </Tooltip>

@@ -11,6 +11,13 @@ export interface Zone {
   stagingSpot?: Coordinates; // Recommended safe parking/waiting location
 }
 
+export interface DriverSupplyEstimate {
+  estimatedDrivers: number;
+  confidence: 'high' | 'medium' | 'low';
+  source: 'heuristic' | 'crowdsourced';
+  modifier: number;
+}
+
 export interface ZoneScore {
   id: string;
   name: string;
@@ -38,6 +45,7 @@ export interface ZoneScore {
     surge?: number;
   };
   coordinates: Coordinates;
+  driverSupply?: DriverSupplyEstimate; // v9.1: Estimated driver competition
 }
 
 export interface TopPick {

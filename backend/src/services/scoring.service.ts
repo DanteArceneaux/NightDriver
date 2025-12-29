@@ -12,6 +12,7 @@ import { FerriesService } from './ferries.service.js';
 import { HotelCheckoutService } from './hotelCheckout.service.js';
 import { HospitalShiftsService } from './hospitalShifts.service.js';
 import { UWClassesService } from './uwClasses.service.js';
+import { DriverSupplyService } from './driverSupply.service.js';
 
 export class ScoringService {
   private cruiseShipsService: CruiseShipsService;
@@ -21,6 +22,7 @@ export class ScoringService {
   private hotelCheckoutService: HotelCheckoutService;
   private hospitalShiftsService: HospitalShiftsService;
   private uwClassesService: UWClassesService;
+  private driverSupplyService: DriverSupplyService;
 
   /**
    * Micro-zone metadata map (fast lookup)
@@ -42,6 +44,7 @@ export class ScoringService {
     this.hotelCheckoutService = new HotelCheckoutService();
     this.hospitalShiftsService = new HospitalShiftsService();
     this.uwClassesService = new UWClassesService();
+    this.driverSupplyService = new DriverSupplyService();
 
     this.microZoneById = new Map(microZones.map(z => [z.id, z]));
     this.scoringZones = this.buildScoringZones();
@@ -127,6 +130,9 @@ export class ScoringService {
       // 🎯 Micro-zone modifiers: value, competition, rider quality
       const microZoneMetaBoost = microMeta ? this.getMicroZoneMetaBoost(microMeta) : 0;
 
+      // 🚗 NEW v9.1: Driver Supply Estimation (heuristic-based)
+      const driverSupplyEstimate = this.driverSupplyService.estimateSupply(zone, currentTime, weather || undefined, events);
+
       const factors = {
         baseline: baseline,
         events: eventBoost,
@@ -148,6 +154,9 @@ export class ScoringService {
       
       // Apply weather multiplier to total score, not individual weather factor
       totalScore = totalScore * weatherMultiplier;
+      
+      // Apply driver supply modifier (low supply = higher opportunity, high supply = more competition)
+      totalScore += driverSupplyEstimate.modifier;
       
       // Cap at 100
       totalScore = Math.min(100, Math.max(0, totalScore));
@@ -179,6 +188,7 @@ export class ScoringService {
           uwClasses: Math.round(factors.uwClasses),
         },
         coordinates: zone.coordinates,
+        driverSupply: driverSupplyEstimate,
       };
     });
 

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Map, Music, CloudRain, Plane, TrendingUp, MapPin, Clock, ParkingCircle, Zap, BrainCircuit } from 'lucide-react';
+import { Map, Music, CloudRain, Plane, TrendingUp, MapPin, Clock, ParkingCircle, Zap, BrainCircuit, Users } from 'lucide-react';
 import type { ZoneScore, Coordinates, Zone } from '../../types';
 import { calculateDistance, estimateDriveTime, calculateEfficiency } from '../../lib/distance';
 import { openGoogleMaps, openWaze, openAppleMaps, openTeslaNav } from '../../lib/navigation';
@@ -178,6 +178,63 @@ export function ZoneDetailSheet({ zone, onClose, driverLocation, allZones }: Zon
                   )}
                 </div>
               </div>
+
+              {/* Driver Supply Estimate (v9.1) */}
+              {zone.driverSupply && (
+                <div className="glass rounded-xl p-3 border border-white/10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-5 h-5 text-theme-primary" />
+                    <h3 className="text-sm font-bold text-gray-300 uppercase tracking-wide">
+                      Driver Supply Estimate
+                    </h3>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400">Estimated Drivers:</span>
+                      <span className="text-sm text-white font-bold">{zone.driverSupply.estimatedDrivers}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400">Competition Level:</span>
+                      <span className={`text-sm font-bold ${
+                        zone.driverSupply.estimatedDrivers < 5 ? 'text-neon-green' :
+                        zone.driverSupply.estimatedDrivers < 10 ? 'text-theme-primary' :
+                        zone.driverSupply.estimatedDrivers < 20 ? 'text-yellow-400' :
+                        zone.driverSupply.estimatedDrivers < 30 ? 'text-neon-orange' :
+                        'text-red-400'
+                      }`}>
+                        {zone.driverSupply.estimatedDrivers < 5 ? 'Very Low' :
+                         zone.driverSupply.estimatedDrivers < 10 ? 'Low' :
+                         zone.driverSupply.estimatedDrivers < 20 ? 'Normal' :
+                         zone.driverSupply.estimatedDrivers < 30 ? 'High' :
+                         'Very High'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400">Score Modifier:</span>
+                      <span className={`text-sm font-bold ${
+                        zone.driverSupply.modifier > 0 ? 'text-neon-green' : 
+                        zone.driverSupply.modifier < 0 ? 'text-red-400' : 
+                        'text-gray-400'
+                      }`}>
+                        {zone.driverSupply.modifier > 0 ? '+' : ''}{zone.driverSupply.modifier}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400">Confidence:</span>
+                      <span className={`text-xs uppercase font-bold ${
+                        zone.driverSupply.confidence === 'high' ? 'text-neon-green' :
+                        zone.driverSupply.confidence === 'medium' ? 'text-yellow-400' :
+                        'text-red-400'
+                      }`}>
+                        {zone.driverSupply.confidence}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2 italic">
+                    Estimated based on time, weather, events, and historical patterns
+                  </p>
+                </div>
+              )}
 
               {/* Staging Spot Info */}
               {stagingSpot && (
