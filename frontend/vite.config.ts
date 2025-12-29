@@ -15,7 +15,7 @@ export default defineConfig({
   },
   assetsInclude: ['**/*.geojson'],
   json: {
-    stringify: true,
+    stringify: false,
   },
 });
 

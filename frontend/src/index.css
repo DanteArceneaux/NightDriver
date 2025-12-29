@@ -232,3 +232,48 @@
   background: transparent;
   border: none;
 }
+
+/* --- NEW NEON ZONE STYLES --- */
+
+/* Smooth transitions for map elements */
+path.leaflet-interactive {
+  transition: stroke-width 0.3s ease, stroke-opacity 0.3s ease, fill-opacity 0.3s ease, filter 0.3s ease;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Zone Hierarchy & Glows */
+.zone-surge {
+  /* High Score (80+): Intense Pink/Purple Glow */
+  filter: drop-shadow(0 0 8px rgba(255, 0, 85, 0.6));
+  stroke: #ff0055;
+  animation: pulse-surge 3s infinite alternate;
+}
+
+.zone-hot {
+  /* Medium Score (60-79): Orange/Amber Glow */
+  filter: drop-shadow(0 0 5px rgba(255, 170, 0, 0.5));
+  stroke: #ffaa00;
+}
+
+.zone-warm {
+  /* Low-Medium Score (40-59): Cyan Glow */
+  filter: drop-shadow(0 0 3px rgba(6, 182, 212, 0.4));
+  stroke: #06b6d4;
+}
+
+.zone-cool {
+  /* Low Score (<40): Subtle Blue, No Glow to reduce noise */
+  stroke: #3b82f6;
+  opacity: 0.5;
+}
+
+@keyframes pulse-surge {
+  0% {
+    filter: drop-shadow(0 0 5px rgba(255, 0, 85, 0.5));
+    stroke-opacity: 0.8;
+  }
+  100% {
+    filter: drop-shadow(0 0 12px rgba(255, 0, 85, 0.8));
+    stroke-opacity: 1.0;
+  }
+}

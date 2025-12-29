@@ -51,9 +51,12 @@ export class ScoringService {
   }
 
   private buildScoringZones(): Zone[] {
-    // POLYGON FIX: Use ONLY legacy zones (29 macro zones) to match GeoJSON polygons
-    // Micro-zones disabled for v9.1.2 until we have polygon definitions for all 101 micro-zones
-    return legacyZones;
+    // V9.1.3: Enable all 101 micro-zones for ultra-specific positioning
+    // Merge legacy zones (29) + micro-zones (101) = 130 total zones
+    // Frontend will render GeoJSON polygons for all zones
+    const allZones = [...legacyZones, ...microZones];
+    console.log(`✅ Loaded ${allZones.length} zones (${legacyZones.length} legacy + ${microZones.length} micro-zones)`);
+    return allZones;
   }
 
   calculateZoneScores(

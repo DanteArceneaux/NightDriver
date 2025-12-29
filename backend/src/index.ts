@@ -66,11 +66,11 @@ app.use(errorHandler);
 app.get('/', (_req: express.Request, res: express.Response) => {
   res.json({
     name: 'Seattle Uber Driver Optimizer API',
-    version: '4.2.5',
+    version: '9.1.3',
     features: [
       'Real-time WebSocket updates',
       'Surge detection',
-      'Micro-zones (granular Seattle scoring)',
+      '101 ultra-granular micro-zones (block-level precision)',
       'Money-makers intelligence (ferries, hotel checkout, hospitals, UW bursts)',
       'Trip chain recommendations',
     ],
@@ -88,35 +88,36 @@ app.get('/', (_req: express.Request, res: express.Response) => {
 io.on('connection', (socket) => {
   console.log(`🔌 Client connected: ${socket.id}`);
 
-  // Rate limiting for WebSocket messages
-  const messageCounts = new Map<string, number>();
-  const resetTime = Date.now() + 60000; // 1 minute window
+  // Rate limiting for WebSocket messages (per-connection state)
+  const rateLimitState = {
+    count: 0,
+    resetTime: Date.now() + 60000, // 1 minute window
+  };
 
   socket.on('disconnect', () => {
     console.log(`🔌 Client disconnected: ${socket.id}`);
-    messageCounts.delete(socket.id);
   });
 
   // Rate limit check for incoming messages
   const checkRateLimit = (): boolean => {
     const now = Date.now();
-    if (now > resetTime) {
-      // Reset window
-      messageCounts.clear();
-      return true;
+    
+    // Reset window if expired
+    if (now > rateLimitState.resetTime) {
+      rateLimitState.count = 0;
+      rateLimitState.resetTime = now + 60000; // Reset to new window
     }
 
-    const count = messageCounts.get(socket.id) || 0;
-    if (count >= 300) { // 300 messages per minute per connection
+    if (rateLimitState.count >= 300) { // 300 messages per minute per connection
       socket.emit('error', {
         type: 'RATE_LIMITED',
         message: 'Too many messages, please slow down.',
-        retryAfter: Math.ceil((resetTime - now) / 1000),
+        retryAfter: Math.ceil((rateLimitState.resetTime - now) / 1000),
       });
       return false;
     }
 
-    messageCounts.set(socket.id, count + 1);
+    rateLimitState.count++;
     return true;
   };
 
@@ -189,7 +190,7 @@ process.on('SIGTERM', () => {
 
 // Start server
 httpServer.listen(config.port, () => {
-  console.log(`🚗 Seattle Driver Optimizer API v4.2.3`);
+  console.log(`🚗 Seattle Driver Optimizer API v9.1.3`);
   console.log(`📍 HTTP: http://localhost:${config.port}`);
   console.log(`⚡ WebSocket: ws://localhost:${config.port}`);
   console.log(`🏥 Health: http://localhost:${config.port}/api/health`);
@@ -197,7 +198,8 @@ httpServer.listen(config.port, () => {
   logApiStatus();
   
   console.log('\n⚡ Real-time updates: Broadcasting every 30 seconds');
-  console.log('🔥 Surge detection: Active (threshold: 20 points)\n');
+  console.log('🔥 Surge detection: Active (threshold: 20 points)');
+  console.log('🗺️  Zones: 101 ultra-granular micro-zones enabled\n');
   
   // Do initial broadcast
   setTimeout(broadcastScores, 5000);

@@ -8,7 +8,7 @@ import { fetchConditions } from '../../lib/api';
 import { SafeStorage } from '../../lib/safeStorage';
 import { useThemeUtils } from '../../features/theme/themeUtils';
 import { HeatmapOverlay } from './HeatmapOverlay';
-import seattleZonesGeoJSON from '../../data/seattleZones.geojson';
+import allZonesGeoJSON from '../../data/allZones.json';
 import { 
   sanitizeEmoji, 
   sanitizeEventData, 
@@ -48,27 +48,32 @@ const VENUE_COORDINATES: Record<string, { lat: number; lng: number }> = {
   'seattle center': { lat: 47.6205, lng: -122.3540 },
 };
 
-function getColorForScore(score: number): { fill: string; stroke: string; glow: string } {
-  if (score >= 80) return { 
-    fill: '#ff0055', 
-    stroke: '#aa00ff', 
-    glow: 'rgba(255, 0, 85, 0.6)' 
-  }; // Neon pink/purple (surge)
-  if (score >= 60) return { 
-    fill: '#ffaa00', 
-    stroke: '#ff0055', 
-    glow: 'rgba(255, 170, 0, 0.5)' 
-  }; // Neon orange/pink (hot)
+function getColorForScore(score: number): { fill: string; stroke: string; className: string } {
+  if (score >= 85) return { 
+    fill: '#ff0055',    // Neon Pink
+    stroke: '#ff99aa', 
+    className: 'zone-surge'
+  };
+  if (score >= 70) return { 
+    fill: '#d946ef',    // Neon Fuchsia
+    stroke: '#f0abfc', 
+    className: 'zone-surge'
+  };
+  if (score >= 55) return { 
+    fill: '#f59e0b',    // Neon Amber
+    stroke: '#fcd34d',
+    className: 'zone-hot'
+  };
   if (score >= 40) return { 
-    fill: '#00ffee', 
-    stroke: '#3b82f6', 
-    glow: 'rgba(0, 255, 238, 0.4)' 
-  }; // Neon cyan (warm)
+    fill: '#06b6d4',    // Neon Cyan
+    stroke: '#67e8f9', 
+    className: 'zone-warm'
+  };
   return { 
-    fill: '#3b82f6', 
-    stroke: '#1e40af', 
-    glow: 'rgba(59, 130, 246, 0.3)' 
-  }; // Blue (cool)
+    fill: '#3b82f6',    // Standard Blue
+    stroke: '#60a5fa', 
+    className: 'zone-cool'
+  };
 }
 
 // Get venue coordinates from venue name
@@ -730,12 +735,22 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
 
         {/* Zone Polygons (Uber/Lyft Style) */}
         {zones.map((zone) => {
-          const colors = getColorForScore(zone.score);
+          const styles = getColorForScore(zone.score);
           
-          // Find matching GeoJSON feature for this zone
-          const geoFeature = (seattleZonesGeoJSON as any)?.features?.find(
-            (f: any) => f.properties.id === zone.id
-          );
+          // VISUAL HIERARCHY LOGIC
+          // Make low score zones ghost-like to fix the "clutter"
+          const isHighValue = zone.score >= 55;
+          const isLowValue = zone.score < 40;
+          
+          // Dynamic styles based on importance
+          const baseWeight = isHighValue ? 2 : 1;
+          const baseOpacity = isLowValue ? 0.3 : 0.9;
+          const baseFillOpacity = isLowValue ? 0.05 : (isHighValue ? 0.5 : 0.25);
+          
+            // Find matching GeoJSON feature for this zone
+            const geoFeature = (allZonesGeoJSON as any)?.features?.find(
+              (f: any) => f.properties.id === zone.id
+            );
           
           // Fallback to circle marker if no polygon exists
           if (!geoFeature) {
@@ -746,12 +761,12 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
                 center={[zone.coordinates.lat, zone.coordinates.lng]}
                 radius={baseRadius}
                 pathOptions={{
-                  fillColor: colors.fill,
-                  color: colors.stroke,
-                  weight: 3,
-                  opacity: 0.9,
-                  fillOpacity: 0.7,
-                  className: zone.score >= 80 ? 'pulse-marker' : '',
+                  fillColor: styles.fill,
+                  color: styles.stroke,
+                  weight: baseWeight,
+                  opacity: baseOpacity,
+                  fillOpacity: baseFillOpacity,
+                  className: styles.className,
                 }}
                 eventHandlers={{
                   click: () => onZoneClick?.(zone),
@@ -794,27 +809,34 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
               key={zone.id}
               positions={positions}
               pathOptions={{
-                fillColor: colors.fill,
-                color: colors.stroke,
-                weight: 2,
-                opacity: 0.9,
-                fillOpacity: zone.score >= 80 ? 0.7 : 0.5,
-                className: zone.score >= 80 ? 'pulse-zone' : '',
+                fillColor: styles.fill,
+                color: styles.stroke,
+                weight: baseWeight,
+                opacity: baseOpacity,
+                fillOpacity: baseFillOpacity,
+                className: styles.className,
+                lineCap: 'round',
+                lineJoin: 'round',
               }}
               eventHandlers={{
                 click: () => onZoneClick?.(zone),
                 mouseover: (e) => {
                   const layer = e.target;
                   layer.setStyle({
-                    fillOpacity: 0.8,
+                    fillOpacity: 0.7,
                     weight: 3,
+                    opacity: 1,
+                    color: '#ffffff', // Flash white border on hover
                   });
+                  layer.bringToFront(); // CRITICAL: Brings hovered zone to top
                 },
                 mouseout: (e) => {
                   const layer = e.target;
                   layer.setStyle({
-                    fillOpacity: zone.score >= 80 ? 0.7 : 0.5,
-                    weight: 2,
+                    fillOpacity: baseFillOpacity,
+                    weight: baseWeight,
+                    opacity: baseOpacity,
+                    color: styles.stroke,
                   });
                 },
               }}
