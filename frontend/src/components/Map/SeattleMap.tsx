@@ -733,7 +733,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
           const colors = getColorForScore(zone.score);
           
           // Find matching GeoJSON feature for this zone
-          const geoFeature = (seattleZonesGeoJSON as any).features.find(
+          const geoFeature = (seattleZonesGeoJSON as any)?.features?.find(
             (f: any) => f.properties.id === zone.id
           );
           
