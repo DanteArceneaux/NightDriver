@@ -224,18 +224,39 @@ export function EventsPanel() {
                           </div>
                         </div>
 
-                        {/* Zone Boost Badge */}
+                        {/* Zone Boost Badge - Updated for v9.0 scoring */}
                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-theme-primary/20 border border-theme-primary/50 rounded-lg">
-                          <span className="text-xs text-gray-300">Boosting:</span>
+                          <span className="text-xs text-gray-300">
+                            {timeInfo.status === 'ending' || timeInfo.status === 'live' ? '🔥 SURGE in:' : 'Boosting:'}
+                          </span>
                           <span className="text-xs text-theme-primary font-bold uppercase">
                             {event.zoneId.replace('_', ' ')}
                           </span>
-                          <span className="text-neon-orange font-bold text-sm">
-                            +{event.type === 'sports' && timeInfo.status === 'ending' ? '40' : 
-                              event.type === 'concert' && timeInfo.status === 'ending' ? '30' : 
-                              event.type === 'conference' && timeInfo.status === 'starting' ? '30' : '15'}
+                          <span className={`font-bold text-sm ${
+                            timeInfo.status === 'ending' || (timeInfo.status === 'live' && timeInfo.urgency > 40) 
+                              ? 'text-neon-pink' 
+                              : 'text-neon-orange'
+                          }`}>
+                            +{
+                              // NEW v9.0 scoring: Ending is MASSIVE (up to 100pts)
+                              timeInfo.status === 'ending' && event.type === 'sports' ? '80-100' :
+                              timeInfo.status === 'ending' && event.type === 'concert' ? '60-80' :
+                              timeInfo.status === 'ending' ? '50-70' :
+                              timeInfo.status === 'live' && event.type === 'sports' ? '50-60' :
+                              timeInfo.status === 'live' && event.type === 'concert' ? '40-45' :
+                              timeInfo.status === 'live' ? '35-40' :
+                              timeInfo.status === 'starting' ? '8-12' : 
+                              '5'
+                            } pts
                           </span>
                         </div>
+                        
+                        {/* Post-Event Decay Warning */}
+                        {timeInfo.status === 'ending' && (
+                          <div className="mt-2 text-xs text-gray-400 italic">
+                            💡 Peak surge at ending, 60-min decay after
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>

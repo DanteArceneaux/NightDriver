@@ -288,56 +288,68 @@ export class ScoringService {
     for (const event of zoneEvents) {
       const eventStart = new Date(event.startTime);
       const eventEnd = new Date(event.endTime);
-      const hoursUntilStart = (eventStart.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
-      const hoursUntilEnd = (eventEnd.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+      const minutesUntilEnd = (eventEnd.getTime() - currentTime.getTime()) / (1000 * 60);
+      const minutesAfterEnd = (currentTime.getTime() - eventEnd.getTime()) / (1000 * 60);
+      const minutesUntilStart = (eventStart.getTime() - currentTime.getTime()) / (1000 * 60);
 
       // Type-specific scoring
       const eventType = event.type || 'other';
 
-      const EVENT_BOOST_DURING_SPORTS = 10;
-      const EVENT_BOOST_DURING_OTHER = 15;
-      const EVENT_BOOST_END_SPORTS = 40;
-      const EVENT_BOOST_END_CONCERT = 30;
-      const EVENT_BOOST_END_CONFERENCE = 10;
-      const EVENT_BOOST_END_OTHER = 25;
-      const EVENT_BOOST_START_CONFERENCE = 30;
-      const EVENT_BOOST_START_SPORTS_CONCERT = 20;
-      const EVENT_BOOST_START_OTHER = 15;
-      const EVENT_BOOST_NEXT_TWO_HOURS = 10;
-
-      // Event is happening now
-      if (hoursUntilStart <= 0 && hoursUntilEnd > 0) {
-        boost += eventType === 'sports' ? EVENT_BOOST_DURING_SPORTS : EVENT_BOOST_DURING_OTHER;
-      }
-      // Event ending soon (surge for rides home)
-      else if (hoursUntilEnd > 0 && hoursUntilEnd <= 1) {
+      // 🔥 PRIORITY 1: EVENT ENDING SOON (0-30 min before end) - MASSIVE SURGE
+      // As the event gets closer to ending, urgency increases exponentially
+      if (minutesUntilEnd > 0 && minutesUntilEnd <= 30) {
+        const urgencyMultiplier = 1 + (30 - minutesUntilEnd) / 30; // 1.0x to 2.0x
         if (eventType === 'sports') {
-          boost += EVENT_BOOST_END_SPORTS;
+          boost += 50 * urgencyMultiplier; // Up to 100pts!
         } else if (eventType === 'concert') {
-          boost += EVENT_BOOST_END_CONCERT;
-        } else if (eventType === 'conference') {
-          boost += EVENT_BOOST_END_CONFERENCE;
+          boost += 40 * urgencyMultiplier; // Up to 80pts
+        } else if (eventType === 'festival') {
+          boost += 35 * urgencyMultiplier;
         } else {
-          boost += EVENT_BOOST_END_OTHER;
+          boost += 30 * urgencyMultiplier;
         }
       }
-      // Event starting soon (people arriving)
-      else if (hoursUntilStart > 0 && hoursUntilStart <= 1) {
-        if (eventType === 'conference') {
-          boost += EVENT_BOOST_START_CONFERENCE;
-        } else if (eventType === 'sports' || eventType === 'concert') {
-          boost += EVENT_BOOST_START_SPORTS_CONCERT;
+      
+      // 🔥 PRIORITY 2: EVENT JUST ENDED (0-60 min after) - POST-EVENT WAVE
+      // Linear decay as people disperse
+      else if (minutesAfterEnd >= 0 && minutesAfterEnd <= 60) {
+        const decayFactor = 1 - (minutesAfterEnd / 60); // 1.0 → 0.0 over 60 min
+        if (eventType === 'sports') {
+          boost += 60 * decayFactor; // Starts at 60pts, decays to 0
+        } else if (eventType === 'concert') {
+          boost += 45 * decayFactor;
+        } else if (eventType === 'festival') {
+          boost += 40 * decayFactor;
         } else {
-          boost += EVENT_BOOST_START_OTHER;
+          boost += 35 * decayFactor;
         }
       }
-      // Event in next 2 hours
-      else if (hoursUntilStart > 1 && hoursUntilStart <= 2) {
-        boost += EVENT_BOOST_NEXT_TWO_HOURS;
+      
+      // Event ending in 30-60 min - moderate boost
+      else if (minutesUntilEnd > 30 && minutesUntilEnd <= 60) {
+        if (eventType === 'sports') boost += 25;
+        else if (eventType === 'concert') boost += 20;
+        else boost += 15;
+      }
+      
+      // Event is happening now (but not ending soon)
+      else if (minutesUntilEnd > 60 && minutesAfterEnd < 0) {
+        boost += 10; // Small boost during event
+      }
+      
+      // Event starting soon (1 hour before) - minimal
+      else if (minutesUntilStart > 0 && minutesUntilStart <= 60) {
+        if (eventType === 'conference') boost += 12; // Conferences have early arrivals
+        else boost += 8;
+      }
+      
+      // Event in next 1-2 hours - very minimal
+      else if (minutesUntilStart > 60 && minutesUntilStart <= 120) {
+        boost += 5;
       }
     }
 
-    return Math.min(boost, 45); // Cap event boost at 45 (raised for sports surges)
+    return Math.min(boost, 100); // Allow up to 100pts for major event endings
   }
 
   private calculateWeatherBoost(weather: WeatherConditions | null): number {
@@ -511,4 +523,5 @@ export class ScoringService {
     return forecast;
   }
 }
+
 

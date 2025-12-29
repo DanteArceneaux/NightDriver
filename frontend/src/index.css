@@ -199,6 +199,21 @@
 .pulse-marker {
   animation: pulse-marker 2s ease-in-out infinite;
 }
+
+/* Polygon zone pulse animation (Uber/Lyft style) */
+@keyframes pulse-zone {
+  0%, 100% { 
+    fill-opacity: 0.7;
+    stroke-width: 2;
+  }
+  50% { 
+    fill-opacity: 0.9;
+    stroke-width: 3;
+  }
+}
+.pulse-zone {
+  animation: pulse-zone 2s ease-in-out infinite;
+}
 .leaflet-tooltip {
   background: rgba(10, 14, 39, 0.95) !important;
   border: 1px solid rgba(0, 255, 238, 0.3) !important;

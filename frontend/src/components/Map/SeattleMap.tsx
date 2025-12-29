@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Marker, Tooltip, useMap, Polyline, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Marker, Tooltip, useMap, Polyline, Circle, Polygon } from 'react-leaflet';
 import { motion } from 'framer-motion';
 import { Map as MapIcon, Satellite, TrendingUp, Navigation2, Gauge, Crosshair } from 'lucide-react';
 import L from 'leaflet';
@@ -8,6 +8,7 @@ import { fetchConditions } from '../../lib/api';
 import { SafeStorage } from '../../lib/safeStorage';
 import { useThemeUtils } from '../../features/theme/themeUtils';
 import { HeatmapOverlay } from './HeatmapOverlay';
+import seattleZonesGeoJSON from '../../data/seattleZones.geojson';
 import { 
   sanitizeEmoji, 
   sanitizeEventData, 
@@ -727,26 +728,95 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
         {/* Personal Heatmap Overlay */}
         <HeatmapOverlay enabled={showHeatmap} zones={zones} />
 
-        {/* Zone Markers */}
+        {/* Zone Polygons (Uber/Lyft Style) */}
         {zones.map((zone) => {
           const colors = getColorForScore(zone.score);
-          const baseRadius = 12 + (zone.score / 100) * 13;
-
+          
+          // Find matching GeoJSON feature for this zone
+          const geoFeature = (seattleZonesGeoJSON as any).features.find(
+            (f: any) => f.properties.id === zone.id
+          );
+          
+          // Fallback to circle marker if no polygon exists
+          if (!geoFeature) {
+            const baseRadius = 12 + (zone.score / 100) * 13;
+            return (
+              <CircleMarker
+                key={zone.id}
+                center={[zone.coordinates.lat, zone.coordinates.lng]}
+                radius={baseRadius}
+                pathOptions={{
+                  fillColor: colors.fill,
+                  color: colors.stroke,
+                  weight: 3,
+                  opacity: 0.9,
+                  fillOpacity: 0.7,
+                  className: zone.score >= 80 ? 'pulse-marker' : '',
+                }}
+                eventHandlers={{
+                  click: () => onZoneClick?.(zone),
+                }}
+              >
+                <Tooltip 
+                  direction="top" 
+                  offset={[0, -10]} 
+                  opacity={1}
+                  className="custom-tooltip"
+                >
+                  <div className="text-sm">
+                    <div className="font-bold text-white text-base mb-1">{zone.name}</div>
+                    <div className="text-theme-primary font-bold text-lg mb-2">Score: {zone.score}</div>
+                    <div className="text-xs text-gray-300 space-y-1">
+                      <div className="text-gray-400">Base: {zone.factors.baseline}</div>
+                      {zone.factors.events > 0 && (
+                        <div className="text-neon-orange">🎵 Events: +{zone.factors.events}</div>
+                      )}
+                      {zone.factors.weather > 0 && (
+                        <div className="text-blue-400">🌧️ Weather: +{zone.factors.weather}</div>
+                      )}
+                      {zone.factors.flights > 0 && (
+                        <div className="text-neon-green">✈️ Flights: +{zone.factors.flights}</div>
+                      )}
+                    </div>
+                  </div>
+                </Tooltip>
+              </CircleMarker>
+            );
+          }
+          
+          // Extract polygon coordinates (GeoJSON is [lng, lat], Leaflet needs [lat, lng])
+          const positions = geoFeature.geometry.coordinates[0].map(
+            ([lng, lat]: [number, number]) => [lat, lng] as [number, number]
+          );
+          
           return (
-            <CircleMarker
+            <Polygon
               key={zone.id}
-              center={[zone.coordinates.lat, zone.coordinates.lng]}
-              radius={baseRadius}
+              positions={positions}
               pathOptions={{
                 fillColor: colors.fill,
                 color: colors.stroke,
-                weight: 3,
+                weight: 2,
                 opacity: 0.9,
-                fillOpacity: 0.7,
-                className: zone.score >= 80 ? 'pulse-marker' : '',
+                fillOpacity: zone.score >= 80 ? 0.7 : 0.5,
+                className: zone.score >= 80 ? 'pulse-zone' : '',
               }}
               eventHandlers={{
                 click: () => onZoneClick?.(zone),
+                mouseover: (e) => {
+                  const layer = e.target;
+                  layer.setStyle({
+                    fillOpacity: 0.8,
+                    weight: 3,
+                  });
+                },
+                mouseout: (e) => {
+                  const layer = e.target;
+                  layer.setStyle({
+                    fillOpacity: zone.score >= 80 ? 0.7 : 0.5,
+                    weight: 2,
+                  });
+                },
               }}
             >
               <Tooltip 
@@ -754,6 +824,7 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
                 offset={[0, -10]} 
                 opacity={1}
                 className="custom-tooltip"
+                sticky
               >
                 <div className="text-sm">
                   <div className="font-bold text-white text-base mb-1">{zone.name}</div>
@@ -761,18 +832,21 @@ export function SeattleMap({ zones, onZoneClick }: SeattleMapProps) {
                   <div className="text-xs text-gray-300 space-y-1">
                     <div className="text-gray-400">Base: {zone.factors.baseline}</div>
                     {zone.factors.events > 0 && (
-                      <div className="text-neon-orange">🎵 Events: +{zone.factors.events}</div>
+                      <div className="text-red-400 font-bold">🔥 Events: +{zone.factors.events}</div>
                     )}
                     {zone.factors.weather > 0 && (
                       <div className="text-blue-400">🌧️ Weather: +{zone.factors.weather}</div>
                     )}
+                    {zone.factors.traffic > 0 && (
+                      <div className="text-orange-400">🚗 Traffic: +{zone.factors.traffic}</div>
+                    )}
                     {zone.factors.flights > 0 && (
-                      <div className="text-neon-green">✈️ Flights: +{zone.factors.flights}</div>
+                      <div className="text-green-400">✈️ Flights: +{zone.factors.flights}</div>
                     )}
                   </div>
                 </div>
               </Tooltip>
-            </CircleMarker>
+            </Polygon>
           );
         })}
 
